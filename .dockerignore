@@ -1,0 +1,34 @@
+# Изключва ненужното от build контекста — по-бърз build и по-малък образ.
+
+node_modules
+.next
+.git
+.gitignore
+
+# Тайни — НИКОГА не влизат в образа
+.env
+.env.local
+.env.production
+.env*.local
+
+# Качени файлове (монтират се като volume)
+uploads
+
+# Документация и разработка
+*.md
+!README.md
+.vscode
+.idea
+coverage
+*.log
+*.tsbuildinfo
+
+# Docker файлове
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Операционна система
+.DS_Store
+Thumbs.db
+desktop.ini

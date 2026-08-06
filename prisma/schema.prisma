@@ -1,0 +1,539 @@
+// ReMindBooks v2.0 — модел на данните
+// Всички суми се пазят в стотинки (Int), за да се избегнат грешки с плаваща запетая.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ------------------------------------------------------------------
+// Потребители и автентикация
+// ------------------------------------------------------------------
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  passwordHash  String? // null при вход само с Google
+  name          String?
+  phone         String?
+  image         String?
+  role          Role      @default(USER)
+
+  // Адрес по подразбиране за доставка
+  addressLine String?
+  city        String?
+  postalCode  String?
+
+  newsletterOptIn Boolean @default(false)
+
+  accounts      Account[]
+  sessions      Session[]
+  orders        Order[]
+  favorites     Favorite[]
+  reviews       Review[]
+  entitlements  Entitlement[]
+  resetTokens   PasswordResetToken[]
+  giftCardsBought GiftCard[] @relation("GiftCardPurchaser")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  expires   DateTime
+  usedAt    DateTime?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ------------------------------------------------------------------
+// Продукти
+// ------------------------------------------------------------------
+
+enum ProductType {
+  PHYSICAL // Физическа книга — изисква доставка
+  PDF // Дигитална книга — сваляне от профила
+  AUDIO // Аудио съдържание — слушане/сваляне
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  order    Int       @default(0)
+  products Product[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  type        ProductType
+  slug        String      @unique
+  title       String
+  author      String?
+  description String      @db.Text
+  shortDesc   String?     @db.Text
+
+  // Цени в стотинки. priceCents = текуща цена, compareAtCents = зачертана "стара" цена.
+  priceCents      Int
+  compareAtCents  Int?
+
+  // Само за PHYSICAL
+  stock          Int     @default(0)
+  lowStockAlert  Int     @default(3)
+  weightGrams    Int?
+
+  // Само за AUDIO
+  durationSeconds Int?
+  isFree          Boolean @default(false)
+
+  // Файлове в обектното хранилище (S3/R2 ключове, не публични URL-и)
+  fileKey        String? // основният PDF / аудио файл
+  previewKey     String? // безплатен preview (първи страници / откъс)
+  previewPages   Int?    @default(0)
+
+  coverImage String?
+  images     ProductImage[]
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  isPublished Boolean @default(false)
+  isFeatured  Boolean @default(false) // "Препоръчан"
+  isBestseller Boolean @default(false) // "Най-продаван"
+
+  // SEO
+  metaTitle       String?
+  metaDescription String? @db.Text
+
+  reviews    Review[]
+  favorites  Favorite[]
+  orderItems OrderItem[]
+  entitlements Entitlement[]
+
+  // Свързани книги ("Може да ви хареса") — ръчно зададени
+  relatedTo  ProductRelation[] @relation("RelationSource")
+  relatedBy  ProductRelation[] @relation("RelationTarget")
+
+  // Участие в комплекти (bundle-и)
+  bundleItems BundleItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type, isPublished])
+  @@index([categoryId])
+  @@index([isBestseller])
+  @@index([isFeatured])
+  @@index([createdAt])
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  order     Int     @default(0)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductRelation {
+  id       String  @id @default(cuid())
+  sourceId String
+  targetId String
+  source   Product @relation("RelationSource", fields: [sourceId], references: [id], onDelete: Cascade)
+  target   Product @relation("RelationTarget", fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, targetId])
+  @@index([sourceId])
+}
+
+// Комплекти книги (bundle-и) на намалена цена
+model Bundle {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  title       String
+  description String  @db.Text
+  priceCents  Int
+  coverImage  String?
+  isPublished Boolean @default(false)
+
+  items      BundleItem[]
+  orderItems OrderItem[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BundleItem {
+  id        String  @id @default(cuid())
+  bundleId  String
+  productId String
+  quantity  Int     @default(1)
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleId, productId])
+}
+
+// ------------------------------------------------------------------
+// Ревюта и любими
+// ------------------------------------------------------------------
+
+model Review {
+  id        String  @id @default(cuid())
+  productId String
+  userId    String
+  rating    Int // 1..5
+  title     String?
+  body      String  @db.Text
+  isApproved Boolean @default(true)
+  // Ревю се допуска само от потребител, закупил продукта — пази се за справка
+  verifiedPurchase Boolean @default(false)
+
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([productId, userId])
+  @@index([productId, isApproved])
+}
+
+model Favorite {
+  id        String  @id @default(cuid())
+  userId    String
+  productId String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// ------------------------------------------------------------------
+// Поръчки
+// ------------------------------------------------------------------
+
+enum OrderStatus {
+  PENDING // чакаща (създадена, неплатена)
+  PAID // платена
+  SHIPPED // изпратена
+  COMPLETED // завършена
+  CANCELLED // отказана
+  REFUNDED // възстановена
+}
+
+enum PaymentMethod {
+  CARD // Stripe
+  COD // наложен платеж
+}
+
+enum FulfillmentType {
+  SHIPPING // физическа доставка
+  DIGITAL // дигитално доставяне
+}
+
+model Order {
+  id          String  @id @default(cuid())
+  orderNumber String  @unique // напр. RMB-2026-000123
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Данни на купувача (пазят се и при гост поръчка)
+  email       String
+  firstName   String?
+  lastName    String?
+  phone       String?
+  addressLine String?
+  city        String?
+  postalCode  String?
+  notes       String? @db.Text
+
+  status          OrderStatus     @default(PENDING)
+  paymentMethod   PaymentMethod   @default(CARD)
+  fulfillmentType FulfillmentType
+
+  subtotalCents Int
+  discountCents Int @default(0)
+  shippingCents Int @default(0)
+  totalCents    Int
+
+  promoCodeId String?
+  promoCode   PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+
+  giftCardId    String?
+  giftCard      GiftCard? @relation("GiftCardRedemption", fields: [giftCardId], references: [id], onDelete: SetNull)
+  giftCardCents Int       @default(0)
+
+  stripeSessionId       String? @unique
+  stripePaymentIntentId String?
+
+  trackingNumber String?
+  shippedAt      DateTime?
+  paidAt         DateTime?
+
+  items        OrderItem[]
+  entitlements Entitlement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([email])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  bundleId String?
+  bundle   Bundle? @relation(fields: [bundleId], references: [id], onDelete: SetNull)
+
+  // Заглавие и цена се копират, за да останат верни и след промяна на продукта
+  titleSnapshot String
+  typeSnapshot  ProductType
+  unitCents     Int
+  quantity      Int         @default(1)
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+// Право на достъп до дигитален продукт (PDF/аудио) — след плащане
+model Entitlement {
+  id        String @id @default(cuid())
+  userId    String
+  productId String
+  orderId   String?
+
+  // Брой сваляния (за защита от споделяне на линкове)
+  downloadCount Int      @default(0)
+  grantedAt     DateTime @default(now())
+  // Ръчно отключено от администратор
+  grantedManually Boolean @default(false)
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order   Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, productId])
+  @@index([userId])
+}
+
+// Достъп за гости (купили PDF без регистрация) — линк по имейл
+model GuestDownloadToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  orderId   String
+  productId String
+  email     String
+  expires   DateTime
+  downloadCount Int  @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
+}
+
+// ------------------------------------------------------------------
+// Промо кодове и подаръчни карти
+// ------------------------------------------------------------------
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+model PromoCode {
+  id           String       @id @default(cuid())
+  code         String       @unique
+  discountType DiscountType
+  // PERCENT: 1..100, FIXED: стойност в стотинки
+  amount       Int
+  minOrderCents Int?
+  startsAt     DateTime?
+  expiresAt    DateTime?
+  maxUses      Int?
+  usedCount    Int          @default(0)
+  isActive     Boolean      @default(true)
+  description  String?
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
+}
+
+enum GiftCardStatus {
+  ACTIVE
+  REDEEMED
+  EXPIRED
+  CANCELLED
+}
+
+model GiftCard {
+  id            String         @id @default(cuid())
+  code          String         @unique
+  initialCents  Int
+  balanceCents  Int
+  status        GiftCardStatus @default(ACTIVE)
+  recipientEmail String?
+  recipientName  String?
+  message        String?        @db.Text
+  expiresAt      DateTime?
+
+  purchaserId String?
+  purchaser   User?   @relation("GiftCardPurchaser", fields: [purchaserId], references: [id], onDelete: SetNull)
+
+  stripeSessionId String? @unique
+  redemptions     Order[] @relation("GiftCardRedemption")
+
+  createdAt DateTime @default(now())
+
+  @@index([status])
+}
+
+// ------------------------------------------------------------------
+// Блог — "Вътрешен компас"
+// ------------------------------------------------------------------
+
+model Post {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  title   String
+  excerpt String? @db.Text
+  body    String  @db.Text
+  coverImage String?
+
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+
+  metaTitle       String?
+  metaDescription String? @db.Text
+
+  tags     Tag[]     @relation("PostTags")
+  comments Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isPublished, publishedAt])
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[] @relation("PostTags")
+}
+
+model Comment {
+  id       String  @id @default(cuid())
+  postId   String
+  post     Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName String
+  authorEmail String
+  body     String  @db.Text
+  isApproved Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([postId, isApproved])
+}
+
+// ------------------------------------------------------------------
+// Съобщения, бюлетин и настройки
+// ------------------------------------------------------------------
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  body      String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([isRead])
+}
+
+model NewsletterSubscriber {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  isConfirmed  Boolean   @default(false)
+  confirmToken String?   @unique
+  source       String? // "homepage" | "footer" | "checkout"
+  syncedToMailerLite Boolean @default(false)
+  unsubscribedAt DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+// Ключ-стойност настройки, редактируеми от админ панела
+model Setting {
+  key       String   @id
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+}

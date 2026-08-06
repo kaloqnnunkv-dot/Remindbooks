@@ -1,0 +1,80 @@
+# ------------------------------------------------------------------
+#  ReMindBooks — локално стартиране с Docker
+#
+#  Пълен production-подобен стек: PostgreSQL + приложението.
+#
+#    docker compose up --build          → сайтът е на http://localhost:3000
+#    docker compose --profile seed up    → същото, но с начални данни
+#    docker compose down                 → спиране
+#    docker compose down -v              → спиране + изтриване на базата
+# ------------------------------------------------------------------
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: remindbooks-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: remindbooks
+      POSTGRES_PASSWORD: remindbooks
+      POSTGRES_DB: remindbooks
+      # Ускорява стартирането; данните живеят във volume-а.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8"
+    ports:
+      # Изнесен навън, за да може Prisma Studio да се свърже от хоста.
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U remindbooks -d remindbooks"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+    container_name: remindbooks-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://remindbooks:remindbooks@db:5432/remindbooks"
+      NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+      # Само за локална употреба — в production се генерира нов.
+      AUTH_SECRET: "local-development-secret-do-not-use-live"
+      # Без S3/R2 файловете се пазят в монтираната папка ./uploads.
+      LOCAL_UPLOAD_DIR: "./uploads"
+    ports:
+      - "3000:3000"
+    volumes:
+      # Качените корици и файлове оцеляват при рестарт на контейнера.
+      - ./uploads:/app/uploads
+
+  # Начални данни: категории, примерни книги, блог публикации, админ профил.
+  # Стартира се само с `--profile seed`, изпълнява се веднъж и спира.
+  seed:
+    profiles: ["seed"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Етапът `builder` съдържа dev зависимостите (tsx), нужни за seed скрипта.
+      target: builder
+    container_name: remindbooks-seed
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://remindbooks:remindbooks@db:5432/remindbooks"
+      SEED_ADMIN_EMAIL: "admin@remindbooks.com"
+      SEED_ADMIN_PASSWORD: "ReMind2026!"
+    command: >
+      sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
+    restart: "no"
+
+volumes:
+  db-data:

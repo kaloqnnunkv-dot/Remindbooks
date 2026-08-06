@@ -1,0 +1,45 @@
+# Зависимости
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+.next/
+out/
+build/
+next-env.d.ts
+
+# Променливи на средата — НИКОГА не се качват в Git
+.env
+.env.local
+.env.production
+.env*.local
+!.env.example
+
+# Качени файлове (локален режим)
+uploads/
+
+# Логове
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Операционна система
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Редактори
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+
+# Тестове и покритие
+coverage/
+
+# Vercel
+.vercel
