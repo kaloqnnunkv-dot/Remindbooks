@@ -21,12 +21,47 @@ function required(name: string, fallback?: string): string {
   return "";
 }
 
+/**
+ * Нормализира адрес до пълен URL с протокол.
+ *
+ * Railway, Cloudflare и повечето табла показват адреса без протокол
+ * (`remindbooks-production.up.railway.app`), затова е естествено да бъде
+ * поставен така. Без протокол `new URL()` хвърля и целият build се проваля,
+ * а Stripe и имейлите биха получили невалидни адреси.
+ *
+ * Локалните адреси остават на http — там няма сертификат.
+ */
+const FALLBACK_URL = "http://localhost:3000";
+
+function normalizeUrl(value: string): string {
+  const trimmed = value.trim().replace(/\/+$/, "");
+  if (!trimmed) return FALLBACK_URL;
+
+  const isLocal = /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?$/i.test(trimmed);
+  const withProtocol = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `${isLocal ? "http" : "https"}://${trimmed}`;
+
+  // Стойността се подава на `new URL()` при компилация. Невалиден адрес
+  // проваля целия build, затова проверяваме тук и предупреждаваме ясно,
+  // вместо да оставим грешката да изскочи някъде надълбоко.
+  try {
+    return new URL(withProtocol).origin;
+  } catch {
+    console.error(
+      `[env] NEXT_PUBLIC_APP_URL е невалиден адрес: "${value}". ` +
+        `Използва се ${FALLBACK_URL}. Задайте пълен адрес, напр. https://remindbooks.com`,
+    );
+    return FALLBACK_URL;
+  }
+}
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   isProd: process.env.NODE_ENV === "production",
 
   databaseUrl: required("DATABASE_URL"),
-  appUrl: (optional("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000").replace(/\/$/, ""),
+  appUrl: normalizeUrl(optional("NEXT_PUBLIC_APP_URL") ?? "http://localhost:3000"),
 
   auth: {
     secret: required("AUTH_SECRET", "dev-secret-change-me"),
