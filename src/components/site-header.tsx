@@ -67,14 +67,14 @@ export function SiteHeader({
     <>
       <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container-page">
-          <div className="flex h-16 items-center justify-between gap-4">
+          <div className="flex h-20 items-center justify-between gap-4">
             {/* Лого */}
             <Link
               href="/"
               aria-label="Remind Books — начална страница"
               className="shrink-0 transition-opacity hover:opacity-80"
             >
-              <Logo width={150} priority className="h-9 sm:h-10" />
+              <Logo width={240} priority className="h-[3.375rem] sm:h-[3.75rem]" />
             </Link>
 
             {/* Навигация — десктоп */}
@@ -157,7 +157,7 @@ export function SiteHeader({
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-50 bg-background">
           <div className="container-page">
-            <div className="flex h-16 items-center justify-between">
+            <div className="flex h-20 items-center justify-between">
               <span className="font-sans text-lg font-bold">Меню</span>
               <button
                 type="button"
