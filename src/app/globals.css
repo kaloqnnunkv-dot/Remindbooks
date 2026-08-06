@@ -9,51 +9,51 @@
 
 :root {
   --card: #fffcf5;
-  --ring: #a67c52;
-  --input: #dbd0ba;
-  --muted: #ece5d8;
-  --accent: #d4c8aa;
-  --border: #dbd0ba;
+  --ring: #745739;
+  --input: #bab19e;
+  --muted: #c9c3b8;
+  --accent: #b4aa90;
+  --border: #bab19e;
   --radius: 0.25rem;
-  --chart-1: #a67c52;
-  --chart-2: #8d6e4c;
-  --chart-3: #735a3a;
-  --chart-4: #b3906f;
-  --chart-5: #c0a080;
+  --chart-1: #745739;
+  --chart-2: #634d35;
+  --chart-3: #503f29;
+  --chart-4: #7d654e;
+  --chart-5: #86705a;
   --popover: #fffcf5;
-  --primary: #a67c52;
-  --sidebar: #ece5d8;
+  --primary: #745739;
+  --sidebar: #c9c3b8;
   --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
   --font-sans: var(--font-libre-baskerville), "Libre Baskerville", serif;
-  --secondary: #e2d8c3;
+  --secondary: #c0b8a6;
   --background: #f5f1e6;
   --font-serif: var(--font-lora), "Lora", serif;
-  --foreground: #4a3f35;
+  --foreground: #342c25;
   --destructive: #b54a35;
   --shadow-blur: 5px;
   --shadow-color: hsl(28 13% 20%);
-  --sidebar-ring: #a67c52;
+  --sidebar-ring: #745739;
   --shadow-spread: 0px;
   --shadow-opacity: 0.12;
-  --sidebar-accent: #d4c8aa;
+  --sidebar-accent: #b4aa90;
   --sidebar-border: #dbd0ba;
-  --card-foreground: #4a3f35;
+  --card-foreground: #342c25;
   --shadow-offset-x: 2px;
   --shadow-offset-y: 3px;
-  --sidebar-primary: #a67c52;
-  --muted-foreground: #7d6b56;
-  --accent-foreground: #4a3f35;
-  --popover-foreground: #4a3f35;
+  --sidebar-primary: #745739;
+  --muted-foreground: #584b3c;
+  --accent-foreground: #342c25;
+  --popover-foreground: #342c25;
   --primary-foreground: #ffffff;
-  --sidebar-foreground: #4a3f35;
-  --secondary-foreground: #5c4d3f;
+  --sidebar-foreground: #342c25;
+  --secondary-foreground: #40362c;
   --destructive-foreground: #ffffff;
-  --sidebar-accent-foreground: #4a3f35;
+  --sidebar-accent-foreground: #342c25;
   --sidebar-primary-foreground: #ffffff;
 
   /* Нюанси на фона за редуване на секциите */
-  --surface-1: #efe9da;
-  --surface-2: #e7dfcd;
+  --surface-1: #cbc6b9;
+  --surface-2: #c4beae;
 
   /* Статуси (извън базовата тема, за админ панела и наличности) */
   --success: #5f7d4f;
