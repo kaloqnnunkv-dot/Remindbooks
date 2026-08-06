@@ -6,6 +6,7 @@ import { Badge, Stars } from "./ui";
 import { AddToCartButton } from "./add-to-cart";
 import { FavoriteButton } from "./favorite-button";
 import { HeadphonesIcon } from "./icons";
+import { ProductTypeBadge } from "./product-type-badge";
 
 export type ProductCardData = {
   id: string;
@@ -80,6 +81,11 @@ export function ProductCard({
             {product.isBestseller && <Badge tone="primary">Най-продавана</Badge>}
             {product.isFree && <Badge tone="success">Безплатно</Badge>}
           </div>
+
+          {/* Вид на продукта — долу вляво, за да не се блъска с промоциите */}
+          <span className="absolute bottom-2 left-2">
+            <ProductTypeBadge type={product.type} short />
+          </span>
 
           {outOfStock && (
             <div className="absolute inset-0 bg-background/70 flex items-center justify-center">

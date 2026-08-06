@@ -13,6 +13,7 @@ import { getFavoriteIds } from "@/app/actions/favorites";
 
 import { Badge, Breadcrumbs, SectionHeading, ButtonLink, Alert } from "@/components/ui";
 import { ProductCard } from "@/components/product-card";
+import { ProductTypeBadge } from "@/components/product-type-badge";
 import { BuyBox } from "@/components/add-to-cart";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButtons } from "@/components/share-buttons";
@@ -157,13 +158,14 @@ export default async function PdfBookPage({
               </div>
             )}
             <span className="absolute top-3 left-3">
-              <Badge tone="primary">PDF</Badge>
+              <ProductTypeBadge type="PDF" />
             </span>
           </div>
         </div>
 
         <div className="lg:col-span-3">
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <ProductTypeBadge type="PDF" variant="inline" />
             {book.isBestseller && <Badge tone="primary">Най-продавана</Badge>}
             {discount && <Badge tone="destructive">−{discount}%</Badge>}
           </div>

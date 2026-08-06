@@ -12,6 +12,7 @@ import { getFavoriteIds } from "@/app/actions/favorites";
 
 import { Badge, Breadcrumbs, SectionHeading, Alert } from "@/components/ui";
 import { ProductCard } from "@/components/product-card";
+import { ProductTypeBadge } from "@/components/product-type-badge";
 import { BuyBox } from "@/components/add-to-cart";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButtons } from "@/components/share-buttons";
@@ -159,7 +160,8 @@ export default async function AudioDetailPage({
         </div>
 
         <div className="lg:col-span-3">
-          <div className="flex flex-wrap gap-2 mb-3">
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <ProductTypeBadge type="AUDIO" variant="inline" />
             {item.isFree && <Badge tone="success">Безплатно</Badge>}
             {!item.isFree && owned && <Badge tone="primary">Ваше</Badge>}
             {discount && <Badge tone="destructive">−{discount}%</Badge>}

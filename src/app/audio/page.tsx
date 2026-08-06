@@ -13,6 +13,7 @@ import { PageHeader, EmptyState, Badge, ButtonLink } from "@/components/ui";
 import { CatalogControls } from "@/components/catalog-controls";
 import { Pagination } from "@/components/pagination";
 import { AudioPlayer } from "@/components/audio-player";
+import { ProductTypeBadge } from "@/components/product-type-badge";
 import { AddToCartButton } from "@/components/add-to-cart";
 import { FavoriteButton } from "@/components/favorite-button";
 import { HeadphonesIcon } from "@/components/icons";
@@ -129,6 +130,7 @@ export default async function AudioPage({
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <ProductTypeBadge type="AUDIO" variant="inline" short />
                           {item.isFree && <Badge tone="success">Безплатно</Badge>}
                           {owned && !item.isFree && <Badge tone="primary">Ваше</Badge>}
                           {item.durationSeconds ? (

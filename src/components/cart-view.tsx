@@ -7,11 +7,12 @@ import { useTransition } from "react";
 import type { ProductType } from "@prisma/client";
 
 import { updateCartQuantity, removeFromCart } from "@/app/actions/cart";
-import { formatPrice, BG_PRODUCT_TYPE } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import { productHref } from "./product-card";
 import { QuantityPicker } from "./add-to-cart";
 import { Badge, ButtonLink, Card, cn } from "./ui";
 import { TrashIcon } from "./icons";
+import { ProductTypeBadge } from "./product-type-badge";
 import { useToast } from "./toast";
 
 export type CartLine = {
@@ -200,9 +201,11 @@ function CartRow({ line }: { line: CartLine }) {
               {line.title}
             </Link>
             <div className="mt-1 flex flex-wrap items-center gap-2">
-              <Badge tone="outline">
-                {line.kind === "b" ? "Комплект" : BG_PRODUCT_TYPE[line.type]}
-              </Badge>
+              {line.kind === "b" ? (
+                <Badge tone="outline">Комплект</Badge>
+              ) : (
+                <ProductTypeBadge type={line.type} variant="inline" short />
+              )}
               {line.unavailable && (
                 <Badge tone="destructive">{line.unavailable}</Badge>
               )}
