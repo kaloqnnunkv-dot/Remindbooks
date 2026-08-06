@@ -1,0 +1,68 @@
+# ------------------------------------------------------------------
+#  Променливи за Railway — попълнете и преименувайте на `railway-env`
+#
+#  Редът е по зависимости: горните може да се попълнят веднага,
+#  долните изискват сайтът вече да е пуснат веднъж.
+#
+#  ВАЖНО: файлът `railway-env` съдържа тайни и е в .gitignore.
+# ------------------------------------------------------------------
+
+# --- ГОТОВИ (генерирани, не ги променяйте) --------------------------
+AUTH_SECRET=lXtRS0eqPz1wEW7z37BOTOfIglvUeHl96ANdZaoip84=
+
+# --- ПОПЪЛВА СЕ АВТОМАТИЧНО ОТ RAILWAY ------------------------------
+# Не задавайте ръчно. В Railway отворете услугата на приложението →
+# Variables → Add Reference → Postgres → DATABASE_URL
+# DATABASE_URL=
+
+# --- STRIPE (Dashboard → Developers → API keys) ---------------------
+STRIPE_SECRET_KEY=
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
+# Попълва се СЛЕД първия деплой — нужен е реален адрес за webhook-а.
+STRIPE_WEBHOOK_SECRET=
+
+# --- CLOUDFLARE R2 (R2 → Manage API Tokens) -------------------------
+# S3_ENDPOINT е от вида https://<account-id>.r2.cloudflarestorage.com
+S3_ENDPOINT=
+S3_REGION=auto
+S3_BUCKET=remindbooks
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+# Публичният домейн на bucket-а, напр. media.remindbooks.com
+NEXT_PUBLIC_MEDIA_HOST=
+
+# --- RESEND (Dashboard → API Keys) ----------------------------------
+RESEND_API_KEY=
+EMAIL_FROM=ReMindBooks <noreply@remindbooks.com>
+OWNER_EMAIL=
+
+# --- MAILERLITE (Integrations → Developer API) ----------------------
+MAILERLITE_API_KEY=
+MAILERLITE_GROUP_ID=
+
+# --- GOOGLE OAUTH (по избор) ----------------------------------------
+# Redirect URI: https://ДОМЕЙН/api/auth/callback/google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+
+# --- АДРЕС НА САЙТА -------------------------------------------------
+# Първо временният адрес от Railway, после реалният домейн.
+NEXT_PUBLIC_APP_URL=
+
+# --- МАГАЗИН (стойности в стотинки) ---------------------------------
+SHIPPING_CENTS=599
+FREE_SHIPPING_OVER_CENTS=5000
+COD_FEE_CENTS=0
+
+# --- ФУНКЦИОНАЛНОСТИ ------------------------------------------------
+FEATURE_COD=true
+FEATURE_REVIEWS=true
+FEATURE_GIFT_CARDS=true
+FEATURE_BLOG_COMMENTS=true
+
+# --- КОНТАКТИ (показват се в сайта) ---------------------------------
+NEXT_PUBLIC_CONTACT_PHONE=
+NEXT_PUBLIC_CONTACT_EMAIL=
+NEXT_PUBLIC_FACEBOOK_URL=
+NEXT_PUBLIC_TIKTOK_URL=
+NEXT_PUBLIC_INSTAGRAM_URL=

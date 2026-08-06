@@ -43,3 +43,6 @@ coverage/
 
 # Vercel
 .vercel
+
+# Реални ключове за Railway — НИКОГА в Git
+scripts/railway-env
