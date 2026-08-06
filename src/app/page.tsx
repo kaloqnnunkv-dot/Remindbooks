@@ -6,6 +6,8 @@ import { ButtonLink, SectionHeading, Card } from "@/components/ui";
 import { ProductCard, ProductGrid } from "@/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { BookIcon, FileTextIcon, HeadphonesIcon } from "@/components/icons";
+import { HeroVideo } from "@/components/hero-video";
+import { publicUrl } from "@/lib/storage";
 import {
   getBestsellers,
   getLatestByType,
@@ -26,6 +28,16 @@ export const metadata: Metadata = {
 // секцията с любими зависи от текущия потребител.
 export const dynamic = "force-dynamic";
 
+/** Декоративното видео за hero секцията, ако собственикът е качил такова. */
+async function getHeroVideo() {
+  const rows = await db.setting.findMany({
+    where: { key: { in: ["hero_video", "hero_video_poster"] } },
+  });
+  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const src = publicUrl(map.hero_video || null);
+  return src ? { src, poster: publicUrl(map.hero_video_poster || null) } : null;
+}
+
 async function getAboutText(): Promise<string> {
   const setting = await db.setting.findUnique({ where: { key: "about_short" } });
   return (
@@ -35,7 +47,7 @@ async function getAboutText(): Promise<string> {
 }
 
 export default async function HomePage() {
-  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText] =
+  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText, heroVideo] =
     await Promise.all([
       getBestsellers(4),
       getLatestByType("PDF", 4),
@@ -43,11 +55,12 @@ export default async function HomePage() {
       getLatestPosts(3),
       getFavoriteIds(),
       getAboutText(),
+      getHeroVideo(),
     ]);
 
   return (
     <>
-      <Hero />
+      <Hero video={heroVideo} />
 
       {/* Най-продавани физически книги */}
       {bestsellers.length > 0 && (
@@ -190,7 +203,11 @@ export default async function HomePage() {
   );
 }
 
-function Hero() {
+function Hero({
+  video,
+}: {
+  video: { src: string; poster: string | null } | null;
+}) {
   return (
     <section className="relative overflow-hidden border-b border-border">
       {/* Фонова текстура от градиенти — без външни изображения, зарежда се мигновено */}
@@ -203,8 +220,15 @@ function Hero() {
         }}
       />
 
-      <div className="container-page relative py-20 sm:py-28 lg:py-36">
-        <div className="max-w-3xl">
+      <div className="container-page relative py-20 sm:py-28 lg:py-32">
+        <div
+          className={
+            video
+              ? "grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-16 items-center"
+              : ""
+          }
+        >
+        <div className={video ? "" : "max-w-3xl"}>
           <p className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-primary">
             ReMindBooks
           </p>
@@ -233,6 +257,13 @@ function Hero() {
             <QuickLink href="/pdf" icon={<FileTextIcon size={20} />} label="PDF книги" />
             <QuickLink href="/audio" icon={<HeadphonesIcon size={20} />} label="Аудио" />
           </div>
+        </div>
+
+        {video && (
+          <div className="lg:pl-4">
+            <HeroVideo src={video.src} poster={video.poster} />
+          </div>
+        )}
         </div>
       </div>
     </section>
