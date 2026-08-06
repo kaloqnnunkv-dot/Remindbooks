@@ -78,9 +78,31 @@ export const env = {
   storage: {
     endpoint: optional("S3_ENDPOINT"),
     region: optional("S3_REGION") ?? "auto",
+    /** Публичен bucket: корици, снимки от блога и безплатни откъси. */
     bucket: optional("S3_BUCKET"),
+    /**
+     * Частен bucket: пълните PDF и аудио файлове.
+     *
+     * Държи се отделно, защото публичният адрес на R2 (r2.dev) прави достъпен
+     * ЦЕЛИЯ bucket. Ако платените книги стоят в него, всеки с ключа може да ги
+     * свали, заобикаляйки плащането. Ако не е зададен, се използва основният —
+     * работи, но без това разделение.
+     */
+    privateBucket: optional("S3_PRIVATE_BUCKET") ?? optional("S3_BUCKET"),
     accessKeyId: optional("S3_ACCESS_KEY_ID"),
     secretAccessKey: optional("S3_SECRET_ACCESS_KEY"),
+    /**
+     * Отделни ключове за частния bucket.
+     *
+     * В Cloudflare R2 токенът се ограничава до един bucket. Вместо да се
+     * създава един токен с достъп до всичко, всеки bucket си има свой — така
+     * изтичането на публичния ключ не дава достъп до платеното съдържание.
+     * Ако не са зададени, се използват основните ключове.
+     */
+    privateAccessKeyId:
+      optional("S3_PRIVATE_ACCESS_KEY_ID") ?? optional("S3_ACCESS_KEY_ID"),
+    privateSecretAccessKey:
+      optional("S3_PRIVATE_SECRET_ACCESS_KEY") ?? optional("S3_SECRET_ACCESS_KEY"),
     /** Публичен CDN домейн за корици и други публични файлове. */
     publicUrl: optional("NEXT_PUBLIC_MEDIA_HOST"),
     /** Локална папка, ако не се използва S3 (напр. Railway volume). */

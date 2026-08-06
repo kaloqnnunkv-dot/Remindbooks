@@ -26,20 +26,67 @@ import { env, isStorageConfigured } from "./env";
  * потребителят е закупил продукта.
  */
 
-const s3 = isStorageConfigured
-  ? new S3Client({
-      region: env.storage.region,
-      endpoint: env.storage.endpoint,
-      // R2 и MinIO изискват path-style адресиране
-      forcePathStyle: Boolean(env.storage.endpoint),
-      credentials: {
-        accessKeyId: env.storage.accessKeyId!,
-        secretAccessKey: env.storage.secretAccessKey!,
-      },
-    })
+function makeClient(accessKeyId: string, secretAccessKey: string): S3Client {
+  return new S3Client({
+    region: env.storage.region,
+    endpoint: env.storage.endpoint,
+    // R2 и MinIO изискват path-style адресиране
+    forcePathStyle: Boolean(env.storage.endpoint),
+    credentials: { accessKeyId, secretAccessKey },
+  });
+}
+
+/** Клиент за публичния bucket (корици, откъси, декоративни файлове). */
+const publicS3 = isStorageConfigured
+  ? makeClient(env.storage.accessKeyId!, env.storage.secretAccessKey!)
   : null;
 
-export type UploadFolder = "covers" | "pdf" | "audio" | "blog" | "previews";
+/**
+ * Клиент за частния bucket. Ползва отделни ключове, ако са зададени —
+ * в R2 един токен обикновено има достъп само до един bucket.
+ */
+const privateS3 = isStorageConfigured
+  ? makeClient(
+      env.storage.privateAccessKeyId ?? env.storage.accessKeyId!,
+      env.storage.privateSecretAccessKey ?? env.storage.secretAccessKey!,
+    )
+  : null;
+
+/** Запазено за съвместимост — показва дали хранилището изобщо е настроено. */
+const s3 = publicS3;
+
+export type UploadFolder =
+  | "covers"    // корици — публични, зареждат се през CDN
+  | "blog"      // снимки в публикациите — публични
+  | "previews"  // безплатни откъси — публични по замисъл
+  | "site"      // декоративни файлове (напр. видеото в hero) — публични
+  | "pdf"       // пълни книги — ЧАСТНИ
+  | "audio";    // пълни аудио файлове — ЧАСТНИ
+
+/** Папките, чието съдържание се плаща и не бива да е публично. */
+const PRIVATE_FOLDERS = ["pdf", "audio"] as const;
+
+/**
+ * Определя в кой bucket се намира даден ключ.
+ *
+ * Разделението е по префикс, а не по флаг в базата — така дори при грешка
+ * в извикващия код платено съдържание не може да попадне в публичния bucket.
+ */
+export function isPrivateKey(key: string): boolean {
+  const folder = key.split("/")[0] ?? "";
+  return (PRIVATE_FOLDERS as readonly string[]).includes(folder);
+}
+
+function bucketFor(key: string): string {
+  return isPrivateKey(key)
+    ? (env.storage.privateBucket ?? env.storage.bucket!)
+    : env.storage.bucket!;
+}
+
+/** Клиентът, който има права над bucket-а на този ключ. */
+function clientFor(key: string): S3Client {
+  return (isPrivateKey(key) ? privateS3 : publicS3)!;
+}
 
 /** Генерира уникален ключ, запазвайки разширението на файла. */
 export function makeKey(folder: UploadFolder, filename: string): string {
@@ -57,9 +104,9 @@ export async function uploadFile(
   contentType: string,
 ): Promise<string> {
   if (s3) {
-    await s3.send(
+    await clientFor(key).send(
       new PutObjectCommand({
-        Bucket: env.storage.bucket!,
+        Bucket: bucketFor(key),
         Key: key,
         Body: body,
         ContentType: contentType,
@@ -78,8 +125,8 @@ export async function deleteFile(key: string): Promise<void> {
   if (!key) return;
   try {
     if (s3) {
-      await s3.send(
-        new DeleteObjectCommand({ Bucket: env.storage.bucket!, Key: key }),
+      await clientFor(key).send(
+        new DeleteObjectCommand({ Bucket: bucketFor(key), Key: key }),
       );
     } else {
       await fs.unlink(localPathFor(key));
@@ -101,6 +148,10 @@ export function publicUrl(key?: string | null): string | null {
   if (!key) return null;
   if (key.startsWith("http://") || key.startsWith("https://")) return key;
 
+  // Платеното съдържание никога не получава публичен адрес. То се сервира
+  // само през защитените endpoint-и с временно подписан адрес.
+  if (isPrivateKey(key)) return null;
+
   if (env.storage.publicUrl) {
     const raw = env.storage.publicUrl.trim().replace(/\/+$/, "");
     const base = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
@@ -121,9 +172,9 @@ export async function signedDownloadUrl(
 ): Promise<string> {
   if (s3) {
     return getSignedUrl(
-      s3,
+      clientFor(key),
       new GetObjectCommand({
-        Bucket: env.storage.bucket!,
+        Bucket: bucketFor(key),
         Key: key,
         ResponseContentDisposition: downloadFilename
           ? `attachment; filename="${encodeURIComponent(downloadFilename)}"`
@@ -140,8 +191,8 @@ export async function signedDownloadUrl(
 export async function readFile(key: string): Promise<Buffer | null> {
   try {
     if (s3) {
-      const res = await s3.send(
-        new GetObjectCommand({ Bucket: env.storage.bucket!, Key: key }),
+      const res = await clientFor(key).send(
+        new GetObjectCommand({ Bucket: bucketFor(key), Key: key }),
       );
       const bytes = await res.Body?.transformToByteArray();
       return bytes ? Buffer.from(bytes) : null;
