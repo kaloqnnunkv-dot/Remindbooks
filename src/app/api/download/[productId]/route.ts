@@ -88,8 +88,17 @@ export async function GET(
   const extension = product.fileKey.slice(product.fileKey.lastIndexOf("."));
   const filename = `${slugify(product.title) || "remindbooks"}${extension}`;
 
+  // ?inline=1 отваря файла в четеца на сайта вместо да го сваля.
+  const inline = request.nextUrl.searchParams.get("inline") === "1";
+
   if (isStorageConfigured) {
-    const url = await signedDownloadUrl(product.fileKey, 900, filename);
+    // При inline режим не подаваме име за сваляне — иначе браузърът предлага
+    // запис на файла вместо да го покаже.
+    const url = await signedDownloadUrl(
+      product.fileKey,
+      900,
+      inline ? undefined : filename,
+    );
     return NextResponse.redirect(url, 302);
   }
 
@@ -100,7 +109,9 @@ export async function GET(
     headers: {
       "Content-Type": contentTypeFor(product.fileKey),
       "Content-Length": String(buffer.length),
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": inline
+        ? `inline; filename="${filename}"`
+        : `attachment; filename="${filename}"`,
       "Cache-Control": "private, no-store",
     },
   });

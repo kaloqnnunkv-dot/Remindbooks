@@ -110,16 +110,25 @@ export default async function MyBooksPage() {
                           Отключена на {formatDate(e.grantedAt)}
                         </p>
 
-                        <div className="mt-auto pt-3">
+                        <div className="mt-auto pt-3 flex flex-wrap gap-2">
                           {e.product.fileKey ? (
-                            <ButtonLink
-                              href={`/api/download/${e.product.id}`}
-                              size="sm"
-                              variant="outline"
-                            >
-                              <DownloadIcon size={14} />
-                              Свали PDF
-                            </ButtonLink>
+                            <>
+                              <ButtonLink
+                                href={`/profil/chetene/${e.product.slug}`}
+                                size="sm"
+                              >
+                                <BookIcon size={14} />
+                                Чети онлайн
+                              </ButtonLink>
+                              <ButtonLink
+                                href={`/api/download/${e.product.id}`}
+                                size="sm"
+                                variant="outline"
+                              >
+                                <DownloadIcon size={14} />
+                                Свали
+                              </ButtonLink>
+                            </>
                           ) : (
                             <Badge tone="warning">Файлът се подготвя</Badge>
                           )}

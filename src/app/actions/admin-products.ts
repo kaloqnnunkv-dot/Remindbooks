@@ -12,6 +12,7 @@ import {
   fieldErrors,
 } from "@/lib/validation";
 import { slugify } from "@/lib/format";
+import { extractFirstPages, DEFAULT_PREVIEW_PAGES } from "@/lib/pdf";
 import {
   uploadFile,
   deleteFile,
@@ -157,6 +158,34 @@ export async function saveProduct(
     };
   }
 
+  /**
+   * Автоматичен откъс за PDF книги.
+   *
+   * Ако администраторът е качил книга, но не и отделен откъс, първите
+   * страници се извличат автоматично. Това премахва ръчна стъпка и гарантира,
+   * че откъсът винаги съответства на текущото издание.
+   * Ръчно качен откъс има предимство.
+   */
+  let generatedPreviewKey: string | null = null;
+  let detectedPreviewPages: number | null = null;
+
+  if (data.type === "PDF" && !previewFile.key) {
+    const uploaded = formData.get("mainFile");
+    if (uploaded instanceof File && uploaded.size > 0) {
+      const source = Buffer.from(await uploaded.arrayBuffer());
+      const wanted = data.previewPages > 0 ? data.previewPages : DEFAULT_PREVIEW_PAGES;
+      const excerpt = await extractFirstPages(source, wanted);
+
+      if (excerpt) {
+        generatedPreviewKey = makeKey("previews", `preview-${uploaded.name}`);
+        await uploadFile(generatedPreviewKey, excerpt.data, "application/pdf");
+        detectedPreviewPages = excerpt.pageCount;
+      } else {
+        console.warn("[admin] Откъсът не можа да бъде генериран автоматично.");
+      }
+    }
+  }
+
   const slug = await uniqueSlug(data.slug || data.title, productId ?? undefined);
 
   const payload = {
@@ -172,7 +201,10 @@ export async function saveProduct(
     lowStockAlert: data.lowStockAlert,
     durationSeconds: isAudio ? (data.durationSeconds ?? null) : null,
     isFree: isAudio ? data.isFree : false,
-    previewPages: data.type === "PDF" ? data.previewPages : 0,
+    previewPages:
+      data.type === "PDF"
+        ? (detectedPreviewPages ?? data.previewPages ?? DEFAULT_PREVIEW_PAGES)
+        : 0,
     categoryId: data.categoryId || null,
     isPublished: data.isPublished,
     isFeatured: data.isFeatured,
@@ -181,7 +213,11 @@ export async function saveProduct(
     metaDescription: data.metaDescription || null,
     ...(cover.key ? { coverImage: cover.key } : {}),
     ...(mainFile.key ? { fileKey: mainFile.key } : {}),
-    ...(previewFile.key ? { previewKey: previewFile.key } : {}),
+    ...(previewFile.key
+      ? { previewKey: previewFile.key }
+      : generatedPreviewKey
+        ? { previewKey: generatedPreviewKey }
+        : {}),
   };
 
   let savedId: string;
@@ -193,7 +229,8 @@ export async function saveProduct(
     // Изтриваме заменените файлове, за да не се трупат в хранилището.
     if (cover.key && existing?.coverImage) await deleteFile(existing.coverImage);
     if (mainFile.key && existing?.fileKey) await deleteFile(existing.fileKey);
-    if (previewFile.key && existing?.previewKey) await deleteFile(existing.previewKey);
+    const newPreview = previewFile.key ?? generatedPreviewKey;
+    if (newPreview && existing?.previewKey) await deleteFile(existing.previewKey);
   } else {
     const created = await db.product.create({ data: payload });
     savedId = created.id;
