@@ -89,14 +89,24 @@ export async function deleteFile(key: string): Promise<void> {
   }
 }
 
-/** Публичен URL за корици и други некритични файлове. */
+/**
+ * Публичен URL за корици и други некритични файлове.
+ *
+ * NEXT_PUBLIC_MEDIA_HOST се приема и със, и без протокол — в интерфейсите на
+ * Cloudflare адресът се показва ту като `media.example.com`, ту като
+ * `https://pub-xxxx.r2.dev`. Без нормализация стойност без протокол дава
+ * относителен адрес и всички изображения се чупят.
+ */
 export function publicUrl(key?: string | null): string | null {
   if (!key) return null;
   if (key.startsWith("http://") || key.startsWith("https://")) return key;
+
   if (env.storage.publicUrl) {
-    const base = env.storage.publicUrl.replace(/\/$/, "");
-    return `${base}/${key}`;
+    const raw = env.storage.publicUrl.trim().replace(/\/+$/, "");
+    const base = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
+    return `${base}/${key.replace(/^\/+/, "")}`;
   }
+
   return `/api/media/${key}`;
 }
 

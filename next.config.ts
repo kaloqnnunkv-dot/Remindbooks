@@ -4,15 +4,29 @@ import type { NextConfig } from "next";
  * Хостовете, от които се зареждат изображения, се задават чрез променливата
  * NEXT_PUBLIC_MEDIA_HOST (например CDN домейна на S3/R2 bucket-а).
  */
-const mediaHost = process.env.NEXT_PUBLIC_MEDIA_HOST;
+const mediaHost = process.env.NEXT_PUBLIC_MEDIA_HOST
+  ?.trim()
+  .replace(/^https?:\/\//i, "")
+  .replace(/\/+$/, "");
 
+/**
+ * Разрешени източници за <Image>.
+ *
+ * Списъкът се вгражда при компилация. Ако разчитахме само на
+ * NEXT_PUBLIC_MEDIA_HOST, смяната на адреса на хранилището след build щеше да
+ * чупи всички изображения с „hostname is not configured“. Затова добавяме и
+ * шаблони за стандартните адреси на Cloudflare R2 — така адресът от `r2.dev`
+ * работи веднага, без предварително да е бил известен при компилацията.
+ */
 const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   images: {
-    remotePatterns: mediaHost
-      ? [{ protocol: "https", hostname: mediaHost.replace(/^https?:\/\//, "") }]
-      : [],
+    remotePatterns: [
+      ...(mediaHost ? [{ protocol: "https" as const, hostname: mediaHost }] : []),
+      { protocol: "https" as const, hostname: "**.r2.dev" },
+      { protocol: "https" as const, hostname: "**.r2.cloudflarestorage.com" },
+    ],
     formats: ["image/avif", "image/webp"],
   },
   experimental: {
