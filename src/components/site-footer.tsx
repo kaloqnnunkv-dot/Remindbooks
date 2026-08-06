@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { env } from "@/lib/env";
 import { NewsletterForm } from "./newsletter-form";
+import { Logo } from "./logo";
 import { FacebookIcon, InstagramIcon, MailIcon, PhoneIcon, TikTokIcon } from "./icons";
 
 const SHOP_LINKS = [
@@ -33,7 +34,7 @@ export function SiteFooter() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Бранд + бюлетин */}
           <div className="lg:col-span-1">
-            <div className="font-sans text-lg font-bold">ReMindBooks</div>
+            <Logo width={160} className="h-10" />
             <p className="mt-3 text-sm text-sidebar-foreground/75 leading-relaxed">
               Книги, които връщат посоката. Истории и практики за вътрешния компас.
             </p>
@@ -94,7 +95,7 @@ export function SiteFooter() {
         {/* Долна лента */}
         <div className="mt-12 pt-6 border-t border-sidebar-border flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-xs text-sidebar-foreground/60">
-            © {year} ReMindBooks. Всички права запазени.
+            © {year} Remind Books. Всички права запазени.
           </p>
           <nav aria-label="Правна информация">
             <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">

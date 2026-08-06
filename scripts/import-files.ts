@@ -49,7 +49,7 @@ async function firstPages(buffer: Buffer, pages: number) {
   const out = await PDFDocument.create();
   const copied = await out.copyPages(src, Array.from({ length: take }, (_, i) => i));
   for (const p of copied) out.addPage(p);
-  out.setProducer("ReMindBooks");
+  out.setProducer("Remind Books");
   return { data: Buffer.from(await out.save()), take, total: src.getPageCount() };
 }
 
@@ -57,7 +57,7 @@ async function firstPages(buffer: Buffer, pages: number) {
 const BOOKS: Record<string, { title: string; author: string; short: string; body: string; price: number; compareAt?: number; featured?: boolean; bestseller?: boolean }> = {
   "Антикрехкост_Сянката_и_Контролът (1).pdf": {
     title: "Антикрехкост, Сянката и Контролът",
-    author: "ReMindBooks",
+    author: "Remind Books",
     short: "За силата, която се ражда от натиска, и за частите от нас, които предпочитаме да не гледаме.",
     body: `<p>Има неща, които се чупят под натиск. Има и такива, които стават по-здрави заради него.</p>
 <p>Тази книга разглежда трите понятия, които най-често се преплитат, когато говорим за вътрешна устойчивост: <strong>антикрехкостта</strong>, <strong>сянката</strong> и <strong>контролът</strong>.</p>
@@ -73,7 +73,7 @@ const BOOKS: Record<string, { title: string; author: string; short: string; body
   },
   "Как мозъкът контролира емоциите - Google Docs.pdf": {
     title: "Как мозъкът контролира емоциите",
-    author: "ReMindBooks",
+    author: "Remind Books",
     short: "Какво се случва в главата ни в момента, в който нещо ни разстрои — обяснено просто.",
     body: `<p>Емоциите не идват от нищото. Зад всяка има съвсем конкретен механизъм.</p>
 <p>Тази книга обяснява как работи връзката между тялото, мозъка и това, което наричаме чувство — без научен жаргон и без опростяване до безсмислие.</p>
@@ -87,7 +87,7 @@ const BOOKS: Record<string, { title: string; author: string; short: string; body
   },
   "Не чакай да ти се прииска.pdf": {
     title: "Не чакай да ти се прииска",
-    author: "ReMindBooks",
+    author: "Remind Books",
     short: "63 страници за най-скъпата илюзия — че един ден просто ще ни се доще.",
     body: `<p>Чакаме мотивация, както се чака автобус. Понякога идва. По-често — не.</p>
 <p>Тази книга предлага друга отправна точка: действието предхожда желанието, а не обратното.</p>
@@ -105,7 +105,7 @@ const BOOKS: Record<string, { title: string; author: string; short: string; body
   },
   "Огледалото_на_себе_си.docx (1).pdf": {
     title: "Огледалото на себе си",
-    author: "ReMindBooks",
+    author: "Remind Books",
     short: "Десет минути на ден пред най-трудното огледало — вашето собствено.",
     body: `<p>Най-трудният поглед не е навън, а навътре.</p>
 <p>Кратка практическа книга с десетминутни упражнения за всеки ден. Не изисква предварителна подготовка, само готовност да си зададете няколко неудобни въпроса.</p>`,
@@ -210,7 +210,7 @@ async function main() {
         type: "AUDIO" as ProductType,
         slug,
         title: "Пътят към себе си — видео",
-        author: "ReMindBooks",
+        author: "Remind Books",
         shortDesc: "Кратко видео въведение към пътя навътре.",
         description:
           "<p>Видео материал, който въвежда в основните идеи зад поредицата „Пътят към себе си“.</p>",

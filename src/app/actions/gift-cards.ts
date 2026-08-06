@@ -89,7 +89,7 @@ export async function purchaseGiftCard(
           price_data: {
             currency: env.shop.currency,
             product_data: {
-              name: `Подаръчна карта ReMindBooks — ${(amountCents / 100).toFixed(2)} лв.`,
+              name: `Подаръчна карта Remind Books — ${(amountCents / 100).toFixed(2)} лв.`,
               description: `За: ${recipientName || recipientEmail}`,
             },
             unit_amount: amountCents,

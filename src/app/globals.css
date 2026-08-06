@@ -51,6 +51,10 @@
   --sidebar-accent-foreground: #4a3f35;
   --sidebar-primary-foreground: #ffffff;
 
+  /* Нюанси на фона за редуване на секциите */
+  --surface-1: #efe9da;
+  --surface-2: #e7dfcd;
+
   /* Статуси (извън базовата тема, за админ панела и наличности) */
   --success: #5f7d4f;
   --success-foreground: #ffffff;
@@ -94,6 +98,9 @@
   --sidebar-primary-foreground: #2d2621;
   --shadow-color: hsl(28 13% 4%);
   --shadow-opacity: 0.34;
+
+  --surface-1: #332c26;
+  --surface-2: #3a322c;
 
   --success: #8ab173;
   --success-foreground: #2d2621;
@@ -211,6 +218,24 @@
 }
 
 @layer components {
+  /**
+   * Редуващи се фонове за секциите.
+   *
+   * Всички секции на един и същ фон се сливат и страницата изглежда плоска.
+   * `--surface-*` са леко потъмнени варианти на основния фон — достатъчно, за
+   * да се различат границите, без да натежават на светлата хартиена палитра.
+   */
+  .section-alt {
+    background-color: var(--surface-1);
+  }
+  .section-alt-strong {
+    background-color: var(--surface-2);
+  }
+  /* Тънка разделителна линия, когато два еднакви фона се допират. */
+  .section-edge {
+    border-top: 1px solid var(--border);
+  }
+
   .container-page {
     width: 100%;
     margin-inline: auto;

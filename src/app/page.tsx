@@ -18,9 +18,9 @@ import { formatDate, truncate } from "@/lib/format";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "ReMindBooks — книги, които връщат посоката",
+  title: "Remind Books — книги, които връщат посоката",
   description:
-    "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание. Открийте своя вътрешен компас с ReMindBooks.",
+    "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание. Открийте своя вътрешен компас с Remind Books.",
   alternates: { canonical: "/" },
 };
 
@@ -42,7 +42,7 @@ async function getAboutText(): Promise<string> {
   const setting = await db.setting.findUnique({ where: { key: "about_short" } });
   return (
     setting?.value ??
-    "ReMindBooks започна с едно просто убеждение: правилната книга, срещната в правилния момент, може да върне посоката на цял един живот. Издаваме и подбираме заглавия за хора, които търсят своя вътрешен компас."
+    "Remind Books започна с едно просто убеждение: правилната книга, срещната в правилния момент, може да върне посоката на цял един живот. Издаваме и подбираме заглавия за хора, които търсят своя вътрешен компас."
   );
 }
 
@@ -64,7 +64,8 @@ export default async function HomePage() {
 
       {/* Най-продавани физически книги */}
       {bestsellers.length > 0 && (
-        <section className="container-page py-16" aria-labelledby="bestsellers">
+        <section className="section-alt border-b border-border" aria-labelledby="bestsellers">
+          <div className="container-page py-16">
           <SectionHeading title="Най-продавани" href="/knigi" />
           <ProductGrid>
             {bestsellers.map((p, i) => (
@@ -76,6 +77,7 @@ export default async function HomePage() {
               />
             ))}
           </ProductGrid>
+          </div>
         </section>
       )}
 
@@ -102,17 +104,19 @@ export default async function HomePage() {
         products={audioItems}
         favoriteIds={favoriteIds}
         reversed
+        tone="alt"
       />
 
       {/* Кратко "За нас" */}
-      <section className="container-page py-16" aria-labelledby="about-teaser">
-        <Card className="p-8 sm:p-12 bg-muted border-0">
+      <section className="section-alt-strong border-b border-border" aria-labelledby="about-teaser">
+        <div className="container-page py-16">
+        <Card className="p-8 sm:p-12 bg-card border border-border">
           <div className="max-w-3xl">
             <p className="font-sans text-xs font-bold uppercase tracking-[0.15em] text-primary">
               За нас
             </p>
             <h2 id="about-teaser" className="mt-3 text-2xl sm:text-3xl">
-              Историята зад ReMindBooks
+              Историята зад Remind Books
             </h2>
             <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
               {aboutText}
@@ -122,11 +126,13 @@ export default async function HomePage() {
             </ButtonLink>
           </div>
         </Card>
+        </div>
       </section>
 
       {/* От блога */}
       {posts.length > 0 && (
-        <section className="container-page py-16" aria-labelledby="from-blog">
+        <section className="border-b border-border" aria-labelledby="from-blog">
+          <div className="container-page py-16">
           <SectionHeading title="От блога" href="/blog" linkLabel="Всички публикации" />
           <div className="grid gap-8 md:grid-cols-3">
             {posts.map((post) => (
@@ -181,12 +187,14 @@ export default async function HomePage() {
               </article>
             ))}
           </div>
+          </div>
         </section>
       )}
 
       {/* Бюлетин */}
-      <section className="container-page pb-20" aria-labelledby="newsletter">
-        <Card className="p-8 sm:p-12 text-center bg-card">
+      <section className="section-alt-strong" aria-labelledby="newsletter">
+        <div className="container-page py-16">
+        <Card className="p-8 sm:p-12 text-center bg-card border border-border">
           <h2 id="newsletter" className="text-2xl sm:text-3xl">
             Останете свързани
           </h2>
@@ -198,6 +206,7 @@ export default async function HomePage() {
             <NewsletterForm source="homepage" />
           </div>
         </Card>
+        </div>
       </section>
     </>
   );
@@ -230,7 +239,7 @@ function Hero({
         >
         <div className={video ? "" : "max-w-3xl"}>
           <p className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-primary">
-            ReMindBooks
+            Remind Books
           </p>
 
           <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl leading-[1.1]">
@@ -303,6 +312,7 @@ function PromoSection({
   products,
   favoriteIds,
   reversed = false,
+  tone = "plain",
 }: {
   eyebrow: string;
   title: string;
@@ -313,11 +323,18 @@ function PromoSection({
   products: Awaited<ReturnType<typeof getLatestByType>>;
   favoriteIds: Set<string>;
   reversed?: boolean;
+  /** Редуването на фонове прави границите между секциите видими. */
+  tone?: "plain" | "alt";
 }) {
   if (products.length === 0) return null;
 
   return (
-    <section className="container-page py-16">
+    <section
+      className={
+        tone === "alt" ? "section-alt border-b border-border" : "border-b border-border"
+      }
+    >
+      <div className="container-page py-16">
       <div
         className={`grid lg:grid-cols-3 gap-10 items-start ${
           reversed ? "lg:[&>*:first-child]:order-2" : ""
@@ -348,6 +365,7 @@ function PromoSection({
             ))}
           </div>
         </div>
+      </div>
       </div>
     </section>
   );

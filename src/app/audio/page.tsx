@@ -22,7 +22,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Аудио съдържание",
   description:
-    "Медитации, четения и аудио програми от ReMindBooks. Слушайте безплатни материали или отключете пълните записи.",
+    "Медитации, четения и аудио програми от Remind Books. Слушайте безплатни материали или отключете пълните записи.",
   alternates: { canonical: "/audio" },
 };
 

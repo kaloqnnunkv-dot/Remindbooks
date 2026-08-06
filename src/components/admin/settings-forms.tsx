@@ -95,7 +95,7 @@ function HomeSettings({ settings }: { settings: Record<string, string> }) {
         <Field
           label="Кратък текст"
           htmlFor="s-about-short"
-          hint="Показва се в блока „Историята зад ReMindBooks“ на началната страница."
+          hint="Показва се в блока „Историята зад Remind Books“ на началната страница."
         >
           <Textarea
             id="s-about-short"
@@ -103,7 +103,7 @@ function HomeSettings({ settings }: { settings: Record<string, string> }) {
             defaultValue={settings.about_short ?? ""}
             rows={4}
             maxLength={600}
-            placeholder="ReMindBooks започна с едно просто убеждение…"
+            placeholder="Remind Books започна с едно просто убеждение…"
           />
         </Field>
 

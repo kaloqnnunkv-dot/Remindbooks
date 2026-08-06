@@ -99,8 +99,8 @@ export default async function PostPage({
     image: cover ?? undefined,
     datePublished: post.publishedAt?.toISOString(),
     dateModified: post.updatedAt.toISOString(),
-    author: { "@type": "Organization", name: "ReMindBooks" },
-    publisher: { "@type": "Organization", name: "ReMindBooks" },
+    author: { "@type": "Organization", name: "Remind Books" },
+    publisher: { "@type": "Organization", name: "Remind Books" },
     mainEntityOfPage: `${env.appUrl}/blog/${post.slug}`,
   };
 

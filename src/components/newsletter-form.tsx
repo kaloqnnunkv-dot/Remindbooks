@@ -53,7 +53,7 @@ export function NewsletterForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2" noValidate>
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <label htmlFor={`newsletter-${source}`} className="sr-only">
           Имейл адрес
         </label>
@@ -67,7 +67,9 @@ export function NewsletterForm({
           autoComplete="email"
           disabled={status === "loading"}
           aria-invalid={status === "error"}
-          className="flex-1"
+          // min-w гарантира, че примерът в полето се вижда изцяло —
+          // при тесен footer колоната иначе го отрязваше.
+          className="min-w-0 flex-1 sm:min-w-[15rem]"
         />
         <Button type="submit" disabled={status === "loading"}>
           {status === "loading" ? "Изпращане…" : "Абонирай ме"}

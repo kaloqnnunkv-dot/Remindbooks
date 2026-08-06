@@ -12,6 +12,7 @@ import {
   UserIcon,
 } from "./icons";
 import { LiveSearch } from "./live-search";
+import { Logo } from "./logo";
 import { cn } from "./ui";
 
 const NAV = [
@@ -68,10 +69,12 @@ export function SiteHeader({
         <div className="container-page">
           <div className="flex h-16 items-center justify-between gap-4">
             {/* Лого */}
-            <Link href="/" className="flex items-baseline gap-2 shrink-0 group">
-              <span className="font-sans text-lg sm:text-xl font-bold tracking-tight group-hover:text-primary transition-colors">
-                ReMindBooks
-              </span>
+            <Link
+              href="/"
+              aria-label="Remind Books — начална страница"
+              className="shrink-0 transition-opacity hover:opacity-80"
+            >
+              <Logo width={150} priority className="h-9 sm:h-10" />
             </Link>
 
             {/* Навигация — десктоп */}

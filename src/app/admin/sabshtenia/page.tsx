@@ -76,7 +76,7 @@ export default async function AdminMessagesPage({
 
                   <a
                     href={`mailto:${message.email}?subject=${encodeURIComponent(
-                      `Re: ${message.subject ?? "Вашето съобщение до ReMindBooks"}`,
+                      `Re: ${message.subject ?? "Вашето съобщение до Remind Books"}`,
                     )}`}
                     className="text-sm text-primary hover:underline break-all"
                   >

@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Регистрация",
-  description: "Създайте профил в ReMindBooks — достъп до закупените книги, история на поръчките и любими заглавия.",
+  description: "Създайте профил в Remind Books — достъп до закупените книги, история на поръчките и любими заглавия.",
   robots: { index: false, follow: false },
 };
 

@@ -18,7 +18,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Физически книги",
   description:
-    "Хартиени издания на ReMindBooks с доставка до адрес или офис на куриер. Разгледайте пълния каталог.",
+    "Хартиени издания на Remind Books с доставка до адрес или офис на куриер. Разгледайте пълния каталог.",
   alternates: { canonical: "/knigi" },
 };
 

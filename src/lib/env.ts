@@ -111,7 +111,7 @@ export const env = {
 
   email: {
     resendApiKey: optional("RESEND_API_KEY"),
-    from: optional("EMAIL_FROM") ?? "ReMindBooks <noreply@remindbooks.com>",
+    from: optional("EMAIL_FROM") ?? "Remind Books <noreply@remindbooks.com>",
     /** Имейлът на собственика — там отиват съобщенията от формата за контакт. */
     ownerEmail: optional("OWNER_EMAIL") ?? "info@remindbooks.com",
   },

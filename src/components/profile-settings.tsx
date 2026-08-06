@@ -224,7 +224,7 @@ function NewsletterPreference({ initial }: { initial: boolean }) {
           className="mt-0.5"
         />
         <span className="text-sm">
-          Искам да получавам бюлетина на ReMindBooks.
+          Искам да получавам бюлетина на Remind Books.
         </span>
       </label>
     </Card>

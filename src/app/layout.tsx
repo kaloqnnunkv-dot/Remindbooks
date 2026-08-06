@@ -41,29 +41,34 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(env.appUrl),
   title: {
-    default: "ReMindBooks — книги, които връщат посоката",
-    template: "%s | ReMindBooks",
+    default: "Remind Books — книги, които връщат посоката",
+    template: "%s | Remind Books",
   },
   description:
-    "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание. Открийте своя вътрешен компас с ReMindBooks.",
+    "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание. Открийте своя вътрешен компас с Remind Books.",
   keywords: [
     "книги",
     "PDF книги",
     "аудио книги",
     "медитации",
     "саморазвитие",
-    "ReMindBooks",
+    "Remind Books",
   ],
-  authors: [{ name: "ReMindBooks" }],
+  authors: [{ name: "Remind Books" }],
   openGraph: {
     type: "website",
     locale: "bg_BG",
-    siteName: "ReMindBooks",
-    title: "ReMindBooks — книги, които връщат посоката",
+    siteName: "Remind Books",
+    title: "Remind Books — книги, които връщат посоката",
     description:
       "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание.",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Remind Books" }],
   },
-  twitter: { card: "summary_large_image" },
+  icons: {
+    icon: [{ url: "/logo-mark.png", type: "image/png" }],
+    apple: [{ url: "/apple-icon.png" }],
+  },
+  twitter: { card: "summary_large_image", images: ["/og-image.jpg"] },
   robots: { index: true, follow: true },
   alternates: { canonical: "/" },
 };

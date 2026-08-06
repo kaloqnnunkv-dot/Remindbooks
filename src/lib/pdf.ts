@@ -50,7 +50,7 @@ export async function extractFirstPages(
 
     // Метаданните подсказват в четеца, че това е откъс.
     preview.setTitle(`${source.getTitle() ?? "Откъс"} — безплатен откъс`);
-    preview.setProducer("ReMindBooks");
+    preview.setProducer("Remind Books");
 
     const bytes = await preview.save({ useObjectStreams: true });
     return { data: Buffer.from(bytes), pageCount: take };

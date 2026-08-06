@@ -64,7 +64,7 @@ function layout(title: string, content: string): string {
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fffcf5;border:1px solid #dbd0ba;border-radius:4px;">
         <tr><td style="padding:28px 32px 8px;border-bottom:1px solid #ece5d8;">
-          <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#4a3f35;">ReMindBooks</div>
+          <div style="font-size:20px;font-weight:700;letter-spacing:-0.01em;color:#4a3f35;">Remind Books</div>
           <div style="font-size:12px;color:#7d6b56;margin-top:2px;">Книги за вътрешния компас</div>
         </td></tr>
         <tr><td style="padding:28px 32px;font-size:15px;line-height:1.7;">
@@ -72,7 +72,7 @@ function layout(title: string, content: string): string {
           ${content}
         </td></tr>
         <tr><td style="padding:20px 32px;background:#ece5d8;border-top:1px solid #dbd0ba;font-size:12px;color:#7d6b56;">
-          <div>ReMindBooks &middot; <a href="${env.appUrl}" style="color:#a67c52;">remindbooks.com</a></div>
+          <div>Remind Books &middot; <a href="${env.appUrl}" style="color:#a67c52;">remindbooks.com</a></div>
           <div style="margin-top:6px;">Имейл: ${env.contact.email} &middot; Тел.: ${env.contact.phone}</div>
         </td></tr>
       </table>
@@ -154,7 +154,7 @@ export async function sendOrderConfirmation(d: OrderEmailData) {
 
   return sendEmail({
     to: d.email,
-    subject: `Потвърждение на поръчка ${d.orderNumber} — ReMindBooks`,
+    subject: `Потвърждение на поръчка ${d.orderNumber} — Remind Books`,
     html: layout(
       "Благодарим за поръчката!",
       `<p style="margin:0;">${greeting}</p>
@@ -175,7 +175,7 @@ export async function sendOrderShipped(d: {
 }) {
   return sendEmail({
     to: d.email,
-    subject: `Поръчка ${d.orderNumber} е изпратена — ReMindBooks`,
+    subject: `Поръчка ${d.orderNumber} е изпратена — Remind Books`,
     html: layout(
       "Поръчката ви пътува към вас",
       `<p style="margin:0;">${d.firstName ? `Здравейте, ${d.firstName}!` : "Здравейте!"}</p>
@@ -185,7 +185,7 @@ export async function sendOrderShipped(d: {
            ? `<p style="margin:16px 0;padding:12px 16px;background:#ece5d8;border-radius:4px;">Номер за проследяване: <strong>${d.trackingNumber}</strong></p>`
            : ""
        }
-       <p>Благодарим ви, че избрахте ReMindBooks.</p>`,
+       <p>Благодарим ви, че избрахте Remind Books.</p>`,
     ),
   });
 }
@@ -246,7 +246,7 @@ export async function sendPasswordReset(email: string, token: string) {
   const url = `${env.appUrl}/nova-parola?token=${token}`;
   return sendEmail({
     to: email,
-    subject: "Възстановяване на парола — ReMindBooks",
+    subject: "Възстановяване на парола — Remind Books",
     html: layout(
       "Възстановяване на парола",
       `<p style="margin:0;">Получихме заявка за нова парола за вашия профил.</p>
@@ -308,10 +308,10 @@ export async function sendNewsletterConfirm(email: string, token: string) {
   const url = `${env.appUrl}/api/newsletter/confirm?token=${token}`;
   return sendEmail({
     to: email,
-    subject: "Потвърдете абонамента си — ReMindBooks",
+    subject: "Потвърдете абонамента си — Remind Books",
     html: layout(
       "Още една стъпка",
-      `<p style="margin:0;">Благодарим ви за интереса към бюлетина на ReMindBooks!</p>
+      `<p style="margin:0;">Благодарим ви за интереса към бюлетина на Remind Books!</p>
        <p>Моля, потвърдете абонамента си с бутона отдолу.</p>
        ${button(url, "Потвърждавам абонамента")}
        <p style="color:#7d6b56;font-size:13px;">Ако не сте заявявали абонамент, игнорирайте този имейл.</p>`,
@@ -329,7 +329,7 @@ export async function sendGiftCard(d: {
 }) {
   return sendEmail({
     to: d.to,
-    subject: "Получихте подаръчна карта за ReMindBooks",
+    subject: "Получихте подаръчна карта за Remind Books",
     html: layout(
       "Подарък за вас",
       `<p style="margin:0;">${d.fromName ? `${d.fromName} ви изпраща` : "Получавате"} подаръчна карта на стойност <strong>${formatPrice(
@@ -368,7 +368,7 @@ export async function sendLowStockAlert(products: { title: string; stock: number
 
   return sendEmail({
     to: env.email.ownerEmail,
-    subject: "Ниска наличност на книги — ReMindBooks",
+    subject: "Ниска наличност на книги — Remind Books",
     html: layout(
       "Наближава изчерпване",
       `<p style="margin:0;">Следните заглавия имат ниска наличност:</p>

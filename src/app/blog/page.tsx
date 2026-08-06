@@ -15,12 +15,12 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Вътрешен компас — блог",
   description:
-    "Статии, вдъхновения и практики от ReMindBooks. Блогът „Вътрешен компас“ — за посоката, която търсим отвътре.",
+    "Статии, вдъхновения и практики от Remind Books. Блогът „Вътрешен компас“ — за посоката, която търсим отвътре.",
   alternates: { canonical: "/blog" },
   openGraph: {
     type: "website",
-    title: "Вътрешен компас — блогът на ReMindBooks",
-    description: "Статии, вдъхновения и практики от ReMindBooks.",
+    title: "Вътрешен компас — блогът на Remind Books",
+    description: "Статии, вдъхновения и практики от Remind Books.",
   },
 };
 

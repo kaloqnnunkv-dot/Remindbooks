@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Вход",
-  description: "Влезте в профила си в ReMindBooks.",
+  description: "Влезте в профила си в Remind Books.",
   robots: { index: false, follow: false },
 };
 

@@ -9,7 +9,7 @@ import { GiftIcon, MailIcon, TagIcon } from "@/components/icons";
 export const metadata: Metadata = {
   title: "Подаръчни карти",
   description:
-    "Подарете книга, без да гадаете коя. Подаръчна карта на ReMindBooks с код по имейл.",
+    "Подарете книга, без да гадаете коя. Подаръчна карта на Remind Books с код по имейл.",
   alternates: { canonical: "/podaruchni-karti" },
 };
 

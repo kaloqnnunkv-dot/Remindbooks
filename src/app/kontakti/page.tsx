@@ -22,7 +22,7 @@ export default function ContactPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    name: "ReMindBooks",
+    name: "Remind Books",
     url: env.appUrl,
     email: env.contact.email,
     telephone: env.contact.phone,

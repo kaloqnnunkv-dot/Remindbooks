@@ -12,7 +12,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "PDF книги",
   description:
-    "Дигитални книги от ReMindBooks — плащате с карта и четете веднага. Без доставка и без чакане.",
+    "Дигитални книги от Remind Books — плащате с карта и четете веднага. Без доставка и без чакане.",
   alternates: { canonical: "/pdf" },
 };
 

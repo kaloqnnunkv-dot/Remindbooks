@@ -6,7 +6,7 @@ import { Card } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Забравена парола",
-  description: "Възстановете достъпа до профила си в ReMindBooks.",
+  description: "Възстановете достъпа до профила си в Remind Books.",
   robots: { index: false, follow: false },
 };
 

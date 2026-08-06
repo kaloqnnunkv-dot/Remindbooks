@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Търсене",
-  description: "Търсене в каталога и блога на ReMindBooks.",
+  description: "Търсене в каталога и блога на Remind Books.",
   // Страниците с резултати не носят стойност в индекса на Google.
   robots: { index: false, follow: true },
 };
