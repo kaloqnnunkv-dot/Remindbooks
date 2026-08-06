@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import { env } from "@/lib/env";
 import { NewsletterForm } from "./newsletter-form";
 import { Logo } from "./logo";
-import { FacebookIcon, InstagramIcon, MailIcon, PhoneIcon, TikTokIcon } from "./icons";
+import { InstagramIcon, MailIcon, PhoneIcon } from "./icons";
 
 const SHOP_LINKS = [
   { href: "/knigi", label: "Физически книги" },
@@ -77,12 +78,16 @@ export function SiteFooter() {
             </ul>
 
             <div className="mt-5 flex items-center gap-2">
-              <SocialLink href={env.social.facebook} label="Facebook">
-                <FacebookIcon size={18} />
-              </SocialLink>
-              <SocialLink href={env.social.tiktok} label="TikTok">
-                <TikTokIcon size={18} />
-              </SocialLink>
+              <SocialLogo
+                href={env.social.facebook}
+                label="Facebook"
+                logo="/social-facebook.png"
+              />
+              <SocialLogo
+                href={env.social.tiktok}
+                label="TikTok"
+                logo="/social-tiktok.png"
+              />
               {env.social.instagram && (
                 <SocialLink href={env.social.instagram} label="Instagram">
                   <InstagramIcon size={18} />
@@ -142,6 +147,30 @@ function FooterColumn({
         ))}
       </ul>
     </div>
+  );
+}
+
+/** Официалното лого на мрежата — носи собствен фон, затова няма рамка. */
+function SocialLogo({
+  href,
+  label,
+  logo,
+}: {
+  href: string;
+  label: string;
+  logo: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
+      className="inline-flex transition-transform hover:scale-105"
+    >
+      <Image src={logo} alt="" width={36} height={36} className="h-9 w-9 rounded-md" />
+    </a>
   );
 }
 

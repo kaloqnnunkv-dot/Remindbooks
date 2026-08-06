@@ -1,15 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 
 import { env } from "@/lib/env";
 import { PageHeader, Card } from "@/components/ui";
 import { ContactForm } from "@/components/contact-form";
-import {
-  FacebookIcon,
-  InstagramIcon,
-  MailIcon,
-  PhoneIcon,
-  TikTokIcon,
-} from "@/components/icons";
+import { InstagramIcon, MailIcon, PhoneIcon } from "@/components/icons";
 
 export const metadata: Metadata = {
   title: "Свържете се с нас",
@@ -106,12 +101,16 @@ export default function ContactPage() {
               Социални мрежи
             </h2>
             <div className="flex flex-wrap gap-2">
-              <SocialButton href={env.social.facebook} label="Facebook">
-                <FacebookIcon size={16} />
-              </SocialButton>
-              <SocialButton href={env.social.tiktok} label="TikTok">
-                <TikTokIcon size={16} />
-              </SocialButton>
+              <SocialButton
+                href={env.social.facebook}
+                label="Facebook"
+                logo="/social-facebook.png"
+              />
+              <SocialButton
+                href={env.social.tiktok}
+                label="TikTok"
+                logo="/social-tiktok.png"
+              />
               {env.social.instagram && (
                 <SocialButton href={env.social.instagram} label="Instagram">
                   <InstagramIcon size={16} />
@@ -136,20 +135,27 @@ export default function ContactPage() {
 function SocialButton({
   href,
   label,
+  logo,
   children,
 }: {
   href: string;
   label: string;
-  children: React.ReactNode;
+  /** Официално лого на мрежата; ако липсва, се използва икона. */
+  logo?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-2 h-9 px-3 rounded-md border border-border font-sans text-xs font-bold hover:border-primary hover:text-primary transition-colors"
+      className="inline-flex items-center gap-2 h-9 pl-1.5 pr-3 rounded-md border border-border font-sans text-xs font-bold hover:border-primary hover:text-primary transition-colors"
     >
-      {children}
+      {logo ? (
+        <Image src={logo} alt="" width={24} height={24} className="h-6 w-6 rounded" />
+      ) : (
+        children
+      )}
       {label}
     </a>
   );
