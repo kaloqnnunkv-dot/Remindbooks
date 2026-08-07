@@ -50,11 +50,11 @@ export function ProductCard({
     product.type === "PHYSICAL" && product.stock > 0 && product.stock <= 3;
 
   return (
-    <article className="group flex flex-col h-full">
+    <article className="group flex h-full flex-col overflow-hidden rounded-md border border-border bg-card transition-shadow duration-200 hover:shadow-lift">
       <div className="relative">
         <Link
           href={href}
-          className="block relative aspect-[2/3] bg-muted rounded-md overflow-hidden border border-border"
+          className="block relative aspect-[2/3] overflow-hidden bg-muted"
         >
           {product.coverImage ? (
             <Image
@@ -103,7 +103,7 @@ export function ProductCard({
         )}
       </div>
 
-      <div className="flex flex-col flex-1 pt-3">
+      <div className="flex flex-1 flex-col p-3.5">
         <Link href={href} className="group/title">
           <h3 className="font-sans text-sm font-bold leading-snug line-clamp-2 group-hover/title:text-primary transition-colors">
             {product.title}
@@ -166,7 +166,7 @@ export function ProductCard({
 
 export function ProductGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-9">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
       {children}
     </div>
   );

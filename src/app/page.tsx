@@ -355,7 +355,7 @@ function PromoSection({
         </div>
 
         <div className="lg:col-span-2">
-          <div className="grid grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-9">
+          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-5">
             {products.map((p) => (
               <ProductCard
                 key={p.id}

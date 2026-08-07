@@ -277,7 +277,7 @@ export default async function PdfBookPage({
       {related.length > 0 && (
         <section className="mt-16 pt-12 border-t border-border">
           <SectionHeading title="Може да ви хареса" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-x-5 gap-y-9">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-5">
             {related.map((p) => (
               <ProductCard key={p.id} product={p} isFavorite={favoriteIds.has(p.id)} />
             ))}
