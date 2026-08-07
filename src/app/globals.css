@@ -51,6 +51,13 @@
   --sidebar-accent-foreground: #342c25;
   --sidebar-primary-foreground: #ffffff;
 
+  /* Значки за вид на продукта — 30% по-тъмни от фоновете, върху които стоят.
+     Текстът е допълнително задълбочен, за да остане четим (дребен шрифт). */
+  --badge-overlay: #b2b0ac;
+  --badge-overlay-foreground: #342c25;
+  --badge-inline: #8d8881;
+  --badge-inline-foreground: #28211c;
+
   /* Нюанси на фона за редуване на секциите */
   --surface-1: #cbc6b9;
   --surface-2: #c4beae;
@@ -102,6 +109,11 @@
   --surface-1: #332c26;
   --surface-2: #3a322c;
 
+  --badge-overlay: #4a4039;
+  --badge-overlay-foreground: #ece5d8;
+  --badge-inline: #59493e;
+  --badge-inline-foreground: #ece5d8;
+
   --success: #8ab173;
   --success-foreground: #2d2621;
   --warning: #d7a35b;
@@ -137,6 +149,11 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+
+  --color-badge-overlay: var(--badge-overlay);
+  --color-badge-overlay-foreground: var(--badge-overlay-foreground);
+  --color-badge-inline: var(--badge-inline);
+  --color-badge-inline-foreground: var(--badge-inline-foreground);
 
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);

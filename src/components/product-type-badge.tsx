@@ -40,13 +40,15 @@ export function ProductTypeBadge({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-sm font-sans font-bold",
         variant === "overlay"
-          ? // Полупрозрачен фон с размиване — четим върху всякаква корица.
-            "bg-card/92 px-2 py-1 text-[11px] text-foreground shadow-soft backdrop-blur-sm"
-          : "border border-border bg-muted px-2.5 py-1 text-xs text-foreground",
+          ? // Плътен фон — върху корица прозрачността прави текста нечетим.
+            "bg-badge-overlay px-2 py-1 text-[11px] text-badge-overlay-foreground shadow-soft"
+          : "bg-badge-inline px-2.5 py-1 text-xs text-badge-inline-foreground",
         className,
       )}
     >
-      <Icon size={variant === "overlay" ? 12 : 14} className="text-primary" />
+      {/* Иконата ползва цвета на текста — кафявото не достига контраст
+          върху потъмнения фон. */}
+      <Icon size={variant === "overlay" ? 12 : 14} />
       {text}
     </span>
   );
