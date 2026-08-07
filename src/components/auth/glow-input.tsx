@@ -73,13 +73,13 @@ export function GlowInput({
             <span
               className="pointer-events-none absolute inset-x-0 top-0 z-20 h-[2px] rounded-t-md"
               style={{
-                background: `radial-gradient(30px circle at ${x}px 0px, var(--auth-glow) 0%, transparent 70%)`,
+                background: `radial-gradient(30px circle at ${x}px 0px, var(--primary) 0%, transparent 70%)`,
               }}
             />
             <span
               className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-[2px] rounded-b-md"
               style={{
-                background: `radial-gradient(30px circle at ${x}px 2px, var(--auth-glow) 0%, transparent 70%)`,
+                background: `radial-gradient(30px circle at ${x}px 2px, var(--primary) 0%, transparent 70%)`,
               }}
             />
           </span>

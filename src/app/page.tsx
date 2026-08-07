@@ -226,24 +226,11 @@ function Hero({ products }: { products: MarqueeProduct[] }) {
         }}
       />
 
-      {/* Кориците се движат по крива, която заобикаля горния ляв ъгъл */}
-      <div className="absolute inset-0 hidden sm:block">
-        <HeroMarquee products={products} />
-      </div>
-
-      <div className="container-page relative">
-        <div className="relative z-10 max-w-2xl py-20 sm:py-28 lg:py-32">
-          {/* Мек ореол зад текста — кориците минават встрани, но при тесни
-              екрани може да се доближат, а заглавието трябва да остане четимо. */}
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10"
-            style={{
-              background:
-                "radial-gradient(60% 55% at 30% 45%, var(--background) 55%, transparent 100%)",
-            }}
-          />
-
+      {/* Текстът стои сам в горния ляв ъгъл. Нарочно НЕ се застъпва с лентата
+          отдолу: докато беше отгоре ѝ, прихващаше движението на мишката и
+          кориците нито се забавяха, нито се отваряха при щракване. */}
+      <div className="container-page relative z-10">
+        <div className="max-w-2xl pt-16 pb-8 sm:pt-20 lg:pt-24">
           <p className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-primary">
             Remind Books
           </p>
@@ -256,47 +243,14 @@ function Hero({ products }: { products: MarqueeProduct[] }) {
             Хартиени издания, дигитални книги и аудио практики за всеки, който
             търси своя вътрешен компас.
           </p>
-
-          <div className="mt-9 flex flex-wrap gap-3">
-            <ButtonLink href="/knigi" size="lg">
-              Разгледай книгите
-            </ButtonLink>
-            <ButtonLink href="/audio" variant="outline" size="lg">
-              Чуй откъс
-            </ButtonLink>
-          </div>
-
-          <div className="mt-14 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
-            <QuickLink href="/knigi" icon={<BookIcon size={20} />} label="Физически книги" />
-            <QuickLink href="/pdf" icon={<FileTextIcon size={20} />} label="PDF книги" />
-            <QuickLink href="/audio" icon={<HeadphonesIcon size={20} />} label="Аудио" />
-          </div>
         </div>
       </div>
-    </section>
-  );
-}
 
-function QuickLink({
-  href,
-  icon,
-  label,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 px-4 py-3 bg-card/80 backdrop-blur-sm border border-border rounded-md hover:border-primary hover:text-primary transition-colors group"
-    >
-      <span className="text-primary">{icon}</span>
-      <span className="font-sans text-sm font-bold">{label}</span>
-      <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-        →
-      </span>
-    </Link>
+      {/* Кориците обикалят в собствена лента под текста */}
+      <div className="relative h-[300px] sm:h-[360px] lg:h-[400px]">
+        <HeroMarquee products={products} />
+      </div>
+    </section>
   );
 }
 

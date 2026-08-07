@@ -15,23 +15,25 @@ export type MarqueeProduct = {
 };
 
 /**
- * Кривата, по която се движат кориците.
+ * Затворена крива, по която обикалят кориците.
  *
- * Начертана е така, че да минава ниско вляво и да се издига надясно — горният
- * ляв ъгъл остава свободен за заглавието. Иначе кориците биха преминавали
- * върху текста и биха го направили нечетим.
+ * Затворена, а не отворена: при отворена крива елементите изникват в единия
+ * край и изчезват в другия. По затворен контур движението е непрекъснато —
+ * кориците просто обикалят.
+ *
+ * Леко неправилният овал изглежда по-живо от идеалната елипса.
  */
 const PATH =
-  "M-40 470 C 160 560, 340 520, 520 400 C 700 280, 660 120, 810 150 C 960 180, 920 380, 1070 396 C 1180 408, 1230 300, 1260 236";
+  "M 600 56 C 900 46, 1150 120, 1140 214 C 1130 312, 860 366, 592 358 C 322 350, 58 300, 62 206 C 66 112, 300 66, 600 56 Z";
 
 export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
   if (products.length === 0) return null;
 
   return (
-    <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+    <div className="absolute inset-0">
       <MarqueeAlongSvgPath
         path={PATH}
-        viewBox="0 0 1200 560"
+        viewBox="0 0 1200 420"
         baseVelocity={6}
         repeat={products.length < 6 ? 3 : 2}
         slowdownOnHover
@@ -47,7 +49,7 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
             key={product.id}
             href={productHref(product)}
             tabIndex={-1}
-            className="pointer-events-auto block w-16 transition-transform duration-300 ease-out hover:scale-125 sm:w-20"
+            className="block w-16 transition-transform duration-300 ease-out hover:scale-125 sm:w-20"
           >
             <span className="block overflow-hidden rounded-sm border border-border bg-card shadow-lift">
               {product.coverImage ? (
