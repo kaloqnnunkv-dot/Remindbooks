@@ -82,7 +82,7 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
               // краткото щракване — да.
               if (!dragged.current) router.push(productHref(product));
             }}
-            className="block w-20 cursor-pointer transition-transform duration-300 ease-out hover:scale-125 sm:w-24"
+            className="block w-12 cursor-pointer transition-transform duration-300 ease-out hover:scale-125 sm:w-[3.6rem]"
           >
             <span className="block overflow-hidden rounded-sm border border-border bg-card shadow-lift">
               {product.coverImage ? (
@@ -95,8 +95,8 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
                   className="pointer-events-none h-auto w-full select-none object-cover"
                 />
               ) : (
-                <span className="flex aspect-[2/3] select-none items-center justify-center px-1.5 text-center font-sans text-[9px] leading-tight text-muted-foreground">
-                  {product.title}
+                <span className="flex aspect-[2/3] select-none items-center justify-center px-1 text-center font-sans text-[7px] leading-[1.15] text-muted-foreground">
+                  <span className="line-clamp-5">{product.title}</span>
                 </span>
               )}
             </span>
