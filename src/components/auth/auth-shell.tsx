@@ -86,7 +86,7 @@ export function AuthShell({
               preload="metadata"
               aria-hidden="true"
               tabIndex={-1}
-              className="absolute inset-0 h-full w-full object-cover opacity-35"
+              className="absolute inset-0 h-full w-full object-cover"
             />
           ) : (
             <Image
@@ -99,21 +99,17 @@ export function AuthShell({
             />
           )}
 
-          {/* Топъл слой, за да се слее панелът с палитрата */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0"
-            style={{
-              background:
-                "linear-gradient(150deg, color-mix(in srgb, var(--accent) 70%, transparent) 0%, color-mix(in srgb, var(--secondary) 55%, transparent) 55%, color-mix(in srgb, var(--primary) 30%, transparent) 100%)",
-            }}
-          />
-
           <div className="relative z-10 flex h-full flex-col justify-end p-12">
-            <blockquote className="text-2xl leading-snug text-foreground">
+            <blockquote
+              className="text-2xl leading-snug text-white"
+              style={{ textShadow: "0 2px 12px rgba(0,0,0,.55)" }}
+            >
               {quote ?? "Книги, които връщат посоката."}
             </blockquote>
-            <p className="mt-4 font-sans text-xs font-bold uppercase tracking-[0.15em] text-foreground/70">
+            <p
+              className="mt-4 font-sans text-xs font-bold uppercase tracking-[0.15em] text-white/80"
+              style={{ textShadow: "0 2px 10px rgba(0,0,0,.6)" }}
+            >
               Remind Books
             </p>
           </div>

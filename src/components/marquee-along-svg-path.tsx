@@ -75,6 +75,13 @@ interface MarqueeAlongSvgPathProps {
   cssVariableInterpolation?: CSSVariableInterpolation[];
 
   responsive?: boolean;
+
+  /**
+   * Завъртане на елементите спрямо кривата.
+   * `auto` ги накланя по посоката на движение — така изглеждат нанизани на
+   * нишка. `0deg` ги държи изправени.
+   */
+  offsetRotate?: string;
 }
 
 /** Свежда стойност в интервала [min, max) с обхождане. */
@@ -95,6 +102,7 @@ function MarqueeItem({
   totalItems,
   baseOffset,
   path,
+  offsetRotate,
   easing,
   zIndexOf,
   cssVariableInterpolation,
@@ -108,6 +116,7 @@ function MarqueeItem({
   totalItems: number;
   baseOffset: MotionValue<number>;
   path: string;
+  offsetRotate: string;
   easing?: (value: number) => number;
   zIndexOf: (offsetDistance: number) => number | undefined;
   cssVariableInterpolation: CSSVariableInterpolation[];
@@ -160,7 +169,7 @@ function MarqueeItem({
       style={{
         offsetPath: `path('${path}')`,
         offsetDistance,
-        offsetRotate: "0deg",
+        offsetRotate,
         zIndex,
         willChange: "offset-distance",
         backfaceVisibility: "hidden",
@@ -205,6 +214,7 @@ export default function MarqueeAlongSvgPath({
   zIndexRange = 10,
   cssVariableInterpolation = [],
   responsive = false,
+  offsetRotate = "auto",
 }: MarqueeAlongSvgPathProps) {
   const container = useRef<HTMLDivElement>(null);
   const marqueeContainerRef = useRef<HTMLDivElement>(null);
@@ -400,6 +410,7 @@ export default function MarqueeAlongSvgPath({
             totalItems={items.length}
             baseOffset={baseOffset}
             path={path}
+            offsetRotate={offsetRotate}
             easing={easing}
             zIndexOf={zIndexOf}
             cssVariableInterpolation={cssVariableInterpolation}
