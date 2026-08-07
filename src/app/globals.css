@@ -53,9 +53,9 @@
 
   /* Значки за вид на продукта — 30% по-тъмни от фоновете, върху които стоят.
      Текстът е допълнително задълбочен, за да остане четим (дребен шрифт). */
-  --badge-overlay: #b2b0ac;
+  --badge-overlay: #d6d3ce;
   --badge-overlay-foreground: #342c25;
-  --badge-inline: #8d8881;
+  --badge-inline: #a9a39b;
   --badge-inline-foreground: #28211c;
 
   /* Нюанси на фона за редуване на секциите */

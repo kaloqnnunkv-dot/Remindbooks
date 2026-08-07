@@ -3,9 +3,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { auth } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { env } from "@/lib/env";
+import { publicUrl } from "@/lib/storage";
 import { LoginForm } from "@/components/auth-forms";
-import { Card } from "@/components/ui";
+import { AuthShell } from "@/components/auth/auth-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,16 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+/** Същият клип като в hero секцията — държи страниците свързани визуално. */
+async function getPanelVideo(): Promise<string | null> {
+  try {
+    const setting = await db.setting.findUnique({ where: { key: "hero_video" } });
+    return publicUrl(setting?.value || null);
+  } catch {
+    return null;
+  }
+}
+
 export default async function LoginPage({
   searchParams,
 }: {
@@ -23,40 +35,38 @@ export default async function LoginPage({
   const session = await auth();
   if (session?.user) redirect("/profil");
 
-  const params = await searchParams;
+  const [params, video] = await Promise.all([searchParams, getPanelVideo()]);
 
   return (
-    <div className="container-page py-16">
-      <div className="max-w-md mx-auto">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl">Вход в профила</h1>
-          <p className="mt-2 text-muted-foreground">
-            Достъп до вашите поръчки, книги и любими заглавия.
+    <AuthShell
+      title="Вход в профила"
+      subtitle="Достъп до вашите поръчки, книги и любими заглавия."
+      video={video}
+      quote="Правилната книга, срещната в правилния момент, връща посоката."
+      footer={
+        <div className="space-y-3 text-sm">
+          <p className="text-muted-foreground">
+            Нямате профил?{" "}
+            <Link
+              href={`/registracia${
+                params.redirect ? `?redirect=${encodeURIComponent(params.redirect)}` : ""
+              }`}
+              className="font-sans font-bold text-primary underline-offset-4 hover:underline"
+            >
+              Създайте безплатно
+            </Link>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Поръчките за физически книги не изискват регистрация.
           </p>
         </div>
-
-        <Card className="p-6 sm:p-8">
-          <LoginForm
-            redirectTo={params.redirect}
-            googleEnabled={env.features.googleLogin}
-            providerError={params.error}
-          />
-        </Card>
-
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Нямате профил?{" "}
-          <Link
-            href={`/registracia${params.redirect ? `?redirect=${encodeURIComponent(params.redirect)}` : ""}`}
-            className="text-primary font-sans font-bold hover:underline underline-offset-4"
-          >
-            Създайте безплатно
-          </Link>
-        </p>
-
-        <p className="mt-4 text-center text-xs text-muted-foreground">
-          Поръчките за физически книги не изискват регистрация.
-        </p>
-      </div>
-    </div>
+      }
+    >
+      <LoginForm
+        redirectTo={params.redirect}
+        googleEnabled={env.features.googleLogin}
+        providerError={params.error}
+      />
+    </AuthShell>
   );
 }

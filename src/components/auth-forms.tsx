@@ -11,6 +11,8 @@ import {
   type AuthState,
 } from "@/app/actions/auth";
 import { Alert, Button, ButtonLink, Checkbox, Field, Input } from "./ui";
+import { GlowInput } from "./auth/glow-input";
+import { ShineButton } from "./auth/shine-button";
 
 const initialState: AuthState = { ok: false, message: "" };
 
@@ -54,37 +56,34 @@ export function LoginForm({
       <form action={action} className="space-y-4" noValidate>
         {redirectTo && <input type="hidden" name="redirect" value={redirectTo} />}
 
-        <Field label="Имейл" htmlFor="login-email" required error={state.errors?.email}>
-          <Input
-            id="login-email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            autoFocus
-          />
-        </Field>
-
-        <Field
-          label="Парола"
-          htmlFor="login-password"
+        <GlowInput
+          id="login-email"
+          name="email"
+          type="email"
+          label="Имейл"
+          placeholder="вашият@имейл.bg"
           required
+          autoComplete="email"
+          autoFocus
+          error={state.errors?.email}
+        />
+
+        <GlowInput
+          id="login-password"
+          name="password"
+          type="password"
+          label="Парола"
+          placeholder="••••••••"
+          required
+          autoComplete="current-password"
           error={state.errors?.password}
-        >
-          <Input
-            id="login-password"
-            name="password"
-            type="password"
-            required
-            autoComplete="current-password"
-          />
-        </Field>
+        />
 
         {state.message && !state.ok && <Alert tone="error">{state.message}</Alert>}
 
-        <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        <ShineButton type="submit" disabled={pending}>
           {pending ? "Влизане…" : "Влез"}
-        </Button>
+        </ShineButton>
       </form>
 
       <p className="text-center">
