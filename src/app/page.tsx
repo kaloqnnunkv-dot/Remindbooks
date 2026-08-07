@@ -6,7 +6,7 @@ import { ButtonLink, SectionHeading, Card } from "@/components/ui";
 import { ProductCard, ProductGrid } from "@/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { BookIcon, FileTextIcon, HeadphonesIcon } from "@/components/icons";
-import { HeroVideo } from "@/components/hero-video";
+import { HeroMarquee, type MarqueeProduct } from "@/components/hero-marquee";
 import { publicUrl } from "@/lib/storage";
 import {
   getBestsellers,
@@ -28,14 +28,15 @@ export const metadata: Metadata = {
 // секцията с любими зависи от текущия потребител.
 export const dynamic = "force-dynamic";
 
-/** Декоративното видео за hero секцията, ако собственикът е качил такова. */
-async function getHeroVideo() {
-  const rows = await db.setting.findMany({
-    where: { key: { in: ["hero_video", "hero_video_poster"] } },
+/** Всички публикувани заглавия — те се въртят по кривата в hero секцията. */
+async function getMarqueeProducts(): Promise<MarqueeProduct[]> {
+  const rows = await db.product.findMany({
+    where: { isPublished: true },
+    orderBy: { createdAt: "desc" },
+    take: 40,
+    select: { id: true, slug: true, title: true, type: true, coverImage: true },
   });
-  const map = Object.fromEntries(rows.map((r) => [r.key, r.value]));
-  const src = publicUrl(map.hero_video || null);
-  return src ? { src, poster: publicUrl(map.hero_video_poster || null) } : null;
+  return rows.map((r) => ({ ...r, coverImage: publicUrl(r.coverImage) }));
 }
 
 async function getAboutText(): Promise<string> {
@@ -47,7 +48,7 @@ async function getAboutText(): Promise<string> {
 }
 
 export default async function HomePage() {
-  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText, heroVideo] =
+  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText, marqueeProducts] =
     await Promise.all([
       getBestsellers(4),
       getLatestByType("PDF", 4),
@@ -55,12 +56,12 @@ export default async function HomePage() {
       getLatestPosts(3),
       getFavoriteIds(),
       getAboutText(),
-      getHeroVideo(),
+      getMarqueeProducts(),
     ]);
 
   return (
     <>
-      <Hero video={heroVideo} />
+      <Hero products={marqueeProducts} />
 
       {/* Най-продавани физически книги */}
       {bestsellers.length > 0 && (
@@ -212,14 +213,10 @@ export default async function HomePage() {
   );
 }
 
-function Hero({
-  video,
-}: {
-  video: { src: string; poster: string | null } | null;
-}) {
+function Hero({ products }: { products: MarqueeProduct[] }) {
   return (
     <section className="relative overflow-hidden border-b border-border">
-      {/* Фонова текстура от градиенти — без външни изображения, зарежда се мигновено */}
+      {/* Мека текстура от градиенти — зарежда се мигновено, без изображения */}
       <div
         aria-hidden="true"
         className="absolute inset-0 opacity-[0.4]"
@@ -229,24 +226,33 @@ function Hero({
         }}
       />
 
-      <div className="container-page relative py-20 sm:py-28 lg:py-32">
-        <div
-          className={
-            video
-              ? "grid lg:grid-cols-[1.15fr_1fr] gap-12 lg:gap-16 items-center"
-              : ""
-          }
-        >
-        <div className={video ? "" : "max-w-3xl"}>
+      {/* Кориците се движат по крива, която заобикаля горния ляв ъгъл */}
+      <div className="absolute inset-0 hidden sm:block">
+        <HeroMarquee products={products} />
+      </div>
+
+      <div className="container-page relative">
+        <div className="relative z-10 max-w-2xl py-20 sm:py-28 lg:py-32">
+          {/* Мек ореол зад текста — кориците минават встрани, но при тесни
+              екрани може да се доближат, а заглавието трябва да остане четимо. */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute -inset-x-8 -inset-y-6 -z-10"
+            style={{
+              background:
+                "radial-gradient(60% 55% at 30% 45%, var(--background) 55%, transparent 100%)",
+            }}
+          />
+
           <p className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-primary">
             Remind Books
           </p>
 
-          <h1 className="mt-5 text-4xl sm:text-5xl lg:text-6xl leading-[1.1]">
+          <h1 className="mt-5 text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
             Книги, които връщат посоката
           </h1>
 
-          <p className="mt-6 text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-2xl">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground sm:text-xl">
             Хартиени издания, дигитални книги и аудио практики за всеки, който
             търси своя вътрешен компас.
           </p>
@@ -260,19 +266,11 @@ function Hero({
             </ButtonLink>
           </div>
 
-          {/* Трите категории като бърза навигация */}
-          <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl">
+          <div className="mt-14 grid max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
             <QuickLink href="/knigi" icon={<BookIcon size={20} />} label="Физически книги" />
             <QuickLink href="/pdf" icon={<FileTextIcon size={20} />} label="PDF книги" />
             <QuickLink href="/audio" icon={<HeadphonesIcon size={20} />} label="Аудио" />
           </div>
-        </div>
-
-        {video && (
-          <div className="lg:pl-4">
-            <HeroVideo src={video.src} poster={video.poster} />
-          </div>
-        )}
         </div>
       </div>
     </section>

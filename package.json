@@ -33,6 +33,7 @@
     "@aws-sdk/s3-request-presigner": "^3.700.0",
     "@prisma/client": "^6.1.0",
     "bcryptjs": "^2.4.3",
+    "motion": "^13.0.0",
     "next": "^15.5.22",
     "next-auth": "^5.0.0-beta.32",
     "pdf-lib": "^1.17.1",
