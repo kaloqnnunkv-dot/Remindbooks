@@ -54,7 +54,7 @@ export function ProductCard({
       <div className="relative">
         <Link
           href={href}
-          className="block relative aspect-[2/3] overflow-hidden bg-muted"
+          className="block relative aspect-[2/3] overflow-hidden bg-card"
         >
           {product.coverImage ? (
             <Image
@@ -63,7 +63,7 @@ export function ProductCard({
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={priority}
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+              className="object-contain transition-transform duration-500 group-hover:scale-[1.03]"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">

@@ -151,7 +151,7 @@ export function BundleForm({
                         alt=""
                         fill
                         sizes="32px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     )}
                   </div>
@@ -242,7 +242,7 @@ export function BundleForm({
                 alt="Преглед"
                 fill
                 sizes="128px"
-                className="object-cover"
+                className="object-contain"
                 unoptimized={coverPreview.startsWith("blob:")}
               />
             </div>

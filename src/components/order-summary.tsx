@@ -40,14 +40,14 @@ export function OrderSummary({
       <ul className="space-y-3 mb-5 max-h-72 overflow-y-auto">
         {lines.map((line, i) => (
           <li key={i} className="flex gap-3">
-            <div className="relative w-12 h-16 shrink-0 bg-muted rounded-sm overflow-hidden border border-border">
+            <div className="relative w-12 h-[4.5rem] shrink-0 bg-card rounded-sm overflow-hidden border border-border">
               {line.coverImage && (
                 <Image
                   src={line.coverImage}
                   alt=""
                   fill
                   sizes="48px"
-                  className="object-cover"
+                  className="object-contain"
                 />
               )}
               {line.quantity > 1 && (

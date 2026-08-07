@@ -109,7 +109,7 @@ export default async function AudioPage({
                 >
                   <Link
                     href={`/audio/${item.slug}`}
-                    className="relative w-full sm:w-36 aspect-square sm:aspect-square shrink-0 bg-muted rounded-md overflow-hidden border border-border"
+                    className="relative w-28 sm:w-36 aspect-[2/3] shrink-0 bg-card rounded-md overflow-hidden border border-border"
                   >
                     {cover ? (
                       <Image
@@ -117,7 +117,7 @@ export default async function AudioPage({
                         alt={item.title}
                         fill
                         sizes="144px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">

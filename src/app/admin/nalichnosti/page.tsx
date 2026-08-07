@@ -113,7 +113,7 @@ export default async function InventoryPage({
                   <Td>
                     <div className="relative w-9 h-12 bg-muted rounded-sm overflow-hidden border border-border">
                       {cover && (
-                        <Image src={cover} alt="" fill sizes="36px" className="object-cover" />
+                        <Image src={cover} alt="" fill sizes="36px" className="object-contain" />
                       )}
                     </div>
                   </Td>

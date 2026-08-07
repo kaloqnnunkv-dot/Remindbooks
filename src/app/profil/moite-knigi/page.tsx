@@ -77,7 +77,7 @@ export default async function MyBooksPage() {
                     <Card key={e.id} className="p-4 flex gap-4">
                       <Link
                         href={productHref(e.product)}
-                        className="relative w-20 h-28 shrink-0 bg-muted rounded-sm overflow-hidden border border-border"
+                        className="relative w-20 h-[7.5rem] shrink-0 bg-card rounded-sm overflow-hidden border border-border"
                       >
                         {cover ? (
                           <Image
@@ -85,7 +85,7 @@ export default async function MyBooksPage() {
                             alt={e.product.title}
                             fill
                             sizes="80px"
-                            className="object-cover"
+                            className="object-contain"
                           />
                         ) : (
                           <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">
@@ -159,7 +159,7 @@ export default async function MyBooksPage() {
                       <div className="flex gap-4">
                         <Link
                           href={productHref(e.product)}
-                          className="relative w-20 h-20 shrink-0 bg-muted rounded-sm overflow-hidden border border-border"
+                          className="relative w-20 h-[7.5rem] shrink-0 bg-card rounded-sm overflow-hidden border border-border"
                         >
                           {cover ? (
                             <Image
@@ -167,7 +167,7 @@ export default async function MyBooksPage() {
                               alt={e.product.title}
                               fill
                               sizes="80px"
-                              className="object-cover"
+                              className="object-contain"
                             />
                           ) : (
                             <span className="absolute inset-0 flex items-center justify-center text-muted-foreground">

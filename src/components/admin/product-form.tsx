@@ -379,7 +379,7 @@ export function ProductForm({
                   alt="Преглед на корицата"
                   fill
                   sizes="80px"
-                  className="object-cover"
+                  className="object-contain"
                   unoptimized={coverPreview.startsWith("blob:")}
                 />
               </div>
@@ -432,7 +432,7 @@ export function ProductForm({
                       fill
                       sizes="96px"
                       className={cn(
-                        "object-cover transition-opacity",
+                        "object-contain transition-opacity",
                         marked && "opacity-30",
                       )}
                     />

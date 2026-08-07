@@ -144,7 +144,7 @@ export default async function SearchPage({
                     >
                       <Link
                         href={`/blog/${post.slug}`}
-                        className="relative w-24 h-20 shrink-0 bg-muted rounded-sm overflow-hidden"
+                        className="relative w-20 h-[7.5rem] shrink-0 bg-card rounded-sm overflow-hidden"
                       >
                         {cover && (
                           <Image
@@ -152,7 +152,7 @@ export default async function SearchPage({
                             alt=""
                             fill
                             sizes="96px"
-                            className="object-cover"
+                            className="object-contain"
                           />
                         )}
                       </Link>

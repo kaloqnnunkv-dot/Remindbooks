@@ -19,7 +19,7 @@ export function ProductGallery({
 
   if (images.length === 0) {
     return (
-      <div className="aspect-[2/3] bg-muted border border-border rounded-md flex items-center justify-center text-muted-foreground">
+      <div className="aspect-[2/3] bg-card border border-border rounded-md flex items-center justify-center text-muted-foreground">
         <BookIcon size={48} />
       </div>
     );
@@ -29,14 +29,14 @@ export function ProductGallery({
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[2/3] bg-muted border border-border rounded-md overflow-hidden">
+      <div className="relative aspect-[2/3] bg-card border border-border rounded-md overflow-hidden">
         <Image
           src={current.url}
           alt={current.alt ?? title}
           fill
           sizes="(max-width: 1024px) 100vw, 40vw"
           priority
-          className="object-cover"
+          className="object-contain"
         />
       </div>
 
@@ -49,7 +49,7 @@ export function ProductGallery({
               onClick={() => setActive(i)}
               aria-label={`Снимка ${i + 1} от ${images.length}`}
               aria-current={i === active}
-              className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 transition-colors ${
+              className={`relative aspect-[2/3] bg-card rounded-sm overflow-hidden border-2 transition-colors ${
                 i === active ? "border-primary" : "border-transparent hover:border-border"
               }`}
             >
@@ -58,7 +58,7 @@ export function ProductGallery({
                 alt=""
                 fill
                 sizes="80px"
-                className="object-cover"
+                className="object-contain"
               />
             </button>
           ))}

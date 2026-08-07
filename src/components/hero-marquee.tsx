@@ -129,7 +129,7 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
                   width={192}
                   height={288}
                   draggable={false}
-                  className="pointer-events-none h-full w-full select-none object-cover"
+                  className="pointer-events-none h-full w-full select-none object-contain"
                 />
               ) : (
                 <span className="flex h-full w-full select-none items-center justify-center px-1 text-center font-sans text-[7px] leading-[1.15] text-muted-foreground">

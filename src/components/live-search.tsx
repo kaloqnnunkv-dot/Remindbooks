@@ -153,14 +153,14 @@ export function LiveSearch({ onClose }: { onClose: () => void }) {
                   i === activeIndex ? "bg-muted" : "hover:bg-muted/60"
                 }`}
               >
-                <div className="w-10 h-14 shrink-0 bg-muted rounded-sm overflow-hidden relative">
+                <div className="w-10 h-15 shrink-0 bg-card rounded-sm overflow-hidden relative">
                   {r.image && (
                     <Image
                       src={r.image}
                       alt=""
                       fill
                       sizes="40px"
-                      className="object-cover"
+                      className="object-contain"
                     />
                   )}
                 </div>

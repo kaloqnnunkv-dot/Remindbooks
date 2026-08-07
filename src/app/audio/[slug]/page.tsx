@@ -141,7 +141,7 @@ export default async function AudioDetailPage({
 
       <div className="grid lg:grid-cols-5 gap-10 lg:gap-14">
         <div className="lg:col-span-2">
-          <div className="relative aspect-square bg-muted border border-border rounded-md overflow-hidden">
+          <div className="relative aspect-[2/3] bg-card border border-border rounded-md overflow-hidden">
             {cover ? (
               <Image
                 src={cover}
@@ -149,7 +149,7 @@ export default async function AudioDetailPage({
                 fill
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 priority
-                className="object-cover"
+                className="object-contain"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">

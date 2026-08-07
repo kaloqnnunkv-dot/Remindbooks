@@ -178,7 +178,7 @@ function CartRow({ line }: { line: CartLine }) {
     >
       <Link
         href={href}
-        className="relative w-20 h-28 shrink-0 bg-muted rounded-sm overflow-hidden border border-border"
+        className="relative w-20 h-[7.5rem] shrink-0 bg-card rounded-sm overflow-hidden border border-border"
       >
         {line.coverImage && (
           <Image
@@ -186,7 +186,7 @@ function CartRow({ line }: { line: CartLine }) {
             alt={line.title}
             fill
             sizes="80px"
-            className="object-cover"
+            className="object-contain"
           />
         )}
       </Link>

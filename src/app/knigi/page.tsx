@@ -130,14 +130,14 @@ export default async function BooksPage({
                   key={bundle.id}
                   className="flex flex-col bg-card border border-border rounded-md overflow-hidden"
                 >
-                  <div className="relative aspect-[3/2] bg-muted">
+                  <div className="relative aspect-[3/2] bg-card">
                     {cover && (
                       <Image
                         src={cover}
                         alt={bundle.title}
                         fill
                         sizes="(max-width: 768px) 100vw, 33vw"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     )}
                     {savings > 0 && (
