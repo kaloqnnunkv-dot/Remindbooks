@@ -27,20 +27,48 @@ const PATH =
 /** Над колко пиксела движение жестът се смята за влачене, а не за щракване. */
 const DRAG_THRESHOLD = 6;
 
+/** Ширина на корица в координатите на кривата (виж CAPACITY). */
+const CARD_WIDTH = 57.6;
+/** Желан просвет между две съседни корици. */
+const GAP = 2;
+
+/**
+ * Колко корици побира кривата при зададения просвет.
+ *
+ * Лентата разпределя елементите равномерно по дължината на кривата, затова
+ * разстоянието между центровете е дължина / брой. Дължината на PATH е 1669.5
+ * единици (числено интегриране на четирите криви), тоест 1669.5 / (57.6 + 2)
+ * ≈ 28 корици оставят точно 2 единици просвет. Повече елементи биха се
+ * припокрили, по-малко — биха се разредили.
+ */
+const CAPACITY = Math.floor(1669.5 / (CARD_WIDTH + GAP));
+
 export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
   const router = useRouter();
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerHref = useRef<string | null>(null);
   const dragged = useRef(false);
 
   if (products.length === 0) return null;
 
+  // Излишните заглавия биха се струпали по кривата; при по-малко — повтаряме,
+  // докато я запълним.
+  const shown = products.slice(0, CAPACITY);
+  const repeat = Math.max(1, Math.round(CAPACITY / shown.length));
+
   return (
     <div
       className="absolute inset-0"
-      // Проследяваме жеста още при прихващане, защото самата лента спира
-      // събитията по-надолу — иначе щракването и влаченето не се различават.
+      // Проследяваме жеста още при прихващане, защото лентата прихваща
+      // показалеца (setPointerCapture) и оттам нататък всички събития —
+      // включително click — се насочват към нея, а не към корицата. Затова и
+      // адресът се запомня още при натискането, докато целта е самата корица.
       onPointerDownCapture={(e) => {
         pointerStart.current = { x: e.clientX, y: e.clientY };
+        pointerHref.current =
+          (e.target as Element | null)
+            ?.closest<HTMLElement>("[data-product-href]")
+            ?.dataset.productHref ?? null;
         dragged.current = false;
       }}
       onPointerMoveCapture={(e) => {
@@ -50,14 +78,18 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
           dragged.current = true;
         }
       }}
+      onClick={() => {
+        // Влаченето върти лентата и не бива да отваря продукта;
+        // краткото щракване — да.
+        const href = pointerHref.current;
+        if (href && !dragged.current) router.push(href);
+      }}
     >
       <MarqueeAlongSvgPath
         path={PATH}
         viewBox="0 0 996 330"
         baseVelocity={7}
-        // По един екземпляр на заглавие — при два кориците се струпваха
-        // и примката изглеждаше задръстена.
-        repeat={products.length < 8 ? 2 : 1}
+        repeat={repeat}
         slowdownOnHover
         slowDownFactor={0.25}
         draggable
@@ -66,25 +98,25 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
         responsive
         className="h-full w-full scale-105"
       >
-        {products.map((product) => (
+        {shown.map((product) => (
           <a
             key={product.id}
             href={productHref(product)}
+            data-product-href={productHref(product)}
             tabIndex={-1}
             /* Браузърът влачи връзките по подразбиране и показва до курсора
                балонче с адреса. Тук влаченето върти лентата, затова
                собственото поведение на браузъра се изключва. */
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
-            onClick={(e) => {
-              e.preventDefault();
-              // Влаченето върти лентата и не бива да отваря продукта;
-              // краткото щракване — да.
-              if (!dragged.current) router.push(productHref(product));
-            }}
-            className="block w-12 cursor-pointer transition-transform duration-300 ease-out hover:scale-125 sm:w-[3.6rem]"
+            onClick={(e) => e.preventDefault()}
+            style={{ width: `${CARD_WIDTH}px` }}
+            className="block cursor-pointer transition-transform duration-300 ease-out hover:scale-125"
           >
-            <span className="block overflow-hidden rounded-sm border border-border bg-card shadow-lift">
+            {/* Съотношението е заковано тук, а не се взима от файла — така
+                всички корици са еднакви правоъгълници, независимо дали
+                качената снимка е квадратна или широка. */}
+            <span className="block aspect-[2/3] overflow-hidden rounded-sm border border-border bg-card shadow-lift">
               {product.coverImage ? (
                 <Image
                   src={product.coverImage}
@@ -92,10 +124,10 @@ export function HeroMarquee({ products }: { products: MarqueeProduct[] }) {
                   width={192}
                   height={288}
                   draggable={false}
-                  className="pointer-events-none h-auto w-full select-none object-cover"
+                  className="pointer-events-none h-full w-full select-none object-cover"
                 />
               ) : (
-                <span className="flex aspect-[2/3] select-none items-center justify-center px-1 text-center font-sans text-[7px] leading-[1.15] text-muted-foreground">
+                <span className="flex h-full w-full select-none items-center justify-center px-1 text-center font-sans text-[7px] leading-[1.15] text-muted-foreground">
                   <span className="line-clamp-5">{product.title}</span>
                 </span>
               )}
