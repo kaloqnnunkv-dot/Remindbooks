@@ -230,7 +230,7 @@ function Hero({ products }: { products: MarqueeProduct[] }) {
           отдолу: докато беше отгоре ѝ, прихващаше движението на мишката и
           кориците нито се забавяха, нито се отваряха при щракване. */}
       <div className="container-page relative z-10">
-        <div className="max-w-2xl pt-16 pb-8 sm:pt-20 lg:pt-24">
+        <div className="max-w-2xl -translate-x-5 -translate-y-[5px] pt-16 pb-8 sm:pt-20 lg:pt-24">
           <p className="font-sans text-xs font-bold uppercase tracking-[0.2em] text-primary">
             Remind Books
           </p>
@@ -247,7 +247,7 @@ function Hero({ products }: { products: MarqueeProduct[] }) {
       </div>
 
       {/* Кориците обикалят в собствена лента под текста */}
-      <div className="relative h-[300px] sm:h-[360px] lg:h-[400px]">
+      <div className="relative h-[340px] sm:h-[420px] lg:h-[480px]">
         <HeroMarquee products={products} />
       </div>
     </section>
