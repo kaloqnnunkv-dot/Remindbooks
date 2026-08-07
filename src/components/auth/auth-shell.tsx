@@ -54,7 +54,7 @@ export function AuthShell({
             }`}
             style={{
               background:
-                "radial-gradient(circle, color-mix(in srgb, var(--primary) 22%, transparent) 0%, transparent 70%)",
+                "radial-gradient(circle, color-mix(in srgb, var(--auth-glow) 34%, transparent) 0%, color-mix(in srgb, var(--auth-glow) 12%, transparent) 45%, transparent 70%)",
               transform: `translate(${pos.x - 210}px, ${pos.y - 210}px)`,
               transition: "transform 0.12s ease-out, opacity 0.3s",
             }}
