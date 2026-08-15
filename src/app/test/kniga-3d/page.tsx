@@ -49,9 +49,9 @@ export default async function Book3DTestPage() {
         </p>
       </header>
 
-      <section className="rounded-md border border-border bg-[var(--surface-1)] px-6 py-12">
-        <h2 className="mb-10 text-center font-sans text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Посочете книга — повдига се и се завърта
+      <section className="overflow-hidden rounded-md border border-border bg-[var(--surface-1)] px-6 py-10">
+        <h2 className="text-center font-sans text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          Посочете книга — излиза напред и открехва капаците си
         </h2>
         <BookRow books={books.slice(0, 3)} />
       </section>

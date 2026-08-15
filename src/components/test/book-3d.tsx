@@ -518,7 +518,12 @@ export function Book3D({
           </button>
           <button
             type="button"
-            onClick={() => setReading(false)}
+            onClick={() => {
+              // Листата се връщат заедно с книгата. Иначе прелистените
+              // оставаха обърнати и стърчаха отляво, след като тя се затвори.
+              setTurned(0);
+              setReading(false);
+            }}
             className="rounded-md px-4 py-2.5 font-sans text-sm font-bold text-muted-foreground hover:text-foreground"
           >
             Затвори
@@ -658,79 +663,213 @@ export function BookLab({
   );
 }
 
+/** Размери на книгите в hero лентата — едри, колкото да носят страницата. */
+const HW = 300;
+const HH = 450;
+const HD = 30;
+
 /**
- * Трите книги отгоре: при посочване се повдигат и изместват встрани.
+ * Разположение като карти в ръка.
  *
- * Тук няма кадров цикъл — един CSS преход върши работа и не струва нищо.
+ * Средната стои отпред, съвсем леко наклонена надясно; страничните са зад нея
+ * и се разперват — лявата наляво, дясната надясно. Завъртането по Y дава на
+ * страничните лек профил, за да се вижда дебелината им.
+ */
+const FAN = [
+  { x: -232, z: -80, rotZ: -10, rotY: 20 },
+  { x: 0, z: 70, rotZ: 4, rotY: -5 },
+  { x: 232, z: -80, rotZ: 10, rotY: -20 },
+];
+
+/**
+ * Трите книги отгоре.
+ *
+ * При посочване книгата излиза напред, изправя се и открехва двата си капака.
+ * Тук няма кадров цикъл — CSS преходи вършат работа и не струват нищо.
  */
 export function BookRow({
   books,
 }: {
   books: { id: string; title: string; cover: string | null }[];
 }) {
-  const [lifted, setLifted] = useState<string | null>(null);
+  const [hot, setHot] = useState<number | null>(null);
+  const face: React.CSSProperties = { position: "absolute", backfaceVisibility: "hidden" };
+  const glide = "transform 640ms cubic-bezier(.2,.8,.2,1)";
 
   return (
-    <div className="flex flex-wrap items-end justify-center gap-10 sm:gap-16">
-      {books.map((b, i) => {
-        const on = lifted === b.id;
-        return (
-          <div
-            key={b.id}
-            onMouseEnter={() => setLifted(b.id)}
-            onMouseLeave={() => setLifted(null)}
-            className="relative"
-            style={{ perspective: "1200px" }}
-          >
+    <div
+      className="relative flex h-[600px] w-full items-center justify-center"
+      style={{ perspective: "2000px" }}
+    >
+      <div className="relative h-0 w-0" style={{ transformStyle: "preserve-3d" }}>
+        {books.slice(0, 3).map((b, i) => {
+          const f = FAN[i] ?? FAN[1]!;
+          const on = hot === i;
+          // Открехване на капаците при посочване.
+          const ajar = on ? 15 : 0;
+
+          return (
             <div
-              className="relative h-[300px] w-[200px] transition-transform duration-[520ms]"
+              key={b.id}
+              onMouseEnter={() => setHot(i)}
+              onMouseLeave={() => setHot(null)}
+              className="absolute cursor-pointer"
               style={{
+                width: HW,
+                height: HH,
+                left: -HW / 2,
+                top: -HH / 2,
                 transformStyle: "preserve-3d",
-                transitionTimingFunction: "cubic-bezier(.2,.8,.2,1)",
-                transform: on
-                  ? `translate3d(${i % 2 ? -10 : 10}px, -18px, 40px) rotateY(${i % 2 ? 13 : -13}deg) rotateX(5deg)`
-                  : "translate3d(0,0,0) rotateY(0deg) rotateX(0deg)",
+                transition: glide,
+                // При посочване книгата се вдига, излиза напред и се поизправя.
+                transform:
+                  `translate3d(${f.x}px, ${on ? -34 : 0}px, ${f.z + (on ? 150 : 0)}px) ` +
+                  `rotateY(${on ? f.rotY * 0.45 : f.rotY}deg) rotateZ(${on ? f.rotZ * 0.5 : f.rotZ}deg)`,
               }}
             >
-              {/* Тегел — дава дебелина при завъртането */}
+              {/* Заден капак */}
               <div
-                className="absolute left-0 top-0 h-full"
                 style={{
-                  width: 24,
+                  position: "absolute",
+                  inset: 0,
                   transformOrigin: "left center",
-                  transform: "rotateY(-90deg)",
+                  transformStyle: "preserve-3d",
+                  transition: glide,
+                  transform: `translateZ(${-HD / 2}px) rotateY(${ajar}deg)`,
+                }}
+              >
+                <div
+                  style={{
+                    ...face,
+                    inset: 0,
+                    transform: "rotateY(180deg)",
+                    background: "linear-gradient(135deg, #4a3f34, #2f2823)",
+                    borderRadius: "6px 2px 2px 6px",
+                  }}
+                />
+                <div
+                  style={{
+                    ...face,
+                    inset: 0,
+                    background: "linear-gradient(105deg, #e6dfcd, #f4eee0)",
+                    borderRadius: "2px 6px 6px 2px",
+                  }}
+                />
+              </div>
+
+              {/* Тегел и ръбовете на листата */}
+              <div
+                style={{
+                  ...face,
+                  width: HD,
+                  height: HH,
+                  left: `calc(50% - ${HD / 2}px)`,
+                  transform: `rotateY(-90deg) translateZ(${HW / 2}px)`,
                   background: "linear-gradient(90deg, #241e1a, #4a3f34 45%, #241e1a)",
+                  borderRadius: 3,
                 }}
               />
-              <div className="absolute inset-0 overflow-hidden rounded-sm border border-border bg-card shadow-lift">
-                {b.cover ? (
-                  <Image
-                    src={b.cover}
-                    alt={b.title}
-                    fill
-                    sizes="200px"
-                    className="object-cover"
-                    draggable={false}
+              <div
+                style={{
+                  ...face,
+                  width: HD,
+                  height: HH,
+                  left: `calc(50% - ${HD / 2}px)`,
+                  transform: `rotateY(90deg) translateZ(${HW / 2}px)`,
+                  background: PAGE_EDGE,
+                }}
+              />
+              <div
+                style={{
+                  ...face,
+                  width: HW,
+                  height: HD,
+                  top: `calc(50% - ${HD / 2}px)`,
+                  transform: `rotateX(90deg) translateZ(${HH / 2}px)`,
+                  background: PAGE_EDGE_V,
+                }}
+              />
+              <div
+                style={{
+                  ...face,
+                  width: HW,
+                  height: HD,
+                  top: `calc(50% - ${HD / 2}px)`,
+                  transform: `rotateX(-90deg) translateZ(${HH / 2}px)`,
+                  background: PAGE_EDGE_V,
+                }}
+              />
+
+              {/* Първата страница — вижда се през открехнатия капак */}
+              <div
+                style={{
+                  ...face,
+                  inset: "7px 7px 7px 11px",
+                  transform: `translateZ(${HD / 2 - 3}px)`,
+                  background: "linear-gradient(105deg, #efe8d8, #fbf7ec 40%)",
+                  boxShadow: "inset 16px 0 24px -16px rgba(0,0,0,.45)",
+                }}
+              />
+
+              {/* Предният капак */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  transformOrigin: "left center",
+                  transformStyle: "preserve-3d",
+                  transition: glide,
+                  transform: `translateZ(${HD / 2}px) rotateY(${-ajar}deg)`,
+                }}
+              >
+                <div
+                  style={{
+                    ...face,
+                    inset: 0,
+                    overflow: "hidden",
+                    borderRadius: "2px 6px 6px 2px",
+                    background: "#3a322c",
+                    boxShadow:
+                      "inset 12px 0 20px -14px rgba(0,0,0,.7), 0 34px 60px -24px rgba(0,0,0,.5)",
+                  }}
+                >
+                  {b.cover ? (
+                    <Image
+                      src={b.cover}
+                      alt={b.title}
+                      fill
+                      sizes="300px"
+                      className="object-cover"
+                      draggable={false}
+                    />
+                  ) : (
+                    <span className="flex h-full items-center justify-center px-6 text-center text-sm text-white/80">
+                      {b.title}
+                    </span>
+                  )}
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      background:
+                        "linear-gradient(105deg, rgba(255,255,255,.2), transparent 38%, transparent 72%, rgba(0,0,0,.2))",
+                    }}
                   />
-                ) : (
-                  <span className="flex h-full items-center justify-center px-4 text-center text-sm">
-                    {b.title}
-                  </span>
-                )}
+                </div>
+                <div
+                  style={{
+                    ...face,
+                    inset: 0,
+                    transform: "rotateY(180deg)",
+                    background: "linear-gradient(105deg, #e6dfcd, #f4eee0)",
+                    borderRadius: "6px 2px 2px 6px",
+                  }}
+                />
               </div>
             </div>
-
-            <div
-              aria-hidden="true"
-              className="mx-auto mt-5 h-4 rounded-[50%] bg-black blur-lg transition-all duration-[520ms]"
-              style={{ width: on ? 150 : 180, opacity: on ? 0.16 : 0.26 }}
-            />
-            <p className="mt-2 text-center font-sans text-sm text-muted-foreground">
-              {b.title}
-            </p>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
