@@ -66,7 +66,9 @@ export default async function Book3DTestPage() {
           хваната, курсорът не я води — командва само ръката.
         </p>
         {main ? (
-          <BookLab cover={main.cover} title={main.title} />
+          // Пет празни листа — щом качите снимките на страниците, на тяхно
+          // място влизат адресите им и нищо друго не се променя.
+          <BookLab cover={main.cover} title={main.title} pages={[null, null, null, null, null]} />
         ) : (
           <p className="text-center text-muted-foreground">
             Няма публикуван продукт с корица.

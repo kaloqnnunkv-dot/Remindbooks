@@ -46,15 +46,36 @@ const PAGE_EDGE =
 const PAGE_EDGE_V =
   "repeating-linear-gradient(to bottom, #f6f1e4 0 1px, #ded5c0 1px 2px)";
 
+/** Колко се приближава книгата в режим „Разлисти“. */
+const READ_Z = 380;
+
 export function Book3D({
   cover,
   title,
+  pages = [],
   tuning = DEFAULT_TUNING,
 }: {
   cover: string | null;
   title: string;
+  /** Снимки на първите страници. Липсващите се рисуват като празен лист. */
+  pages?: (string | null)[];
   tuning?: BookTuning;
 }) {
+  // Един лист носи две страници — лице и гръб.
+  const leaves: { front: string | null; back: string | null; nums: [number, number] }[] = [];
+  for (let i = 0; i < pages.length; i += 2) {
+    leaves.push({
+      front: pages[i] ?? null,
+      back: pages[i + 1] ?? null,
+      nums: [i + 1, i + 2],
+    });
+  }
+  // При нечетен брой последният гръб е празен — няма смисъл да се обръща.
+  const maxTurn = pages.length % 2 === 0 ? leaves.length : leaves.length - 1;
+
+  const [reading, setReading] = useState(false);
+  const [turned, setTurned] = useState(0);
+
   const sceneRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
@@ -75,10 +96,14 @@ export function Book3D({
     nudge: 0, // добавка от влаченето нагоре/надолу
     open: 0, // показвано отваряне, 0–1
     speed: 0, // скорост на влачене
+    read: 0, // преход към режим „Разлисти“, 0–1
+    reading: false,
     dragging: false,
     lastX: 0,
     lastY: 0,
   });
+
+  s.current.reading = reading;
 
   useEffect(() => {
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -87,6 +112,10 @@ export function Book3D({
     const tick = () => {
       const v = s.current;
       const t = tune.current;
+
+      // Преходът към разлистване е една стойност 0–1; всичко останало се
+      // смесва по нея, за да няма два състезаващи се начина на движение.
+      v.read += ((v.reading ? 1 : 0) - v.read) * t.ease * 0.9;
 
       // Скоростта затихва сама — оттам идва и затварянето на корицата.
       v.speed *= 0.9;
@@ -101,14 +130,22 @@ export function Book3D({
       const want = Math.min(1, Math.abs(v.speed) / t.openAt);
       v.open += (want - v.open) * t.ease * 1.4;
 
-      v.curY += (v.aimY + v.spin - v.curY) * t.ease;
-      v.curX += (v.aimX + v.nudge - v.curX) * t.ease;
+      // В режим „Разлисти“ книгата се изправя срещу читателя; свободната игра
+      // отстъпва плавно, вместо да бъде прекъсната.
+      const free = 1 - v.read;
+      v.curY += ((v.aimY + v.spin) * free - v.curY) * t.ease;
+      v.curX += ((v.aimX + v.nudge) * free + v.read * -6 - v.curX) * t.ease;
 
       const book = bookRef.current;
       if (book) {
-        book.style.transform = `rotateX(${v.curX.toFixed(2)}deg) rotateY(${v.curY.toFixed(2)}deg)`;
+        // Тегелът е в левия ръб, затова разтвореният лист излиза наляво —
+        // книгата се измества надясно с половин ширина, за да остане в центъра.
+        book.style.transform =
+          `translateX(${(v.read * (W / 2)).toFixed(1)}px) translateZ(${(v.read * READ_Z).toFixed(1)}px) ` +
+          `rotateX(${v.curX.toFixed(2)}deg) rotateY(${v.curY.toFixed(2)}deg)`;
       }
-      const angle = v.open * t.maxOpen;
+      // Отварянето от влаченето отстъпва на пълния разтвор при разлистване.
+      const angle = v.open * t.maxOpen * free + v.read * 178;
       const cov = coverRef.current;
       if (cov) {
         cov.style.transform = `translateZ(${D / 2}px) rotateY(${(-angle).toFixed(2)}deg)`;
@@ -121,9 +158,10 @@ export function Book3D({
       }
       const sh = shadowRef.current;
       if (sh) {
-        // Сянката се разлива, докато корицата се отваря.
-        sh.style.transform = `translateX(-50%) scaleX(${(1 + v.open * 0.75).toFixed(3)})`;
-        sh.style.opacity = `${(0.28 - v.open * 0.1).toFixed(3)}`;
+        // Сянката се разлива, докато корицата се отваря, и гасне при
+        // разлистване — там книгата вече не стои на плот.
+        sh.style.transform = `translateX(-50%) scaleX(${(1 + v.open * 0.75 + v.read * 0.6).toFixed(3)})`;
+        sh.style.opacity = `${((0.28 - v.open * 0.1) * (1 - v.read)).toFixed(3)}`;
       }
 
       frame = requestAnimationFrame(tick);
@@ -136,6 +174,8 @@ export function Book3D({
   const onPointerMove = (e: React.PointerEvent) => {
     const v = s.current;
     const t = tune.current;
+    // В режим „Разлисти“ книгата стои мирно — иначе четенето става невъзможно.
+    if (v.reading) return;
 
     if (v.dragging) {
       const dx = e.clientX - v.lastX;
@@ -165,6 +205,7 @@ export function Book3D({
 
   const startDrag = (e: React.PointerEvent) => {
     const v = s.current;
+    if (v.reading) return;
     v.dragging = true;
     v.lastX = e.clientX;
     v.lastY = e.clientY;
@@ -179,6 +220,7 @@ export function Book3D({
   const face: React.CSSProperties = { position: "absolute", backfaceVisibility: "hidden" };
 
   return (
+    <div>
     <div
       ref={sceneRef}
       onPointerMove={onPointerMove}
@@ -189,7 +231,9 @@ export function Book3D({
         s.current.aimY = 0;
         s.current.aimX = 0;
       }}
-      className="relative flex h-[560px] w-full cursor-grab touch-none select-none items-center justify-center active:cursor-grabbing"
+      className={`relative flex h-[560px] w-full touch-none select-none items-center justify-center ${
+        reading ? "cursor-default" : "cursor-grab active:cursor-grabbing"
+      }`}
       style={{ perspective: "1800px" }}
     >
       {/* Сянка на пода — извън 3D слоя, за да не се върти с книгата */}
@@ -304,6 +348,33 @@ export function Book3D({
           }}
         />
 
+        {/* Листата за разлистване.
+            Всеки лист виси на същия тегел като корицата и се обръща на 178°.
+            Отместването по Z е така, че лист 0 да е най-отгоре отдясно — и
+            след обръщането същият ред да се запази отляво, само огледален. */}
+        {reading &&
+          leaves.map((leaf, k) => (
+            <div
+              key={k}
+              style={{
+                position: "absolute",
+                inset: "6px 8px 6px 8px",
+                transformOrigin: "left center",
+                transformStyle: "preserve-3d",
+                transform: `translateZ(${D / 2 - 2 - k * 0.5}px) rotateY(${k < turned ? -178 : 0}deg)`,
+                transition: "transform 720ms cubic-bezier(.3,.75,.25,1)",
+              }}
+            >
+              <PageFace src={leaf.front} number={leaf.nums[0]} style={face} />
+              <PageFace
+                src={leaf.back}
+                number={leaf.nums[1]}
+                mirrored
+                style={{ ...face, transform: "rotateY(180deg)" }}
+              />
+            </div>
+          ))}
+
         {/* Корицата: върти се около левия си ръб */}
         <div
           ref={coverRef}
@@ -364,6 +435,109 @@ export function Book3D({
         </div>
       </div>
     </div>
+
+    {/* Управление */}
+    <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+      {!reading ? (
+        <button
+          type="button"
+          onClick={() => {
+            setTurned(0);
+            setReading(true);
+          }}
+          disabled={leaves.length === 0}
+          className="rounded-md bg-primary px-6 py-2.5 font-sans text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+        >
+          Разлисти
+        </button>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => setTurned((n) => Math.max(0, n - 1))}
+            disabled={turned === 0}
+            className="rounded-md border border-border px-4 py-2.5 font-sans text-sm font-bold disabled:opacity-40"
+          >
+            ‹ Назад
+          </button>
+          <span className="min-w-[9rem] text-center font-sans text-sm text-muted-foreground">
+            Страница {Math.min(turned * 2 + 1, pages.length)} от {pages.length}
+          </span>
+          <button
+            type="button"
+            onClick={() => setTurned((n) => Math.min(maxTurn, n + 1))}
+            disabled={turned >= maxTurn}
+            className="rounded-md border border-border px-4 py-2.5 font-sans text-sm font-bold disabled:opacity-40"
+          >
+            Напред ›
+          </button>
+          <button
+            type="button"
+            onClick={() => setReading(false)}
+            className="rounded-md px-4 py-2.5 font-sans text-sm font-bold text-muted-foreground hover:text-foreground"
+          >
+            Затвори
+          </button>
+        </>
+      )}
+    </div>
+    </div>
+  );
+}
+
+/**
+ * Една страница — качена снимка или празен лист, ако още няма такава.
+ *
+ * Числото стои в ъгъла, за да е ясно коя страница се вижда, докато снимките
+ * още ги няма.
+ */
+function PageFace({
+  src,
+  number,
+  mirrored = false,
+  style,
+}: {
+  src: string | null;
+  number: number;
+  mirrored?: boolean;
+  style: React.CSSProperties;
+}) {
+  return (
+    <div
+      style={{
+        ...style,
+        inset: 0,
+        overflow: "hidden",
+        borderRadius: mirrored ? "4px 1px 1px 4px" : "1px 4px 4px 1px",
+        background: "linear-gradient(105deg, #f3ecdc, #fdfaf1 45%)",
+        // Сянка откъм тегела — там страницата хлътва към сгъвката.
+        boxShadow: mirrored
+          ? "inset -16px 0 24px -16px rgba(0,0,0,.4)"
+          : "inset 16px 0 24px -16px rgba(0,0,0,.4)",
+      }}
+    >
+      {src ? (
+        <Image src={src} alt="" fill sizes="250px" className="object-cover" draggable={false} />
+      ) : (
+        <span
+          aria-hidden="true"
+          className="absolute inset-0"
+          style={{
+            // Празен лист с намек за редове текст.
+            background:
+              "repeating-linear-gradient(to bottom, transparent 0 26px, rgba(52,44,37,.13) 26px 28px)",
+            margin: "34px 22px",
+          }}
+        />
+      )}
+      <span
+        className={`absolute bottom-2 font-sans text-[10px] text-muted-foreground ${
+          mirrored ? "left-3" : "right-3"
+        }`}
+      >
+        {number}
+      </span>
+    </div>
   );
 }
 
@@ -373,7 +547,15 @@ export function Book3D({
  * Регулаторите са само за пробата — за да може усещането да се нагласи на
  * място, вместо да се гадае по числа в кода.
  */
-export function BookLab({ cover, title }: { cover: string | null; title: string }) {
+export function BookLab({
+  cover,
+  title,
+  pages = [],
+}: {
+  cover: string | null;
+  title: string;
+  pages?: (string | null)[];
+}) {
   const [t, setT] = useState<BookTuning>(DEFAULT_TUNING);
 
   const sliders: { key: keyof BookTuning; label: string; min: number; max: number; step: number }[] =
@@ -387,7 +569,7 @@ export function BookLab({ cover, title }: { cover: string | null; title: string 
 
   return (
     <div className="grid items-center gap-8 lg:grid-cols-[1fr_280px]">
-      <Book3D cover={cover} title={title} tuning={t} />
+      <Book3D cover={cover} title={title} pages={pages} tuning={t} />
 
       <div className="rounded-md border border-border bg-card p-5">
         <p className="font-sans text-xs font-bold uppercase tracking-wider text-muted-foreground">
