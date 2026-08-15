@@ -62,8 +62,16 @@ const PAGE_EDGE_V =
 /** Колко се приближава книгата в режим „Разлисти“. */
 const READ_Z = 380;
 
-/** През колко пиксела плъзгане се обръща по една страница. */
-const SWIPE_STEP = 70;
+/** През колко пиксела плъзгане страницата изминава целия си път. */
+const SWIPE_SPAN = 240;
+
+/**
+ * Страница, която в момента се обръща с ръка.
+ *
+ * `dir` е 1 при отгръщане напред и −1 при връщане назад; `progress` е 0–1 —
+ * колко от пътя е изминала. Докато я държите, тя стои точно там.
+ */
+type LeafDrag = { leaf: number; dir: 1 | -1; progress: number };
 
 export function Book3D({
   cover,
@@ -91,6 +99,7 @@ export function Book3D({
 
   const [reading, setReading] = useState(false);
   const [turned, setTurned] = useState(0);
+  const [drag, setDrag] = useState<LeafDrag | null>(null);
 
   const sceneRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
@@ -120,6 +129,8 @@ export function Book3D({
     dragging: false,
     swiping: false, // плъзгане за прелистване
     swipeFrom: 0,
+    swipeDir: 0 as 0 | 1 | -1, // 0 = посоката още не е решена
+    swipeLeaf: -1,
     lastX: 0,
     lastY: 0,
   });
@@ -216,19 +227,38 @@ export function Book3D({
     const v = s.current;
     const t = tune.current;
 
-    // В режим „Разлисти“ книгата стои мирно, а плъзгането обръща страници:
-    // наляво напред, надясно назад. Отправната точка се мести при всяко
-    // обръщане, за да може едно дълго плъзгане да прелисти няколко страници.
+    // В режим „Разлисти“ книгата стои мирно, а плъзгането води една страница.
+    // Тя следва ръката през целия си път и остава там, където я оставите —
+    // пуснете ли я, доизминава пътя си или се връща.
     if (v.reading) {
       if (!v.swiping) return;
-      const dx = e.clientX - v.swipeFrom;
-      if (dx <= -SWIPE_STEP) {
+
+      // Посоката се решава веднъж, при първото осезаемо движение, и оттам
+      // нататък не се мени. Оттук идва и правилото „едно плъзгане — една
+      // страница“: втора страница не може да тръгне, докато не пуснете.
+      if (v.swipeDir === 0) {
+        const dx = e.clientX - v.swipeFrom;
+        if (Math.abs(dx) < 5) return;
+        const dir = dx < 0 ? 1 : -1;
+        const leaf = dir === 1 ? turned : turned - 1;
+        const possible = dir === 1 ? turned < maxTurn : turned > 0;
+        if (!possible || leaf < 0 || leaf >= leaves.length) {
+          v.swiping = false;
+          return;
+        }
+        v.swipeDir = dir;
+        v.swipeLeaf = leaf;
         v.swipeFrom = e.clientX;
-        setTurned((n) => Math.min(maxTurn, n + 1));
-      } else if (dx >= SWIPE_STEP) {
-        v.swipeFrom = e.clientX;
-        setTurned((n) => Math.max(0, n - 1));
       }
+
+      // Движение в избраната посока избутва страницата напред; връщане назад
+      // я прибира — затова знакът зависи от посоката.
+      const travel = v.swipeDir === 1 ? v.swipeFrom - e.clientX : e.clientX - v.swipeFrom;
+      setDrag({
+        leaf: v.swipeLeaf,
+        dir: v.swipeDir,
+        progress: clamp01(travel / SWIPE_SPAN),
+      });
       return;
     }
 
@@ -273,6 +303,8 @@ export function Book3D({
     if (v.reading) {
       v.swiping = true;
       v.swipeFrom = e.clientX;
+      v.swipeDir = 0;
+      v.swipeLeaf = -1;
       return;
     }
     v.dragging = true;
@@ -284,6 +316,18 @@ export function Book3D({
     const v = s.current;
     v.dragging = false;
     v.swiping = false;
+
+    // Пусната страница доизминава пътя си, ако е минала средата, иначе пада
+    // обратно. Самото доизминаване е CSS преход — щом `drag` изчезне,
+    // страницата тръгва към покойното си положение.
+    if (drag) {
+      if (drag.progress >= 0.5) {
+        setTurned((n) =>
+          drag.dir === 1 ? Math.min(maxTurn, n + 1) : Math.max(0, n - 1),
+        );
+      }
+      setDrag(null);
+    }
     const el = e.currentTarget as HTMLElement;
     // Освобождаваме само ако наистина сме прихванали — иначе някои браузъри
     // хвърлят грешка.
@@ -428,10 +472,23 @@ export function Book3D({
         {/* Листата за разлистване — всеки виси на същия тегел като корицата. */}
         {leaves.map((leaf, k) => {
           const flipped = k < turned;
+          const live = drag?.leaf === k;
+
           // Обръщането е точно на 180°, за да не наклони листа към зрителя —
           // при 178° наклонът надделяваше над подредбата по дълбочина.
           // Отдясно първият лист е най-отгоре; отляво — последният обърнат.
-          const z = flipped ? D / 2 - 8 + k * 0.5 : D / 2 - 1 - k * 0.5;
+          let angle = flipped ? -180 : 0;
+          if (live && drag) {
+            // Водената страница стои точно там, докъдето е стигнала ръката.
+            angle = drag.dir === 1 ? -180 * drag.progress : -180 * (1 - drag.progress);
+          }
+          // Водената страница излиза най-отгоре — тя минава над всички.
+          const z = live
+            ? D / 2 - 1
+            : flipped
+              ? D / 2 - 8 + k * 0.5
+              : D / 2 - 1 - k * 0.5;
+
           return (
             <div
               key={k}
@@ -440,8 +497,10 @@ export function Book3D({
                 inset: "6px 8px 6px 8px",
                 transformOrigin: "left center",
                 transformStyle: "preserve-3d",
-                transform: `translateZ(${z}px) rotateY(${flipped ? -180 : 0}deg)`,
-                transition: "transform 720ms cubic-bezier(.3,.75,.25,1)",
+                transform: `translateZ(${z}px) rotateY(${angle}deg)`,
+                // Докато ръката я води, преход няма — иначе страницата щеше
+                // да изостава от пръста.
+                transition: live ? "none" : "transform 620ms cubic-bezier(.3,.8,.25,1)",
               }}
             >
               <PageFace src={leaf.front} number={leaf.nums[0]} style={face} />
@@ -710,8 +769,17 @@ const HD = 30;
  * и се разперват — лявата наляво, дясната надясно. Завъртането по Y дава на
  * страничните лек профил, за да се вижда дебелината им.
  */
+/*
+ * Лявата излиза напред по-малко от дясната, и то нарочно.
+ *
+ * Капакът се отваря надясно. При дясната книга той отива навън и не среща
+ * нищо; при лявата минава точно над средната. Върхът му отстои около 70
+ * единици напред от самата книга, а най-близката точка на средната е на 72 —
+ * затова лявата може да излезе най-много до нулата, преди отвореният ѝ капак
+ * да изскочи отпред.
+ */
 const FAN = [
-  { x: -232, z: -80, rotZ: -10, rotY: 20, lift: 110 },
+  { x: -232, z: -80, rotZ: -10, rotY: 20, lift: 50 },
   { x: 0, z: 70, rotZ: 4, rotY: -5, lift: 160 },
   { x: 232, z: -80, rotZ: 10, rotY: -20, lift: 110 },
 ];
