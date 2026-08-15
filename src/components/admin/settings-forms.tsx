@@ -3,14 +3,18 @@
 import { useActionState, useState } from "react";
 import { saveSettings } from "@/app/actions/admin-content";
 import type { AdminState } from "@/app/actions/admin-products";
-import { Alert, Button, Card, Field, Input, Textarea, cn } from "../ui";
+import { Alert, Button, Card, Field, Input, Select, Textarea, cn } from "../ui";
 
 const initialState: AdminState = { ok: false, message: "" };
 
 type LegalKey = "privacy" | "cookies" | "terms" | "returns";
 
+export type HeroChoice = { id: string; title: string; hasCover: boolean };
+
 type Props = {
   settings: Record<string, string>;
+  /** Заглавията, между които може да се избира за hero ветрилото. */
+  products: HeroChoice[];
   legalDefaults: Record<LegalKey, string>;
   legalMeta: Record<LegalKey, { slug: string; title: string; description: string }>;
 };
@@ -21,7 +25,7 @@ const TABS = [
   { key: "legal", label: "Правни документи" },
 ] as const;
 
-export function SettingsForms({ settings, legalDefaults, legalMeta }: Props) {
+export function SettingsForms({ settings, products, legalDefaults, legalMeta }: Props) {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>("home");
 
   return (
@@ -44,7 +48,7 @@ export function SettingsForms({ settings, legalDefaults, legalMeta }: Props) {
         ))}
       </div>
 
-      {tab === "home" && <HomeSettings settings={settings} />}
+      {tab === "home" && <HomeSettings settings={settings} products={products} />}
       {tab === "about" && <AboutSettings settings={settings} />}
       {tab === "legal" && (
         <LegalSettings
@@ -84,12 +88,54 @@ function SaveBar({
   );
 }
 
-function HomeSettings({ settings }: { settings: Record<string, string> }) {
+/** Ключовете, под които се пазят избраните три книги. */
+const HERO_KEYS = ["hero_book_1", "hero_book_2", "hero_book_3"] as const;
+const HERO_SLOTS = ["Лява (отзад)", "Средна (отпред)", "Дясна (отзад)"] as const;
+
+function HomeSettings({
+  settings,
+  products,
+}: {
+  settings: Record<string, string>;
+  products: HeroChoice[];
+}) {
   const [state, action, pending] = useActionState(saveSettings, initialState);
 
   return (
     <form action={action}>
-      <Card className="p-6 space-y-4">
+      <Card className="p-6 space-y-5">
+        <div>
+          <h2 className="font-sans text-lg font-bold">Книги в горната секция</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Трите книги, подредени като карти в ръка на началната страница.
+            Оставите ли празно, мястото се попълва само — първо препоръчаните,
+            после най-продаваните, после най-новите.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          {HERO_KEYS.map((key, i) => (
+            <Field key={key} label={HERO_SLOTS[i]!} htmlFor={`s-${key}`}>
+              <Select id={`s-${key}`} name={key} defaultValue={settings[key] ?? ""}>
+                <option value="">— автоматично —</option>
+                {products.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.title}
+                    {p.hasCover ? "" : " (без корица)"}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          ))}
+        </div>
+
+        <Alert>
+          Заглавие без корица се показва само с името си върху книгата — за
+          горната секция изберете такива с качена корица.
+        </Alert>
+      </Card>
+
+      <Card className="mt-6 p-6 space-y-4">
         <h2 className="font-sans text-lg font-bold">Секция „За нас“ на началната страница</h2>
 
         <Field

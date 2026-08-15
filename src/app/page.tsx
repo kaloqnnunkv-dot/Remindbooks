@@ -36,25 +36,68 @@ export type HeroBook = {
   href: string;
 };
 
+/** Ключовете, под които администраторът пази избраните книги. */
+const HERO_KEYS = ["hero_book_1", "hero_book_2", "hero_book_3"] as const;
+
 /**
  * Трите заглавия за hero ветрилото.
  *
- * Първо препоръчаните, после най-продаваните, после най-новите — и само с
- * корица, защото книга без корица във ветрилото изглежда като грешка.
+ * Първо се гледа изборът от админ панела — по едно място за лявата, средната
+ * и дясната книга. Празните места се допълват сами: препоръчани, после
+ * най-продавани, после най-нови, и само с корица.
+ *
+ * Заглавие, което междувременно е скрито или изтрито, се пропуска — иначе
+ * ветрилото щеше да зее или да води към несъществуваща страница.
  */
 async function getHeroBooks(): Promise<HeroBook[]> {
-  const rows = await db.product.findMany({
-    where: { isPublished: true, coverImage: { not: null } },
-    orderBy: [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }],
-    take: 3,
-    select: { id: true, slug: true, title: true, type: true, coverImage: true },
+  const select = {
+    id: true,
+    slug: true,
+    title: true,
+    type: true,
+    coverImage: true,
+  } as const;
+
+  const settings = await db.setting.findMany({
+    where: { key: { in: [...HERO_KEYS] } },
   });
-  return rows.map((r) => ({
-    id: r.id,
-    title: r.title,
-    cover: publicUrl(r.coverImage),
-    href: productHref(r),
-  }));
+  const chosenIds = HERO_KEYS.map(
+    (k) => settings.find((s) => s.key === k)?.value?.trim() || null,
+  );
+
+  const picked = chosenIds.some(Boolean)
+    ? await db.product.findMany({
+        where: { id: { in: chosenIds.filter((x): x is string => Boolean(x)) }, isPublished: true },
+        select,
+      })
+    : [];
+
+  // Подредбата в панела определя коя книга къде застава, затова местата се
+  // попълват по ключ, а не по реда, в който базата ги е върнала.
+  const slots = chosenIds.map((id) => (id ? picked.find((p) => p.id === id) ?? null : null));
+
+  const missing = slots.filter((x) => !x).length;
+  if (missing > 0) {
+    const taken = slots.filter(Boolean).map((p) => p!.id);
+    const fill = await db.product.findMany({
+      where: { isPublished: true, coverImage: { not: null }, id: { notIn: taken } },
+      orderBy: [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }],
+      take: missing,
+      select,
+    });
+    for (let i = 0, f = 0; i < slots.length && f < fill.length; i++) {
+      if (!slots[i]) slots[i] = fill[f++]!;
+    }
+  }
+
+  return slots
+    .filter((p): p is NonNullable<typeof p> => Boolean(p))
+    .map((p) => ({
+      id: p.id,
+      title: p.title,
+      cover: publicUrl(p.coverImage),
+      href: productHref(p),
+    }));
 }
 
 async function getAboutText(): Promise<string> {

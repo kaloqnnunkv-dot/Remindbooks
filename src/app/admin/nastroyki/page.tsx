@@ -16,8 +16,22 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminSettingsPage() {
-  const rows = await db.setting.findMany();
+  const [rows, catalogue] = await Promise.all([
+    db.setting.findMany(),
+    // Заглавията за избор в горната секция. Само публикуваните — непубликувано
+    // заглавие би водило до страница, която посетителят не може да отвори.
+    db.product.findMany({
+      where: { isPublished: true },
+      orderBy: { title: "asc" },
+      select: { id: true, title: true, coverImage: true },
+    }),
+  ]);
   const settings = Object.fromEntries(rows.map((r) => [r.key, r.value]));
+  const products = catalogue.map((p) => ({
+    id: p.id,
+    title: p.title,
+    hasCover: Boolean(p.coverImage),
+  }));
 
   const integrations = [
     {
@@ -86,6 +100,7 @@ export default async function AdminSettingsPage() {
 
       <SettingsForms
         settings={settings}
+        products={products}
         legalDefaults={{
           privacy: getDefaultLegalContent("privacy"),
           cookies: getDefaultLegalContent("cookies"),
