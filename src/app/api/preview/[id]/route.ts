@@ -26,7 +26,16 @@ export async function GET(
     return new NextResponse("Откъсът не е намерен.", { status: 404 });
   }
 
-  if (isStorageConfigured) {
+  // PDF откъсите се четат от pdf.js в браузъра, за да се разлистват като
+  // книга. Затова НЕ пренасочваме към хранилището: то не връща
+  // Access-Control-Allow-Origin и четенето през fetch се блокира. Файлът е
+  // няколко страници, тъй че подаването му оттук струва малко.
+  //
+  // Аудио откъсите остават с пренасочване — те тежат и се пускат от <audio>,
+  // а той не се съобразява с CORS.
+  const isPdf = contentTypeFor(product.previewKey) === "application/pdf";
+
+  if (isStorageConfigured && !isPdf) {
     const url = await signedDownloadUrl(product.previewKey, 3600);
     return NextResponse.redirect(url, 302);
   }
