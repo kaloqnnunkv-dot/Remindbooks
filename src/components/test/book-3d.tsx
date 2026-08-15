@@ -55,6 +55,7 @@ export function Book3D({
   const sceneRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
   const coverRef = useRef<HTMLDivElement>(null);
+  const backCoverRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
 
   // Настройките се четат вътре в кадровия цикъл, затова стоят в ref —
@@ -106,14 +107,21 @@ export function Book3D({
       if (book) {
         book.style.transform = `rotateX(${v.curX.toFixed(2)}deg) rotateY(${v.curY.toFixed(2)}deg)`;
       }
+      const angle = v.open * t.maxOpen;
       const cov = coverRef.current;
       if (cov) {
-        cov.style.transform = `translateZ(${D / 2}px) rotateY(${(-v.open * t.maxOpen).toFixed(2)}deg)`;
+        cov.style.transform = `translateZ(${D / 2}px) rotateY(${(-angle).toFixed(2)}deg)`;
+      }
+      // Задният капак се отваря със същия ъгъл, но на другата страна — така
+      // книгата се разтваря симетрично, а не само отпред.
+      const back = backCoverRef.current;
+      if (back) {
+        back.style.transform = `translateZ(${-D / 2}px) rotateY(${angle.toFixed(2)}deg)`;
       }
       const sh = shadowRef.current;
       if (sh) {
         // Сянката се разлива, докато корицата се отваря.
-        sh.style.transform = `translateX(-50%) scaleX(${(1 + v.open * 0.5).toFixed(3)})`;
+        sh.style.transform = `translateX(-50%) scaleX(${(1 + v.open * 0.75).toFixed(3)})`;
         sh.style.opacity = `${(0.28 - v.open * 0.1).toFixed(3)}`;
       }
 
@@ -191,16 +199,37 @@ export function Book3D({
         style={{ width: W, height: H, transformStyle: "preserve-3d" }}
         className="relative"
       >
-        {/* Заден капак */}
+        {/* Заден капак — на същия тегел, отваря се в обратната посока */}
         <div
+          ref={backCoverRef}
           style={{
-            ...face,
+            position: "absolute",
             inset: 0,
-            transform: `rotateY(180deg) translateZ(${D / 2}px)`,
-            background: "linear-gradient(135deg, #4a3f34, #2f2823)",
-            borderRadius: "2px 6px 6px 2px",
+            transformOrigin: "left center",
+            transformStyle: "preserve-3d",
+            transform: `translateZ(${-D / 2}px)`,
           }}
-        />
+        >
+          {/* Външна страна */}
+          <div
+            style={{
+              ...face,
+              inset: 0,
+              transform: "rotateY(180deg)",
+              background: "linear-gradient(135deg, #4a3f34, #2f2823)",
+              borderRadius: "6px 2px 2px 6px",
+            }}
+          />
+          {/* Вътрешна страна */}
+          <div
+            style={{
+              ...face,
+              inset: 0,
+              background: "linear-gradient(105deg, #e6dfcd, #f4eee0)",
+              borderRadius: "2px 6px 6px 2px",
+            }}
+          />
+        </div>
 
         {/* Тегел */}
         <div
@@ -255,6 +284,18 @@ export function Book3D({
             transform: `translateZ(${D / 2 - 3}px)`,
             background: "linear-gradient(105deg, #efe8d8, #fbf7ec 40%)",
             boxShadow: "inset 14px 0 22px -14px rgba(0,0,0,.45)",
+          }}
+        />
+
+        {/* Последната страница — иначе отзад зее празно, щом капакът се отвори.
+            Отстъпите и сянката са огледални, защото лицето е обърнато. */}
+        <div
+          style={{
+            ...face,
+            inset: "6px 10px 6px 6px",
+            transform: `rotateY(180deg) translateZ(${D / 2 - 3}px)`,
+            background: "linear-gradient(105deg, #efe8d8, #fbf7ec 40%)",
+            boxShadow: "inset -14px 0 22px -14px rgba(0,0,0,.45)",
           }}
         />
 
