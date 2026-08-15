@@ -30,6 +30,8 @@ export type BookTuning = {
   pull: number;
   /** Колко се открехват капаците, докато книгата следва курсора, в градуси. */
   idleOpen: number;
+  /** Колко трае влизането в режим „Разлисти“, в милисекунди. */
+  readMs: number;
   /** Колко бързо стойностите догонват целта (0–1). По-малко = по-плавно. */
   ease: number;
 };
@@ -40,8 +42,16 @@ export const DEFAULT_TUNING: BookTuning = {
   maxOpen: 115,
   pull: 26,
   idleOpen: 8,
+  readMs: 2200,
   ease: 0.09,
 };
+
+/** Плавно тръгване и плавно спиране — без рязък старт. */
+function easeInOut(x: number): number {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+const clamp01 = (x: number) => (x < 0 ? 0 : x > 1 ? 1 : x);
 
 /** Ръбът на листата — тънки светли и тъмни ивици. */
 const PAGE_EDGE =
@@ -101,7 +111,8 @@ export function Book3D({
     speed: 0, // скорост на влачене
     stir: 0, // скорост на курсора, 0–1 — открехва капаците
     hover: 0, // показвана стойност на горното
-    read: 0, // преход към режим „Разлисти“, 0–1
+    p: 0, // ход на прехода към „Разлисти“, 0–1, воден от времето
+    lastT: 0,
     reading: false,
     dragging: false,
     lastX: 0,
@@ -114,13 +125,20 @@ export function Book3D({
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let frame = 0;
 
-    const tick = () => {
+    const tick = (now: number) => {
       const v = s.current;
       const t = tune.current;
 
-      // Преходът към разлистване е една стойност 0–1; всичко останало се
-      // смесва по нея, за да няма два състезаващи се начина на движение.
-      v.read += ((v.reading ? 1 : 0) - v.read) * t.ease * 0.9;
+      // Преходът върви по време, а не по затихване — така трае точно колкото
+      // е зададено и не пълзи безкрайно към целта.
+      const dt = v.lastT ? Math.min(64, now - v.lastT) : 16;
+      v.lastT = now;
+      v.p = clamp01(v.p + ((v.reading ? 1 : -1) * dt) / t.readMs);
+
+      // Двете движения се застъпват: книгата тръгва към читателя, а някъде по
+      // средата корицата започва да се отваря — вместо едно след друго.
+      const zoom = easeInOut(clamp01(v.p / 0.62));
+      const spread = easeInOut(clamp01((v.p - 0.22) / 0.78));
 
       // Скоростта затихва сама — оттам идва и затварянето на корицата.
       v.speed *= 0.9;
@@ -142,36 +160,44 @@ export function Book3D({
 
       // В режим „Разлисти“ книгата се изправя срещу читателя; свободната игра
       // отстъпва плавно, вместо да бъде прекъсната.
-      const free = 1 - v.read;
+      const free = 1 - zoom;
+      // Лек замах при приближаването — тръгва завъртяна и се уляга.
+      const sway = Math.sin(zoom * Math.PI) * 11;
       v.curY += ((v.aimY + v.spin) * free - v.curY) * t.ease;
-      v.curX += ((v.aimX + v.nudge) * free + v.read * -6 - v.curX) * t.ease;
+      v.curX += ((v.aimX + v.nudge) * free + zoom * -6 - v.curX) * t.ease;
 
       const book = bookRef.current;
       if (book) {
         // Тегелът е в левия ръб, затова разтвореният лист излиза наляво —
         // книгата се измества надясно с половин ширина, за да остане в центъра.
         book.style.transform =
-          `translateX(${(v.read * (W / 2)).toFixed(1)}px) translateZ(${(v.read * READ_Z).toFixed(1)}px) ` +
-          `rotateX(${v.curX.toFixed(2)}deg) rotateY(${v.curY.toFixed(2)}deg)`;
+          `translateX(${(zoom * (W / 2)).toFixed(1)}px) translateZ(${(zoom * READ_Z).toFixed(1)}px) ` +
+          `rotateX(${v.curX.toFixed(2)}deg) rotateY(${(v.curY + sway).toFixed(2)}deg)`;
       }
-      // Отварянето от влаченето отстъпва на пълния разтвор при разлистване.
-      const angle = (v.open * t.maxOpen + v.hover * t.idleOpen) * free + v.read * 178;
+
+      // Свободната игра на капаците; при разлистване тя отстъпва.
+      const play = (v.open * t.maxOpen + v.hover * t.idleOpen) * free;
+
       const cov = coverRef.current;
       if (cov) {
-        cov.style.transform = `translateZ(${D / 2}px) rotateY(${(-angle).toFixed(2)}deg)`;
+        // Корицата не само се завърта, а и потъва по дълбочина. Иначе,
+        // разтворена наляво, тя оставаше пред прелистените листа и ги
+        // покриваше като празна страница.
+        const z = D / 2 - spread * (D + 10);
+        cov.style.transform = `translateZ(${z.toFixed(1)}px) rotateY(${(-(play + spread * 180)).toFixed(2)}deg)`;
       }
-      // Задният капак се отваря със същия ъгъл, но на другата страна — така
-      // книгата се разтваря симетрично, а не само отпред.
+      // Задният капак следва само свободната игра: при четене той остава
+      // затворен, защото е дъното, върху което лежат страниците.
       const back = backCoverRef.current;
       if (back) {
-        back.style.transform = `translateZ(${-D / 2}px) rotateY(${angle.toFixed(2)}deg)`;
+        back.style.transform = `translateZ(${-D / 2}px) rotateY(${play.toFixed(2)}deg)`;
       }
       const sh = shadowRef.current;
       if (sh) {
         // Сянката се разлива, докато корицата се отваря, и гасне при
         // разлистване — там книгата вече не стои на плот.
-        sh.style.transform = `translateX(-50%) scaleX(${(1 + v.open * 0.75 + v.read * 0.6).toFixed(3)})`;
-        sh.style.opacity = `${((0.28 - v.open * 0.1) * (1 - v.read)).toFixed(3)}`;
+        sh.style.transform = `translateX(-50%) scaleX(${(1 + v.open * 0.75 + zoom * 0.6).toFixed(3)})`;
+        sh.style.opacity = `${((0.28 - v.open * 0.1) * (1 - zoom)).toFixed(3)}`;
       }
 
       frame = requestAnimationFrame(tick);
@@ -364,12 +390,14 @@ export function Book3D({
           }}
         />
 
-        {/* Листата за разлистване.
-            Всеки лист виси на същия тегел като корицата и се обръща на 178°.
-            Отместването по Z е така, че лист 0 да е най-отгоре отдясно — и
-            след обръщането същият ред да се запази отляво, само огледален. */}
-        {reading &&
-          leaves.map((leaf, k) => (
+        {/* Листата за разлистване — всеки виси на същия тегел като корицата. */}
+        {leaves.map((leaf, k) => {
+          const flipped = k < turned;
+          // Обръщането е точно на 180°, за да не наклони листа към зрителя —
+          // при 178° наклонът надделяваше над подредбата по дълбочина.
+          // Отдясно първият лист е най-отгоре; отляво — последният обърнат.
+          const z = flipped ? D / 2 - 8 + k * 0.5 : D / 2 - 1 - k * 0.5;
+          return (
             <div
               key={k}
               style={{
@@ -377,7 +405,7 @@ export function Book3D({
                 inset: "6px 8px 6px 8px",
                 transformOrigin: "left center",
                 transformStyle: "preserve-3d",
-                transform: `translateZ(${D / 2 - 2 - k * 0.5}px) rotateY(${k < turned ? -178 : 0}deg)`,
+                transform: `translateZ(${z}px) rotateY(${flipped ? -180 : 0}deg)`,
                 transition: "transform 720ms cubic-bezier(.3,.75,.25,1)",
               }}
             >
@@ -389,7 +417,8 @@ export function Book3D({
                 style={{ ...face, transform: "rotateY(180deg)" }}
               />
             </div>
-          ))}
+          );
+        })}
 
         {/* Корицата: върти се около левия си ръб */}
         <div
@@ -581,6 +610,7 @@ export function BookLab({
       { key: "maxOpen", label: "Докъде се отваря", min: 20, max: 170, step: 5 },
       { key: "pull", label: "Теглене нагоре/надолу", min: 0, max: 60, step: 2 },
       { key: "idleOpen", label: "Открехване при следване", min: 0, max: 30, step: 1 },
+      { key: "readMs", label: "Време за разлистване (мс)", min: 600, max: 4500, step: 100 },
       { key: "ease", label: "Плавност", min: 0.02, max: 0.3, step: 0.01 },
     ];
 
