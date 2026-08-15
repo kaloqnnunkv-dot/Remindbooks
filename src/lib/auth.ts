@@ -7,10 +7,27 @@ import { z } from "zod";
 import { db } from "./db";
 import { env } from "./env";
 
+/**
+ * Полето се казва `email` по исторически причини, но приема и потребителско
+ * име. Затова тук няма проверка за имейл — разпознаването става по-надолу.
+ */
 const credentialsSchema = z.object({
-  email: z.string().email(),
+  email: z.string().min(1).max(200),
   password: z.string().min(1),
 });
+
+/**
+ * Намира потребителя по имейл или по кратко име.
+ *
+ * Наличието на „@“ решава кое от двете е — така входът с имейл се държи точно
+ * както преди, а кратките имена не могат да се сблъскат с чужд имейл.
+ */
+async function findByIdentifier(raw: string) {
+  const id = raw.toLowerCase().trim();
+  return id.includes("@")
+    ? db.user.findUnique({ where: { email: id } })
+    : db.user.findUnique({ where: { username: id } });
+}
 
 // Провайдърите се събират в масив с общия тип на NextAuth, за да може
 // Google да бъде добавен условно (само когато има конфигурирани ключове).
@@ -18,15 +35,14 @@ const providers: NextAuthConfig["providers"] = [
   Credentials({
     name: "credentials",
     credentials: {
-      email: { label: "Имейл", type: "email" },
+      email: { label: "Имейл или потребителско име", type: "text" },
       password: { label: "Парола", type: "password" },
     },
     async authorize(raw) {
       const parsed = credentialsSchema.safeParse(raw);
       if (!parsed.success) return null;
 
-      const email = parsed.data.email.toLowerCase().trim();
-      const user = await db.user.findUnique({ where: { email } });
+      const user = await findByIdentifier(parsed.data.email);
 
       // Потребител, регистриран само през Google, няма passwordHash.
       if (!user?.passwordHash) return null;

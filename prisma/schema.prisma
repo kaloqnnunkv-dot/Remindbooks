@@ -22,6 +22,9 @@ enum Role {
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
+  /// Кратко име за вход вместо имейл. По желание — повечето потребители
+  /// влизат с имейла си, а администраторите предпочитат кратко име.
+  username      String?   @unique
   emailVerified DateTime?
   passwordHash  String? // null при вход само с Google
   name          String?
@@ -36,14 +39,14 @@ model User {
 
   newsletterOptIn Boolean @default(false)
 
-  accounts      Account[]
-  sessions      Session[]
-  orders        Order[]
-  favorites     Favorite[]
-  reviews       Review[]
-  entitlements  Entitlement[]
-  resetTokens   PasswordResetToken[]
-  giftCardsBought GiftCard[] @relation("GiftCardPurchaser")
+  accounts        Account[]
+  sessions        Session[]
+  orders          Order[]
+  favorites       Favorite[]
+  reviews         Review[]
+  entitlements    Entitlement[]
+  resetTokens     PasswordResetToken[]
+  giftCardsBought GiftCard[]           @relation("GiftCardPurchaser")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -90,12 +93,12 @@ model VerificationToken {
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expires   DateTime
-  usedAt    DateTime?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String    @id @default(cuid())
+  token   String    @unique
+  userId  String
+  expires DateTime
+  usedAt  DateTime?
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -128,22 +131,22 @@ model Product {
   shortDesc   String?     @db.Text
 
   // Цени в стотинки. priceCents = текуща цена, compareAtCents = зачертана "стара" цена.
-  priceCents      Int
-  compareAtCents  Int?
+  priceCents     Int
+  compareAtCents Int?
 
   // Само за PHYSICAL
-  stock          Int     @default(0)
-  lowStockAlert  Int     @default(3)
-  weightGrams    Int?
+  stock         Int  @default(0)
+  lowStockAlert Int  @default(3)
+  weightGrams   Int?
 
   // Само за AUDIO
   durationSeconds Int?
   isFree          Boolean @default(false)
 
   // Файлове в обектното хранилище (S3/R2 ключове, не публични URL-и)
-  fileKey        String? // основният PDF / аудио файл
-  previewKey     String? // безплатен preview (първи страници / откъс)
-  previewPages   Int?    @default(0)
+  fileKey      String? // основният PDF / аудио файл
+  previewKey   String? // безплатен preview (първи страници / откъс)
+  previewPages Int?    @default(0)
 
   coverImage String?
   images     ProductImage[]
@@ -151,22 +154,22 @@ model Product {
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
-  isPublished Boolean @default(false)
-  isFeatured  Boolean @default(false) // "Препоръчан"
+  isPublished  Boolean @default(false)
+  isFeatured   Boolean @default(false) // "Препоръчан"
   isBestseller Boolean @default(false) // "Най-продаван"
 
   // SEO
   metaTitle       String?
   metaDescription String? @db.Text
 
-  reviews    Review[]
-  favorites  Favorite[]
-  orderItems OrderItem[]
+  reviews      Review[]
+  favorites    Favorite[]
+  orderItems   OrderItem[]
   entitlements Entitlement[]
 
   // Свързани книги ("Може да ви хареса") — ръчно зададени
-  relatedTo  ProductRelation[] @relation("RelationSource")
-  relatedBy  ProductRelation[] @relation("RelationTarget")
+  relatedTo ProductRelation[] @relation("RelationSource")
+  relatedBy ProductRelation[] @relation("RelationTarget")
 
   // Участие в комплекти (bundle-и)
   bundleItems BundleItem[]
@@ -236,13 +239,13 @@ model BundleItem {
 // ------------------------------------------------------------------
 
 model Review {
-  id        String  @id @default(cuid())
-  productId String
-  userId    String
-  rating    Int // 1..5
-  title     String?
-  body      String  @db.Text
-  isApproved Boolean @default(true)
+  id               String  @id @default(cuid())
+  productId        String
+  userId           String
+  rating           Int // 1..5
+  title            String?
+  body             String  @db.Text
+  isApproved       Boolean @default(true)
   // Ревю се допуска само от потребител, закупил продукта — пази се за справка
   verifiedPurchase Boolean @default(false)
 
@@ -256,11 +259,11 @@ model Review {
 }
 
 model Favorite {
-  id        String  @id @default(cuid())
+  id        String   @id @default(cuid())
   userId    String
   productId String
-  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 
   @@unique([userId, productId])
@@ -291,8 +294,8 @@ enum FulfillmentType {
 }
 
 model Order {
-  id          String  @id @default(cuid())
-  orderNumber String  @unique // напр. RMB-2026-000123
+  id          String @id @default(cuid())
+  orderNumber String @unique // напр. RMB-2026-000123
 
   userId String?
   user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -365,16 +368,16 @@ model OrderItem {
 
 // Право на достъп до дигитален продукт (PDF/аудио) — след плащане
 model Entitlement {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   userId    String
   productId String
   orderId   String?
 
   // Брой сваляния (за защита от споделяне на линкове)
-  downloadCount Int      @default(0)
-  grantedAt     DateTime @default(now())
+  downloadCount   Int      @default(0)
+  grantedAt       DateTime @default(now())
   // Ръчно отключено от администратор
-  grantedManually Boolean @default(false)
+  grantedManually Boolean  @default(false)
 
   user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
@@ -386,14 +389,14 @@ model Entitlement {
 
 // Достъп за гости (купили PDF без регистрация) — линк по имейл
 model GuestDownloadToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  orderId   String
-  productId String
-  email     String
-  expires   DateTime
-  downloadCount Int  @default(0)
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  token         String   @unique
+  orderId       String
+  productId     String
+  email         String
+  expires       DateTime
+  downloadCount Int      @default(0)
+  createdAt     DateTime @default(now())
 
   @@index([orderId])
 }
@@ -408,18 +411,18 @@ enum DiscountType {
 }
 
 model PromoCode {
-  id           String       @id @default(cuid())
-  code         String       @unique
-  discountType DiscountType
+  id            String       @id @default(cuid())
+  code          String       @unique
+  discountType  DiscountType
   // PERCENT: 1..100, FIXED: стойност в стотинки
-  amount       Int
+  amount        Int
   minOrderCents Int?
-  startsAt     DateTime?
-  expiresAt    DateTime?
-  maxUses      Int?
-  usedCount    Int          @default(0)
-  isActive     Boolean      @default(true)
-  description  String?
+  startsAt      DateTime?
+  expiresAt     DateTime?
+  maxUses       Int?
+  usedCount     Int          @default(0)
+  isActive      Boolean      @default(true)
+  description   String?
 
   orders Order[]
 
@@ -436,11 +439,11 @@ enum GiftCardStatus {
 }
 
 model GiftCard {
-  id            String         @id @default(cuid())
-  code          String         @unique
-  initialCents  Int
-  balanceCents  Int
-  status        GiftCardStatus @default(ACTIVE)
+  id             String         @id @default(cuid())
+  code           String         @unique
+  initialCents   Int
+  balanceCents   Int
+  status         GiftCardStatus @default(ACTIVE)
   recipientEmail String?
   recipientName  String?
   message        String?        @db.Text
@@ -462,11 +465,11 @@ model GiftCard {
 // ------------------------------------------------------------------
 
 model Post {
-  id      String  @id @default(cuid())
-  slug    String  @unique
-  title   String
-  excerpt String? @db.Text
-  body    String  @db.Text
+  id         String  @id @default(cuid())
+  slug       String  @unique
+  title      String
+  excerpt    String? @db.Text
+  body       String  @db.Text
   coverImage String?
 
   isPublished Boolean   @default(false)
@@ -492,14 +495,14 @@ model Tag {
 }
 
 model Comment {
-  id       String  @id @default(cuid())
-  postId   String
-  post     Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
-  authorName String
+  id          String   @id @default(cuid())
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  authorName  String
   authorEmail String
-  body     String  @db.Text
-  isApproved Boolean @default(false)
-  createdAt DateTime @default(now())
+  body        String   @db.Text
+  isApproved  Boolean  @default(false)
+  createdAt   DateTime @default(now())
 
   @@index([postId, isApproved])
 }
@@ -521,14 +524,14 @@ model ContactMessage {
 }
 
 model NewsletterSubscriber {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  isConfirmed  Boolean   @default(false)
-  confirmToken String?   @unique
-  source       String? // "homepage" | "footer" | "checkout"
-  syncedToMailerLite Boolean @default(false)
-  unsubscribedAt DateTime?
-  createdAt    DateTime  @default(now())
+  id                 String    @id @default(cuid())
+  email              String    @unique
+  isConfirmed        Boolean   @default(false)
+  confirmToken       String?   @unique
+  source             String? // "homepage" | "footer" | "checkout"
+  syncedToMailerLite Boolean   @default(false)
+  unsubscribedAt     DateTime?
+  createdAt          DateTime  @default(now())
 }
 
 // Ключ-стойност настройки, редактируеми от админ панела

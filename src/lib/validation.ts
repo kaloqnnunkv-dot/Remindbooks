@@ -34,8 +34,15 @@ export const registerSchema = z
     path: ["confirmPassword"],
   });
 
+/**
+ * Полето приема имейл или кратко потребителско име, затова тук няма проверка
+ * за имейл. Разпознаването и търсенето стават при самото влизане.
+ */
 export const loginSchema = z.object({
-  email: emailSchema,
+  email: z
+    .string()
+    .min(1, "Моля, въведете имейл или потребителско име.")
+    .max(200, "Стойността е твърде дълга."),
   password: z.string().min(1, "Моля, въведете парола."),
 });
 

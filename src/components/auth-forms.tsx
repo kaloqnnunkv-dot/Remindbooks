@@ -59,11 +59,11 @@ export function LoginForm({
         <GlowInput
           id="login-email"
           name="email"
-          type="email"
-          label="Имейл"
+          type="text"
+          label="Имейл или потребителско име"
           placeholder="вашият@имейл.bg"
           required
-          autoComplete="email"
+          autoComplete="username"
           autoFocus
           error={state.errors?.email}
         />
