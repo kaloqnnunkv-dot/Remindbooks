@@ -26,6 +26,8 @@ export type BookTuning = {
   openAt: number;
   /** Докъде се отваря корицата, в градуси. */
   maxOpen: number;
+  /** Докъде се накланя книгата при теглене нагоре и надолу, в градуси. */
+  pull: number;
   /** Колко бързо стойностите догонват целта (0–1). По-малко = по-плавно. */
   ease: number;
 };
@@ -34,6 +36,7 @@ export const DEFAULT_TUNING: BookTuning = {
   tilt: 20,
   openAt: 26,
   maxOpen: 115,
+  pull: 26,
   ease: 0.09,
 };
 
@@ -133,14 +136,6 @@ export function Book3D({
   const onPointerMove = (e: React.PointerEvent) => {
     const v = s.current;
     const t = tune.current;
-    const box = sceneRef.current?.getBoundingClientRect();
-    if (!box) return;
-
-    // −1..1 спрямо центъра на сцената
-    const nx = (e.clientX - box.left) / box.width - 0.5;
-    const ny = (e.clientY - box.top) / box.height - 0.5;
-    v.aimY = nx * t.tilt * 2;
-    v.aimX = -ny * t.tilt;
 
     if (v.dragging) {
       const dx = e.clientX - v.lastX;
@@ -149,11 +144,22 @@ export function Book3D({
       v.lastY = e.clientY;
 
       v.spin += dx * 0.45;
-      // Вертикалното влачене е нарочно едва доловимо.
-      v.nudge = Math.max(-7, Math.min(7, v.nudge + dy * 0.04));
+      v.nudge = Math.max(-t.pull, Math.min(t.pull, v.nudge + dy * 0.16));
       // Плавна скорост, за да не подскача отварянето при трепване на ръката.
       v.speed = v.speed * 0.6 + dx * 0.4;
+      return;
     }
+
+    // Следването на курсора важи само когато книгата не е хваната — иначе
+    // двете движения се борят и завъртането от ръката се размива.
+    const box = sceneRef.current?.getBoundingClientRect();
+    if (!box) return;
+
+    // −1..1 спрямо центъра на сцената
+    const nx = (e.clientX - box.left) / box.width - 0.5;
+    const ny = (e.clientY - box.top) / box.height - 0.5;
+    v.aimY = nx * t.tilt * 2;
+    v.aimX = -ny * t.tilt;
   };
 
   const startDrag = (e: React.PointerEvent) => {
@@ -374,6 +380,7 @@ export function BookLab({ cover, title }: { cover: string | null; title: string 
       { key: "tilt", label: "Наклон след курсора", min: 0, max: 40, step: 1 },
       { key: "openAt", label: "Скорост за пълно отваряне", min: 6, max: 70, step: 1 },
       { key: "maxOpen", label: "Докъде се отваря", min: 20, max: 170, step: 5 },
+      { key: "pull", label: "Теглене нагоре/надолу", min: 0, max: 60, step: 2 },
       { key: "ease", label: "Плавност", min: 0.02, max: 0.3, step: 0.01 },
     ];
 

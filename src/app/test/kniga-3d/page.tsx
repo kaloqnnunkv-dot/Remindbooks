@@ -62,7 +62,8 @@ export default async function Book3DTestPage() {
         </h2>
         <p className="mb-8 text-center text-sm text-muted-foreground">
           Хванете и дръпнете настрани: колкото по-бързо, толкова повече се
-          отваря. Дръпнете нагоре или надолу за лек наклон.
+          отваря. Дръпнете нагоре или надолу, за да я наклоните. Докато е
+          хваната, курсорът не я води — командва само ръката.
         </p>
         {main ? (
           <BookLab cover={main.cover} title={main.title} />
