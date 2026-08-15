@@ -144,7 +144,8 @@ export function Book3D({
       v.lastY = e.clientY;
 
       v.spin += dx * 0.45;
-      v.nudge = Math.max(-t.pull, Math.min(t.pull, v.nudge + dy * 0.16));
+      // Обратен знак: теглене надолу изнася горния ръб напред, а долния назад.
+      v.nudge = Math.max(-t.pull, Math.min(t.pull, v.nudge - dy * 0.16));
       // Плавна скорост, за да не подскача отварянето при трепване на ръката.
       v.speed = v.speed * 0.6 + dx * 0.4;
       return;
