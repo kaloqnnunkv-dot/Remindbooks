@@ -28,6 +28,8 @@ export type BookTuning = {
   maxOpen: number;
   /** Докъде се накланя книгата при теглене нагоре и надолу, в градуси. */
   pull: number;
+  /** Колко се открехват капаците, докато книгата следва курсора, в градуси. */
+  idleOpen: number;
   /** Колко бързо стойностите догонват целта (0–1). По-малко = по-плавно. */
   ease: number;
 };
@@ -37,6 +39,7 @@ export const DEFAULT_TUNING: BookTuning = {
   openAt: 26,
   maxOpen: 115,
   pull: 26,
+  idleOpen: 8,
   ease: 0.09,
 };
 
@@ -96,6 +99,8 @@ export function Book3D({
     nudge: 0, // добавка от влаченето нагоре/надолу
     open: 0, // показвано отваряне, 0–1
     speed: 0, // скорост на влачене
+    stir: 0, // скорост на курсора, 0–1 — открехва капаците
+    hover: 0, // показвана стойност на горното
     read: 0, // преход към режим „Разлисти“, 0–1
     reading: false,
     dragging: false,
@@ -130,6 +135,11 @@ export function Book3D({
       const want = Math.min(1, Math.abs(v.speed) / t.openAt);
       v.open += (want - v.open) * t.ease * 1.4;
 
+      // Движението на курсора също открехва капаците — съвсем малко. Затихва
+      // от само себе си, затова щом ръката спре, книгата се затваря.
+      v.stir *= 0.88;
+      v.hover += (v.stir - v.hover) * t.ease * 1.2;
+
       // В режим „Разлисти“ книгата се изправя срещу читателя; свободната игра
       // отстъпва плавно, вместо да бъде прекъсната.
       const free = 1 - v.read;
@@ -145,7 +155,7 @@ export function Book3D({
           `rotateX(${v.curX.toFixed(2)}deg) rotateY(${v.curY.toFixed(2)}deg)`;
       }
       // Отварянето от влаченето отстъпва на пълния разтвор при разлистване.
-      const angle = v.open * t.maxOpen * free + v.read * 178;
+      const angle = (v.open * t.maxOpen + v.hover * t.idleOpen) * free + v.read * 178;
       const cov = coverRef.current;
       if (cov) {
         cov.style.transform = `translateZ(${D / 2}px) rotateY(${(-angle).toFixed(2)}deg)`;
@@ -195,6 +205,12 @@ export function Book3D({
     // двете движения се борят и завъртането от ръката се размива.
     const box = sceneRef.current?.getBoundingClientRect();
     if (!box) return;
+
+    // Колко бързо се движи ръката — оттам идва лекото открехване.
+    const moved = Math.hypot(e.clientX - v.lastX, e.clientY - v.lastY);
+    v.lastX = e.clientX;
+    v.lastY = e.clientY;
+    v.stir = Math.max(v.stir, Math.min(1, moved / 26));
 
     // −1..1 спрямо центъра на сцената
     const nx = (e.clientX - box.left) / box.width - 0.5;
@@ -564,6 +580,7 @@ export function BookLab({
       { key: "openAt", label: "Скорост за пълно отваряне", min: 6, max: 70, step: 1 },
       { key: "maxOpen", label: "Докъде се отваря", min: 20, max: 170, step: 5 },
       { key: "pull", label: "Теглене нагоре/надолу", min: 0, max: 60, step: 2 },
+      { key: "idleOpen", label: "Открехване при следване", min: 0, max: 30, step: 1 },
       { key: "ease", label: "Плавност", min: 0.02, max: 0.3, step: 0.01 },
     ];
 
