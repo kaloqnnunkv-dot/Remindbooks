@@ -62,6 +62,9 @@ const PAGE_EDGE_V =
 /** Колко се приближава книгата в режим „Разлисти“. */
 const READ_Z = 380;
 
+/** През колко пиксела плъзгане се обръща по една страница. */
+const SWIPE_STEP = 70;
+
 export function Book3D({
   cover,
   title,
@@ -115,6 +118,8 @@ export function Book3D({
     lastT: 0,
     reading: false,
     dragging: false,
+    swiping: false, // плъзгане за прелистване
+    swipeFrom: 0,
     lastX: 0,
     lastY: 0,
   });
@@ -210,8 +215,22 @@ export function Book3D({
   const onPointerMove = (e: React.PointerEvent) => {
     const v = s.current;
     const t = tune.current;
-    // В режим „Разлисти“ книгата стои мирно — иначе четенето става невъзможно.
-    if (v.reading) return;
+
+    // В режим „Разлисти“ книгата стои мирно, а плъзгането обръща страници:
+    // наляво напред, надясно назад. Отправната точка се мести при всяко
+    // обръщане, за да може едно дълго плъзгане да прелисти няколко страници.
+    if (v.reading) {
+      if (!v.swiping) return;
+      const dx = e.clientX - v.swipeFrom;
+      if (dx <= -SWIPE_STEP) {
+        v.swipeFrom = e.clientX;
+        setTurned((n) => Math.min(maxTurn, n + 1));
+      } else if (dx >= SWIPE_STEP) {
+        v.swipeFrom = e.clientX;
+        setTurned((n) => Math.max(0, n - 1));
+      }
+      return;
+    }
 
     if (v.dragging) {
       const dx = e.clientX - v.lastX;
@@ -247,16 +266,28 @@ export function Book3D({
 
   const startDrag = (e: React.PointerEvent) => {
     const v = s.current;
-    if (v.reading) return;
+    // Прихващането на показалеца важи и за пръст, и за мишка — оттам нататък
+    // събитията идват тук дори когато жестът излезе извън сцената.
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+    if (v.reading) {
+      v.swiping = true;
+      v.swipeFrom = e.clientX;
+      return;
+    }
     v.dragging = true;
     v.lastX = e.clientX;
     v.lastY = e.clientY;
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
   const endDrag = (e: React.PointerEvent) => {
-    s.current.dragging = false;
-    (e.currentTarget as HTMLElement).releasePointerCapture?.(e.pointerId);
+    const v = s.current;
+    v.dragging = false;
+    v.swiping = false;
+    const el = e.currentTarget as HTMLElement;
+    // Освобождаваме само ако наистина сме прихванали — иначе някои браузъри
+    // хвърлят грешка.
+    if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
   };
 
   const face: React.CSSProperties = { position: "absolute", backfaceVisibility: "hidden" };
@@ -273,10 +304,14 @@ export function Book3D({
         s.current.aimY = 0;
         s.current.aimX = 0;
       }}
-      className={`relative flex h-[560px] w-full touch-none select-none items-center justify-center ${
-        reading ? "cursor-default" : "cursor-grab active:cursor-grabbing"
-      }`}
-      style={{ perspective: "1800px" }}
+      className="relative flex h-[560px] w-full cursor-grab select-none items-center justify-center active:cursor-grabbing"
+      style={{
+        perspective: "1800px",
+        // При четене жестът е изцяло наш. Иначе оставяме вертикалното
+        // плъзгане на браузъра, за да може страницата да се превърта с пръст
+        // — хоризонталното влачене продължава да стига до нас.
+        touchAction: reading ? "none" : "pan-y",
+      }}
     >
       {/* Сянка на пода — извън 3D слоя, за да не се върти с книгата */}
       <div
@@ -676,10 +711,19 @@ const HD = 30;
  * страничните лек профил, за да се вижда дебелината им.
  */
 const FAN = [
-  { x: -232, z: -80, rotZ: -10, rotY: 20 },
-  { x: 0, z: 70, rotZ: 4, rotY: -5 },
-  { x: 232, z: -80, rotZ: 10, rotY: -20 },
+  { x: -232, z: -80, rotZ: -10, rotY: 20, lift: 110 },
+  { x: 0, z: 70, rotZ: 4, rotY: -5, lift: 160 },
+  { x: 232, z: -80, rotZ: 10, rotY: -20, lift: 110 },
 ];
+
+/**
+ * Ред на изчертаване: средната последна.
+ *
+ * При еднаква дълбочина браузърът решава по реда в документа, а страничните
+ * книги се въртят и части от тях излизат напред. Средната е нарисувана
+ * последна, за да остане отгоре и в тези спорни места.
+ */
+const PAINT_ORDER = [0, 2, 1];
 
 /**
  * Трите книги отгоре.
@@ -702,8 +746,9 @@ export function BookRow({
       style={{ perspective: "2000px" }}
     >
       <div className="relative h-0 w-0" style={{ transformStyle: "preserve-3d" }}>
-        {books.slice(0, 3).map((b, i) => {
-          const f = FAN[i] ?? FAN[1]!;
+        {PAINT_ORDER.filter((i) => books[i]).map((i) => {
+          const b = books[i]!;
+          const f = FAN[i]!;
           const on = hot === i;
           // Открехване на капаците при посочване.
           const ajar = on ? 15 : 0;
@@ -711,8 +756,11 @@ export function BookRow({
           return (
             <div
               key={b.id}
-              onMouseEnter={() => setHot(i)}
-              onMouseLeave={() => setHot(null)}
+              // Показалецни събития, а не мишкини — така докосването с пръст
+              // също отваря книгата, вместо да чака „hover“, какъвто там няма.
+              onPointerEnter={() => setHot(i)}
+              onPointerLeave={() => setHot(null)}
+              onPointerCancel={() => setHot(null)}
               className="absolute cursor-pointer"
               style={{
                 width: HW,
@@ -722,8 +770,10 @@ export function BookRow({
                 transformStyle: "preserve-3d",
                 transition: glide,
                 // При посочване книгата се вдига, излиза напред и се поизправя.
+                // Страничните излизат по-малко: така и посочени остават зад
+                // средната, вместо да я застигат по дълбочина.
                 transform:
-                  `translate3d(${f.x}px, ${on ? -34 : 0}px, ${f.z + (on ? 150 : 0)}px) ` +
+                  `translate3d(${f.x}px, ${on ? -34 : 0}px, ${f.z + (on ? f.lift : 0)}px) ` +
                   `rotateY(${on ? f.rotY * 0.45 : f.rotY}deg) rotateZ(${on ? f.rotZ * 0.5 : f.rotZ}deg)`,
               }}
             >
