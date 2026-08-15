@@ -579,7 +579,9 @@ export function Book3D({
       </div>
     </div>
 
-    {/* Управление */}
+    {/* Управление. Без подадени страници няма какво да се разлиства, затова
+        лентата изобщо не се появява — неактивен бутон само би подвел. */}
+    {leaves.length > 0 && (
     <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
       {!reading ? (
         <button
@@ -589,8 +591,7 @@ export function Book3D({
             setReading(true);
             onOpen?.();
           }}
-          disabled={leaves.length === 0}
-          className="rounded-md bg-primary px-6 py-2.5 font-sans text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
+          className="rounded-md bg-primary px-6 py-2.5 font-sans text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90"
         >
           Разлисти
         </button>
@@ -630,6 +631,7 @@ export function Book3D({
         </>
       )}
     </div>
+    )}
     </div>
   );
 }
