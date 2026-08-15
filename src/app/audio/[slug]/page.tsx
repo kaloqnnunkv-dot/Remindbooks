@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
@@ -13,12 +12,13 @@ import { getFavoriteIds } from "@/app/actions/favorites";
 import { Badge, Breadcrumbs, SectionHeading, Alert } from "@/components/ui";
 import { ProductCard } from "@/components/product-card";
 import { ProductTypeBadge } from "@/components/product-type-badge";
+import { Book3D } from "@/components/book-3d";
 import { BuyBox } from "@/components/add-to-cart";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButtons } from "@/components/share-buttons";
 import { ReviewSection } from "@/components/reviews";
 import { AudioPlayer } from "@/components/audio-player";
-import { HeadphonesIcon } from "@/components/icons";
+import {} from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -141,22 +141,7 @@ export default async function AudioDetailPage({
 
       <div className="grid lg:grid-cols-5 gap-10 lg:gap-14">
         <div className="lg:col-span-2">
-          <div className="relative aspect-[2/3] bg-card border border-border rounded-md overflow-hidden">
-            {cover ? (
-              <Image
-                src={cover}
-                alt={item.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                priority
-                className="object-contain"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                <HeadphonesIcon size={48} />
-              </div>
-            )}
-          </div>
+          <Book3D cover={cover} title={item.title} />
         </div>
 
         <div className="lg:col-span-3">

@@ -6,7 +6,8 @@ import { ButtonLink, SectionHeading, Card } from "@/components/ui";
 import { ProductCard, ProductGrid } from "@/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { BookIcon, FileTextIcon, HeadphonesIcon } from "@/components/icons";
-import { HeroMarquee, type MarqueeProduct } from "@/components/hero-marquee";
+import { HeroBooks } from "@/components/book-3d";
+import { productHref } from "@/components/product-card";
 import { publicUrl } from "@/lib/storage";
 import {
   getBestsellers,
@@ -28,15 +29,32 @@ export const metadata: Metadata = {
 // секцията с любими зависи от текущия потребител.
 export const dynamic = "force-dynamic";
 
-/** Всички публикувани заглавия — те се въртят по кривата в hero секцията. */
-async function getMarqueeProducts(): Promise<MarqueeProduct[]> {
+export type HeroBook = {
+  id: string;
+  title: string;
+  cover: string | null;
+  href: string;
+};
+
+/**
+ * Трите заглавия за hero ветрилото.
+ *
+ * Първо препоръчаните, после най-продаваните, после най-новите — и само с
+ * корица, защото книга без корица във ветрилото изглежда като грешка.
+ */
+async function getHeroBooks(): Promise<HeroBook[]> {
   const rows = await db.product.findMany({
-    where: { isPublished: true },
-    orderBy: { createdAt: "desc" },
-    take: 40,
+    where: { isPublished: true, coverImage: { not: null } },
+    orderBy: [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }],
+    take: 3,
     select: { id: true, slug: true, title: true, type: true, coverImage: true },
   });
-  return rows.map((r) => ({ ...r, coverImage: publicUrl(r.coverImage) }));
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    cover: publicUrl(r.coverImage),
+    href: productHref(r),
+  }));
 }
 
 async function getAboutText(): Promise<string> {
@@ -48,7 +66,7 @@ async function getAboutText(): Promise<string> {
 }
 
 export default async function HomePage() {
-  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText, marqueeProducts] =
+  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText, heroBooks] =
     await Promise.all([
       getBestsellers(4),
       getLatestByType("PDF", 4),
@@ -56,12 +74,12 @@ export default async function HomePage() {
       getLatestPosts(3),
       getFavoriteIds(),
       getAboutText(),
-      getMarqueeProducts(),
+      getHeroBooks(),
     ]);
 
   return (
     <>
-      <Hero products={marqueeProducts} />
+      <Hero books={heroBooks} />
 
       {/* Най-продавани физически книги */}
       {bestsellers.length > 0 && (
@@ -213,7 +231,7 @@ export default async function HomePage() {
   );
 }
 
-function Hero({ products }: { products: MarqueeProduct[] }) {
+function Hero({ books }: { books: HeroBook[] }) {
   return (
     <section className="relative overflow-hidden border-b border-border">
       {/* Мека текстура от градиенти — зарежда се мигновено, без изображения */}
@@ -226,23 +244,22 @@ function Hero({ products }: { products: MarqueeProduct[] }) {
         }}
       />
 
-      {/* Текстът стои сам в горния ляв ъгъл. Нарочно НЕ се застъпва с лентата
-          отдолу: докато беше отгоре ѝ, прихващаше движението на мишката и
-          кориците нито се забавяха, нито се отваряха при щракване. */}
       <div className="container-page relative z-10">
-        <div className="max-w-2xl -translate-x-5 -translate-y-[5px] pt-10 pb-4 sm:pt-12 lg:pt-14">
+        <div className="max-w-2xl pt-10 pb-2 sm:pt-12 lg:pt-14">
           <h1 className="text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
             Книги, които връщат посоката
           </h1>
         </div>
       </div>
 
-      {/* Кориците обикалят в собствена лента под текста. Височината е колкото
-          самата крива след мащабирането (996×330 при ширина ~1200 дава ~396px)
-          — по-голяма стойност оставя само празно поле. */}
-      <div className="relative h-[280px] sm:h-[340px] lg:h-[400px]">
-        <HeroMarquee products={products} />
-      </div>
+      {/* Ветрилото стои в собствена лента под заглавието. Не се застъпва с него
+          нарочно: докато текстът беше отгоре, прихващаше движението на мишката
+          и книгите нито се повдигаха, нито се отваряха при щракване. */}
+      {books.length > 0 && (
+        <div className="relative z-10 pb-4">
+          <HeroBooks books={books} />
+        </div>
+      )}
     </section>
   );
 }

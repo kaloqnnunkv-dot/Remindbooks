@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 
 import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
-import { BookLab, BookRow } from "@/components/test/book-3d";
+import { HeroBooks } from "@/components/book-3d";
+import { BookLab } from "@/components/test/book-lab";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +54,7 @@ export default async function Book3DTestPage() {
         <h2 className="text-center font-sans text-sm font-bold uppercase tracking-wider text-muted-foreground">
           Посочете книга — излиза напред и открехва капаците си
         </h2>
-        <BookRow books={books.slice(0, 3)} />
+        <HeroBooks books={books.slice(0, 3)} />
       </section>
 
       <section className="rounded-md border border-border bg-[var(--surface-2)] px-6 py-10">

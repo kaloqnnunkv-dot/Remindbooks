@@ -2,11 +2,14 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { BookIcon } from "./icons";
+import { Book3D } from "./book-3d";
 
 /**
- * Галерия с основно изображение и миниатюри.
- * При една снимка миниатюрите не се показват.
+ * Галерия с триизмерна книга и миниатюри.
+ *
+ * Основната снимка стои върху самата книга — може да се върти и да ѝ се
+ * открехват капаците. Миниатюрите сменят коя снимка е сложена на корицата;
+ * при една снимка изобщо не се показват.
  */
 export function ProductGallery({
   images,
@@ -16,29 +19,11 @@ export function ProductGallery({
   title: string;
 }) {
   const [active, setActive] = useState(0);
-
-  if (images.length === 0) {
-    return (
-      <div className="aspect-[2/3] bg-card border border-border rounded-md flex items-center justify-center text-muted-foreground">
-        <BookIcon size={48} />
-      </div>
-    );
-  }
-
-  const current = images[Math.min(active, images.length - 1)]!;
+  const current = images[Math.min(active, images.length - 1)];
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-[2/3] bg-card border border-border rounded-md overflow-hidden">
-        <Image
-          src={current.url}
-          alt={current.alt ?? title}
-          fill
-          sizes="(max-width: 1024px) 100vw, 40vw"
-          priority
-          className="object-contain"
-        />
-      </div>
+      <Book3D cover={current?.url ?? null} title={title} />
 
       {images.length > 1 && (
         <div className="grid grid-cols-5 gap-2" role="group" aria-label="Още снимки">

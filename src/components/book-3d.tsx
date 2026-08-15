@@ -1,10 +1,11 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Книга в CSS 3D — проба.
+ * Книга в CSS 3D.
  *
  * Тялото е кутия от шест лица (`transform-style: preserve-3d`), а корицата е
  * седмо лице, което се върти около левия си ръб — там е тегелът.
@@ -78,12 +79,15 @@ export function Book3D({
   title,
   pages = [],
   tuning = DEFAULT_TUNING,
+  onOpen,
 }: {
   cover: string | null;
   title: string;
   /** Снимки на първите страници. Липсващите се рисуват като празен лист. */
   pages?: (string | null)[];
   tuning?: BookTuning;
+  /** Обажда се при първото отваряне — оттам се тегли съдържанието. */
+  onOpen?: () => void;
 }) {
   // Един лист носи две страници — лице и гръб.
   const leaves: { front: string | null; back: string | null; nums: [number, number] }[] = [];
@@ -583,6 +587,7 @@ export function Book3D({
           onClick={() => {
             setTurned(0);
             setReading(true);
+            onOpen?.();
           }}
           disabled={leaves.length === 0}
           className="rounded-md bg-primary px-6 py-2.5 font-sans text-sm font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-40"
@@ -661,7 +666,13 @@ function PageFace({
       }}
     >
       {src ? (
-        <Image src={src} alt="" fill sizes="250px" className="object-cover" draggable={false} />
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt=""
+          draggable={false}
+          className="absolute inset-0 h-full w-full object-contain"
+        />
       ) : (
         <span
           aria-hidden="true"
@@ -681,78 +692,6 @@ function PageFace({
       >
         {number}
       </span>
-    </div>
-  );
-}
-
-/**
- * Книгата плюс регулатори.
- *
- * Регулаторите са само за пробата — за да може усещането да се нагласи на
- * място, вместо да се гадае по числа в кода.
- */
-export function BookLab({
-  cover,
-  title,
-  pages = [],
-}: {
-  cover: string | null;
-  title: string;
-  pages?: (string | null)[];
-}) {
-  const [t, setT] = useState<BookTuning>(DEFAULT_TUNING);
-
-  const sliders: { key: keyof BookTuning; label: string; min: number; max: number; step: number }[] =
-    [
-      { key: "tilt", label: "Наклон след курсора", min: 0, max: 40, step: 1 },
-      { key: "openAt", label: "Скорост за пълно отваряне", min: 6, max: 70, step: 1 },
-      { key: "maxOpen", label: "Докъде се отваря", min: 20, max: 170, step: 5 },
-      { key: "pull", label: "Теглене нагоре/надолу", min: 0, max: 60, step: 2 },
-      { key: "idleOpen", label: "Открехване при следване", min: 0, max: 30, step: 1 },
-      { key: "readMs", label: "Време за разлистване (мс)", min: 600, max: 4500, step: 100 },
-      { key: "ease", label: "Плавност", min: 0.02, max: 0.3, step: 0.01 },
-    ];
-
-  return (
-    <div className="grid items-center gap-8 lg:grid-cols-[1fr_280px]">
-      <Book3D cover={cover} title={title} pages={pages} tuning={t} />
-
-      <div className="rounded-md border border-border bg-card p-5">
-        <p className="font-sans text-xs font-bold uppercase tracking-wider text-muted-foreground">
-          Настройки на пробата
-        </p>
-        <div className="mt-4 space-y-4">
-          {sliders.map((sl) => (
-            <label key={sl.key} className="block">
-              <span className="flex justify-between font-sans text-xs">
-                <span>{sl.label}</span>
-                <span className="text-muted-foreground">{t[sl.key]}</span>
-              </span>
-              <input
-                type="range"
-                min={sl.min}
-                max={sl.max}
-                step={sl.step}
-                value={t[sl.key]}
-                onChange={(e) =>
-                  setT((prev) => ({ ...prev, [sl.key]: Number(e.target.value) }))
-                }
-                className="mt-1.5 w-full accent-[var(--primary)]"
-              />
-            </label>
-          ))}
-        </div>
-        <button
-          type="button"
-          onClick={() => setT(DEFAULT_TUNING)}
-          className="mt-5 w-full rounded-md border border-border px-3 py-2 font-sans text-xs font-bold hover:bg-muted"
-        >
-          Върни изходните
-        </button>
-        <p className="mt-4 font-sans text-xs leading-relaxed text-muted-foreground">
-          Кажете ми кои числа ви харесват и ги заковавам.
-        </p>
-      </div>
     </div>
   );
 }
@@ -799,12 +738,17 @@ const PAINT_ORDER = [0, 2, 1];
  * При посочване книгата излиза напред, изправя се и открехва двата си капака.
  * Тук няма кадров цикъл — CSS преходи вършат работа и не струват нищо.
  */
-export function BookRow({
+export function HeroBooks({
   books,
 }: {
-  books: { id: string; title: string; cover: string | null }[];
+  books: { id: string; title: string; cover: string | null; href?: string }[];
 }) {
+  const router = useRouter();
   const [hot, setHot] = useState<number | null>(null);
+  // Посочването върти книгата, затова щракването се брои само ако пръстът или
+  // мишката не са пътували — иначе всяко плъзгане по ветрилото щеше да отваря
+  // продукт.
+  const press = useRef<{ x: number; y: number } | null>(null);
   const face: React.CSSProperties = { position: "absolute", backfaceVisibility: "hidden" };
   const glide = "transform 640ms cubic-bezier(.2,.8,.2,1)";
 
@@ -829,6 +773,14 @@ export function BookRow({
               onPointerEnter={() => setHot(i)}
               onPointerLeave={() => setHot(null)}
               onPointerCancel={() => setHot(null)}
+              onPointerDown={(e) => (press.current = { x: e.clientX, y: e.clientY })}
+              onClick={(e) => {
+                const start = press.current;
+                const moved =
+                  start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 8;
+                if (b.href && !moved) router.push(b.href);
+              }}
+              role={b.href ? "link" : undefined}
               className="absolute cursor-pointer"
               style={{
                 width: HW,

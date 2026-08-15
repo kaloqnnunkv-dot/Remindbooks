@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 
 import { db } from "@/lib/db";
@@ -18,8 +17,9 @@ import { BuyBox } from "@/components/add-to-cart";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButtons } from "@/components/share-buttons";
 import { ReviewSection } from "@/components/reviews";
-import { PdfPreview } from "@/components/pdf-preview";
-import { CheckIcon, DownloadIcon, FileTextIcon } from "@/components/icons";
+import { PdfFlipbook } from "@/components/pdf-flipbook";
+import { Book3D } from "@/components/book-3d";
+import { CheckIcon, DownloadIcon} from "@/components/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -142,22 +142,9 @@ export default async function PdfBookPage({
 
       <div className="grid lg:grid-cols-5 gap-10 lg:gap-14">
         <div className="lg:col-span-2">
-          <div className="relative aspect-[2/3] bg-card border border-border rounded-md overflow-hidden">
-            {cover ? (
-              <Image
-                src={cover}
-                alt={book.title}
-                fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                priority
-                className="object-contain"
-              />
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                <FileTextIcon size={48} />
-              </div>
-            )}
-            <span className="absolute top-3 left-3">
+          <div className="relative">
+            <Book3D cover={cover} title={book.title} />
+            <span className="absolute left-3 top-3 z-10">
               <ProductTypeBadge type="PDF" />
             </span>
           </div>
@@ -256,10 +243,11 @@ export default async function PdfBookPage({
       {book.previewKey && (
         <section className="mt-14">
           <SectionHeading title="Прелистете преди да купите" />
-          <PdfPreview
-            previewUrl={`/api/preview/${book.id}`}
-            pages={book.previewPages ?? 0}
+          <PdfFlipbook
+            cover={cover}
             title={book.title}
+            previewUrl={`/api/preview/${book.id}`}
+            pageCount={book.previewPages || 5}
           />
         </section>
       )}
