@@ -67,6 +67,71 @@ const READ_Z = 380;
 const SWIPE_SPAN = 240;
 
 /**
+ * Колко ширина заема сцената в естествения си размер.
+ *
+ * Стойностите са измерени в браузър, не изчислени: перспективата увеличава
+ * приближената книга, а завъртените корици излизат встрани, тъй че сметка на
+ * ръка все излизаше по-малка от истината. Оставено е и по малко въздух за
+ * сенките — те не влизат в измерената кутия, но се виждат.
+ *
+ * `reading` е доста по-широко от `closed`: разлистената книга е две страници и
+ * освен това е приближена към читателя.
+ */
+const BOOK_BOX = { closed: 300, reading: 740, h: 560 };
+
+/**
+ * Ветрилото при пълна разпереност; `sideX` е отместването на страничните книги.
+ *
+ * `gutter` е въздухът, който остава от двете страни. Без него ветрилото опира
+ * ръбовете на телефона и изглежда като недоглеждане, а не като подредба.
+ */
+const FAN_BOX = { w: 813, h: 600, sideX: 232, minSpread: 0.62, gutter: 16 };
+
+/**
+ * На телефон ширината стига за книгата, но сцената остава висока 560px и изяжда
+ * почти цял екран. Затова височината ѝ не може да надмине толкова пъти
+ * наличната ширина.
+ */
+const MAX_ASPECT = 1.35;
+
+/**
+ * Смалява сцената, докато се вмести в наличната ширина.
+ *
+ * Множителят стига до CSS през променливата `--fit`, а не през state: иначе
+ * всяко влачене на прозореца и всяко завъртане на телефона щеше да пречертава
+ * цялото дърво. Височината на сцената е `calc(var(--fit) * …)`, тъй че следва
+ * същата променлива без отделно писане.
+ *
+ * Числото се пази и в ref, защото жестовете го използват: плъзгане от 240
+ * екранни пиксела върху смалена книга е друго разстояние в нейните мерки.
+ */
+function useFitScene(height: number) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const scale = useRef(1);
+  const avail = useRef(0);
+
+  /** Мащабът, при който сцена с тази ширина се вписва в наличната. */
+  const scaleFor = (width: number) =>
+    avail.current
+      ? Math.min(1, avail.current / width, (avail.current * MAX_ASPECT) / height)
+      : 1;
+
+  const setScale = (k: number) => {
+    scale.current = k;
+    hostRef.current?.style.setProperty("--fit", String(Math.round(k * 1000) / 1000));
+  };
+
+  /** Измерва наличната ширина и връща дали е разбрала нещо ново. */
+  const measure = (width: number) => {
+    if (!width || width === avail.current) return false;
+    avail.current = width;
+    return true;
+  };
+
+  return { hostRef, scale, scaleFor, setScale, measure, avail };
+}
+
+/**
  * Страница, която в момента се обръща с ръка.
  *
  * `dir` е 1 при отгръщане напред и −1 при връщане назад; `progress` е 0–1 —
@@ -104,6 +169,39 @@ export function Book3D({
   const [reading, setReading] = useState(false);
   const [turned, setTurned] = useState(0);
   const [drag, setDrag] = useState<LeafDrag | null>(null);
+
+  const fit = useFitScene(BOOK_BOX.h);
+
+  /**
+   * Разлистената книга е две страници и е приближена към читателя — иска над
+   * два пъти повече ширина от затворената. Затова мащабът има две цели и
+   * кадровият цикъл по-долу минава между тях заедно със самото приближаване.
+   *
+   * Тук се задава само стойността в покой: при заявено спокойно движение
+   * (`prefers-reduced-motion`) цикълът не работи и това остава единственият
+   * път, по който мащабът се пренастройва.
+   */
+  useEffect(() => {
+    const host = fit.hostRef.current;
+    if (!host) return;
+
+    const settle = () => {
+      // При заявено спокойно движение кадровият цикъл не работи, тоест книгата
+      // никога не се разтваря — тогава по-широката мярка не е нужна и
+      // смаляването би било необяснимо за гледащия.
+      const stillCloses = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const width = reading && !stillCloses ? BOOK_BOX.reading : BOOK_BOX.closed;
+      fit.setScale(fit.scaleFor(width));
+    };
+    const observer = new ResizeObserver((entries) => {
+      if (fit.measure(entries[0]!.contentRect.width)) settle();
+    });
+    observer.observe(host);
+    fit.measure(host.clientWidth);
+    settle();
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reading]);
 
   const sceneRef = useRef<HTMLDivElement>(null);
   const bookRef = useRef<HTMLDivElement>(null);
@@ -186,6 +284,13 @@ export function Book3D({
       v.curY += ((v.aimY + v.spin) * free - v.curY) * t.ease;
       v.curX += ((v.aimX + v.nudge) * free + zoom * -6 - v.curX) * t.ease;
 
+      // Сцената се смалява заедно с приближаването: разтворената книга е два
+      // пъти по-широка, а екранът остава същият. На широк екран двете цели са
+      // равни на 1 и тук не се променя нищо.
+      const closed = fit.scaleFor(BOOK_BOX.closed);
+      const spreadFit = fit.scaleFor(BOOK_BOX.reading);
+      if (closed !== spreadFit) fit.setScale(closed + (spreadFit - closed) * zoom);
+
       const book = bookRef.current;
       if (book) {
         // Тегелът е в левия ръб, затова разтвореният лист излиза наляво —
@@ -261,14 +366,20 @@ export function Book3D({
       setDrag({
         leaf: v.swipeLeaf,
         dir: v.swipeDir,
-        progress: clamp01(travel / SWIPE_SPAN),
+        // Пътят се мери спрямо смалената книга: върху телефон целият лист е
+        // широк колкото 130 екранни пиксела, а не 250 — иначе прелистването
+        // иска плъзгане през половин екран.
+        progress: clamp01(travel / (SWIPE_SPAN * fit.scale.current)),
       });
       return;
     }
 
     if (v.dragging) {
-      const dx = e.clientX - v.lastX;
-      const dy = e.clientY - v.lastY;
+      // Същото превръщане като при прелистването: движението на ръката се
+      // мери в мерките на книгата, за да е еднакво усещането на всеки екран.
+      const k = fit.scale.current;
+      const dx = (e.clientX - v.lastX) / k;
+      const dy = (e.clientY - v.lastY) / k;
       v.lastX = e.clientX;
       v.lastY = e.clientY;
 
@@ -286,7 +397,8 @@ export function Book3D({
     if (!box) return;
 
     // Колко бързо се движи ръката — оттам идва лекото открехване.
-    const moved = Math.hypot(e.clientX - v.lastX, e.clientY - v.lastY);
+    const moved =
+      Math.hypot(e.clientX - v.lastX, e.clientY - v.lastY) / fit.scale.current;
     v.lastX = e.clientX;
     v.lastY = e.clientY;
     v.stir = Math.max(v.stir, Math.min(1, moved / 26));
@@ -341,7 +453,7 @@ export function Book3D({
   const face: React.CSSProperties = { position: "absolute", backfaceVisibility: "hidden" };
 
   return (
-    <div>
+    <div ref={fit.hostRef} className="fit-host-book">
     <div
       ref={sceneRef}
       onPointerMove={onPointerMove}
@@ -352,15 +464,33 @@ export function Book3D({
         s.current.aimY = 0;
         s.current.aimX = 0;
       }}
-      className="relative flex h-[560px] w-full cursor-grab select-none items-center justify-center active:cursor-grabbing"
+      className="relative flex w-full cursor-grab select-none justify-center active:cursor-grabbing"
       style={{
-        perspective: "1800px",
+        // Височината следва мащаба, иначе смалената книга оставя под себе си
+        // празна лента, висока колкото разликата.
+        height: `calc(var(--fit, 1) * ${BOOK_BOX.h}px)`,
+        // Смалената сцена стои в рамките на екрана, но меките сенки на книгата
+        // излизат извън измерената кутия. Отрязват се, за да не се появи
+        // хоризонтално плъзгане на страницата заради няколко невидими пиксела.
+        overflowX: "clip",
         // При четене жестът е изцяло наш. Иначе оставяме вертикалното
         // плъзгане на браузъра, за да може страницата да се превърта с пръст
         // — хоризонталното влачене продължава да стига до нас.
         touchAction: reading ? "none" : "pan-y",
       }}
     >
+      {/* Сцената пази естествения си размер и се смалява наведнъж. Пипането на
+          самата геометрия би развалило перспективата: тя се дели на дълбочина,
+          а тя не се мени, когато ширината намалее. */}
+      <div
+        className="fit-scene relative flex items-center justify-center"
+        style={{
+          width: reading ? BOOK_BOX.reading : BOOK_BOX.closed,
+          height: BOOK_BOX.h,
+          flex: "none",
+          perspective: "1800px",
+        }}
+      >
       {/* Сянка на пода — извън 3D слоя, за да не се върти с книгата */}
       <div
         ref={shadowRef}
@@ -545,7 +675,7 @@ export function Book3D({
                 src={cover}
                 alt={title}
                 fill
-                sizes="250px"
+                sizes="(max-width: 767px) 60vw, 250px"
                 className="object-cover"
                 draggable={false}
               />
@@ -576,6 +706,7 @@ export function Book3D({
             }}
           />
         </div>
+      </div>
       </div>
     </div>
 
@@ -726,6 +857,43 @@ const FAN = [
 ];
 
 /**
+ * Мащаб и разпереност на ветрилото според наличната ширина.
+ *
+ * Две неща се менят заедно. Първо ветрилото се събира: при тясен екран
+ * страничните книги се приближават към средната, защото така при същата
+ * ширина книгите остават по-големи. Чак ако и събрано не се вмества, цялата
+ * сцена се смалява.
+ *
+ * И двете стойности стигат до CSS през променливи, за да не се пречертава
+ * дървото при всяко влачене на прозореца или обръщане на телефона.
+ */
+function useFanFit() {
+  const hostRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const host = hostRef.current;
+    if (!host) return;
+
+    const apply = (avail: number) => {
+      if (!avail) return;
+      const usable = Math.max(0, avail - 2 * FAN_BOX.gutter);
+      const spread = Math.max(FAN_BOX.minSpread, Math.min(1, usable / FAN_BOX.w));
+      const width = FAN_BOX.w - 2 * FAN_BOX.sideX * (1 - spread);
+      const fit = Math.min(1, usable / width, (usable * MAX_ASPECT) / FAN_BOX.h);
+      host.style.setProperty("--spread", String(Math.round(spread * 1000) / 1000));
+      host.style.setProperty("--fit", String(Math.round(fit * 1000) / 1000));
+    };
+
+    const observer = new ResizeObserver((entries) => apply(entries[0]!.contentRect.width));
+    observer.observe(host);
+    apply(host.clientWidth);
+    return () => observer.disconnect();
+  }, []);
+
+  return hostRef;
+}
+
+/**
  * Ред на изчертаване: средната последна.
  *
  * При еднаква дълбочина браузърът решава по реда в документа, а страничните
@@ -746,6 +914,7 @@ export function HeroBooks({
   books: { id: string; title: string; cover: string | null; href?: string }[];
 }) {
   const router = useRouter();
+  const hostRef = useFanFit();
   const [hot, setHot] = useState<number | null>(null);
   // Посочването върти книгата, затова щракването се брои само ако пръстът или
   // мишката не са пътували — иначе всяко плъзгане по ветрилото щеше да отваря
@@ -756,9 +925,27 @@ export function HeroBooks({
 
   return (
     <div
-      className="relative flex h-[600px] w-full items-center justify-center"
-      style={{ perspective: "2000px" }}
+      ref={hostRef}
+      className="fit-host-fan w-full"
+      // Сенките на книгите излизат извън измерената кутия; отрязват се, за да
+      // не се появи хоризонтално плъзгане заради няколко меки пиксела.
+      style={{ overflowX: "clip" }}
     >
+    <div
+      className="flex w-full justify-center"
+      style={{ height: `calc(var(--fit, 1) * ${FAN_BOX.h}px)` }}
+    >
+      <div
+        className="fit-scene relative flex items-center justify-center"
+        style={{
+          // Събраното ветрило заема по-малко ширина — толкова, колкото двете
+          // странични книги са се приближили.
+          width: `calc(${FAN_BOX.w}px - ${2 * FAN_BOX.sideX}px * (1 - var(--spread, 1)))`,
+          height: FAN_BOX.h,
+          flex: "none",
+          perspective: "2000px",
+        }}
+      >
       <div className="relative h-0 w-0" style={{ transformStyle: "preserve-3d" }}>
         {PAINT_ORDER.filter((i) => books[i]).map((i) => {
           const b = books[i]!;
@@ -795,7 +982,8 @@ export function HeroBooks({
                 // Страничните излизат по-малко: така и посочени остават зад
                 // средната, вместо да я застигат по дълбочина.
                 transform:
-                  `translate3d(${f.x}px, ${on ? -34 : 0}px, ${f.z + (on ? f.lift : 0)}px) ` +
+                  `translate3d(calc(var(--spread, 1) * ${f.x}px), ${on ? -34 : 0}px, ` +
+                  `${f.z + (on ? f.lift : 0)}px) ` +
                   `rotateY(${on ? f.rotY * 0.45 : f.rotY}deg) rotateZ(${on ? f.rotZ * 0.5 : f.rotZ}deg)`,
               }}
             >
@@ -910,7 +1098,7 @@ export function HeroBooks({
                       src={b.cover}
                       alt={b.title}
                       fill
-                      sizes="300px"
+                      sizes="(max-width: 767px) 45vw, 300px"
                       className="object-cover"
                       draggable={false}
                     />
@@ -942,6 +1130,8 @@ export function HeroBooks({
           );
         })}
       </div>
+      </div>
+    </div>
     </div>
   );
 }

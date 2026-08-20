@@ -138,8 +138,11 @@ export function ProductCard({
           </p>
         )}
 
-        <div className="mt-auto pt-3 flex items-end justify-between gap-2">
-          <div className="flex flex-col">
+        {/* На тесен екран (две карти в редица) цената и бутонът не се вместват
+            един до друг — „Слушай сега“ излизаше извън картата и се отрязваше
+            от ръба на екрана. С пренасяне бутонът просто слиза на нов ред. */}
+        <div className="mt-auto pt-3 flex flex-wrap items-end justify-between gap-2">
+          <div className="flex min-w-0 flex-col">
             {product.compareAtCents && product.compareAtCents > product.priceCents && (
               <span className="text-xs text-muted-foreground line-through">
                 {formatPrice(product.compareAtCents)}
