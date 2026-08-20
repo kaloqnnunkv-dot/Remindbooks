@@ -308,7 +308,9 @@ function Hero({ books }: { books: HeroBook[] }) {
 
       <div className="container-page relative z-10">
         <div className="max-w-2xl pt-12 pb-2 sm:pt-14 lg:pt-16">
-          <h1 className="text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
+          {/* `hero-title` носи сиянието, което държи буквите четими върху
+              снимката — виж globals.css. */}
+          <h1 className="hero-title text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
             Книги, които връщат посоката
           </h1>
         </div>
