@@ -80,8 +80,10 @@ services:
         condition: service_healthy
     environment:
       DATABASE_URL: "postgresql://remindbooks:remindbooks@db:5432/remindbooks"
-      SEED_ADMIN_EMAIL: "admin@remindbooks.com"
-      SEED_ADMIN_PASSWORD: "ReMind2026!"
+      SEED_ADMIN_EMAIL: "${SEED_ADMIN_EMAIL:-admin@remindbooks.com}"
+      # Празна стойност означава: seed скриптът тегли случайна парола и я
+      # изписва еднократно в лога. Парола в този файл би била публична.
+      SEED_ADMIN_PASSWORD: "${SEED_ADMIN_PASSWORD:-}"
     command: >
       sh -c "npx prisma migrate deploy && npx tsx prisma/seed.ts"
     restart: "no"

@@ -32,7 +32,11 @@ npm run docker:seed
 | --- | --- |
 | Адрес | http://localhost:3000/vhod |
 | Имейл | `admin@remindbooks.com` |
-| Парола | `ReMind2026!` |
+| Парола | изписва се в изхода на `seed` контейнера |
+
+Паролата не стои в този файл нарочно — хранилището е публично. Ако изходът е
+превъртял: `docker compose logs seed`. Може и да я зададете предварително с
+`SEED_ADMIN_PASSWORD` в `.env`.
 
 След вход отворете **http://localhost:3000/admin**
 

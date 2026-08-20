@@ -9,13 +9,25 @@
  * при първото пускане и при демонстрация пред клиента.
  */
 
+import { randomBytes } from "node:crypto";
+
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const db = new PrismaClient();
 
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? "admin@remindbooks.com";
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? "ReMind2026!";
+
+/**
+ * Паролата на администратора няма стойност по подразбиране в кода.
+ *
+ * Парола, записана в хранилището, е публична парола — а подразбиращата се
+ * почти никога не се сменя. Затова, ако `SEED_ADMIN_PASSWORD` не е зададена,
+ * тук се тегли случайна и се изписва еднократно в конзолата. Никъде не се
+ * записва: ако се изгуби, се минава през „Забравена парола“.
+ */
+const GIVEN_PASSWORD = process.env.SEED_ADMIN_PASSWORD?.trim();
+const ADMIN_PASSWORD = GIVEN_PASSWORD || randomBytes(15).toString("base64url");
 
 async function main() {
   console.log("Създаване на начални данни…\n");
@@ -23,20 +35,29 @@ async function main() {
   // ---------------------------------------------------------------
   // Администратор
   // ---------------------------------------------------------------
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12);
-
-  const admin = await db.user.upsert({
+  // Проверката „съществува ли“ е отделно от записа нарочно: така накрая
+  // скриптът знае дали паролата, която ще изпише, е новосъздадената, или
+  // профилът е стар и паролата му е друга. При upsert тази разлика се губи.
+  const existing = await db.user.findUnique({
     where: { email: ADMIN_EMAIL },
-    create: {
-      email: ADMIN_EMAIL,
-      name: "Администратор",
-      passwordHash,
-      role: "ADMIN",
-      emailVerified: new Date(),
-    },
-    // Ролята се налага и при повторно пускане, но паролата не се презаписва.
-    update: { role: "ADMIN" },
+    select: { id: true },
   });
+
+  const admin = existing
+    ? // Ролята се налага и при повторно пускане, но паролата не се презаписва.
+      await db.user.update({
+        where: { id: existing.id },
+        data: { role: "ADMIN" },
+      })
+    : await db.user.create({
+        data: {
+          email: ADMIN_EMAIL,
+          name: "Администратор",
+          passwordHash: await bcrypt.hash(ADMIN_PASSWORD, 12),
+          role: "ADMIN",
+          emailVerified: new Date(),
+        },
+      });
   console.log(`✓ Администратор: ${admin.email}`);
 
   // ---------------------------------------------------------------
@@ -394,7 +415,14 @@ async function main() {
   console.log("────────────────────────────────────────");
   console.log("  Вход в административния панел:");
   console.log(`  Имейл:  ${ADMIN_EMAIL}`);
-  console.log(`  Парола: ${ADMIN_PASSWORD}`);
+  if (existing) {
+    console.log("  Парола: (профилът е от предишно пускане — непроменена)");
+  } else if (GIVEN_PASSWORD) {
+    console.log("  Парола: (стойността на SEED_ADMIN_PASSWORD)");
+  } else {
+    console.log(`  Парола: ${ADMIN_PASSWORD}`);
+    console.log("          ↑ изписва се само сега — запишете я");
+  }
   console.log("  Адрес:  /vhod  →  после /admin");
   console.log("────────────────────────────────────────");
   console.log("\nВАЖНО: сменете паролата веднага след първия вход.\n");
