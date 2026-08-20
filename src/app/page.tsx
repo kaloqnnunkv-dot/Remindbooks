@@ -288,14 +288,11 @@ export default async function HomePage() {
 
 function Hero({ books }: { books: HeroBook[] }) {
   return (
-    <section className="hero-photo relative overflow-hidden border-b border-border">
-      {/* Стара библиотека зад заглавието. Снимката е декорация, затова `alt` е
-          празен — екранните четци няма какво да прочетат от нея.
-
-          Воалът върху нея живее в globals.css (`.hero-photo`): отгоре снимката
-          се вижда, а надолу се стопява до чиста хартия. Така ветрилото с
-          книгите стъпва върху фон, а не върху друга снимка — корица върху
-          корица не се чете. */}
+    <section className="relative overflow-hidden border-b border-border">
+      {/* Стара библиотека зад заглавието, в пълния си цвят. Снимката е
+          декорация, затова `alt` е празен — екранните четци няма какво да
+          прочетат от нея. Единственото избелване по нея е сиянието под самото
+          заглавие (`.hero-title` в globals.css), колкото буквите да се четат. */}
       <Image
         src={IMAGES.hero}
         alt=""

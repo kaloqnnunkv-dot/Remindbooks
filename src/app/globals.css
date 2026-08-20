@@ -294,8 +294,7 @@
    * Работи и в тъмната тема без промяна — `--background` там е тъмен, тоест
    * същата сметка потъмнява снимката вместо да я избелва.
    */
-  .photo-wash::after,
-  .hero-photo::after {
+  .photo-wash::after {
     content: "";
     position: absolute;
     inset: 0;
@@ -318,32 +317,6 @@
         transparent 42%,
         color-mix(in srgb, var(--background) 26%, transparent) 100%
       );
-  }
-
-  /**
-   * Заглавната секция: воалът е само около книгите.
-   *
-   * Снимката се вижда в пълния си цвят. Единственото място по нея, което се
-   * избелва, е зад ветрилото — корица върху корица не се различава, а трите
-   * книги трябва да се отделят от лавиците отзад. Воалът е най-плътен при
-   * книгите и изтънява навън, докато изчезне; извън този кръг снимката е
-   * непокътната.
-   *
-   * Заглавието носи своето сияние (`.hero-title`) — то е на самия текст, а не
-   * тук, защото ширината му се мени с екрана.
-   *
-   * Мерките са в проценти от секцията: ветрилото също се мащабира по ширината
-   * на екрана, тъй че процентите го следват сами.
-   */
-  .hero-photo::after {
-    background: radial-gradient(
-      ellipse 33% 30% at 50% 60%,
-      color-mix(in srgb, var(--background) 70%, transparent) 0%,
-      color-mix(in srgb, var(--background) 64%, transparent) 58%,
-      color-mix(in srgb, var(--background) 42%, transparent) 78%,
-      color-mix(in srgb, var(--background) 15%, transparent) 92%,
-      transparent 100%
-    );
   }
 
   /**
@@ -413,17 +386,6 @@
       );
     }
 
-    /* На телефон книгите заемат почти цялата ширина, а ветрилото застава
-       по-ниско в секцията — воалът се разширява и смества след заглавието. */
-    .hero-photo::after {
-      background: radial-gradient(
-        ellipse 46% 21% at 50% 64%,
-        color-mix(in srgb, var(--background) 70%, transparent) 0%,
-        color-mix(in srgb, var(--background) 62%, transparent) 56%,
-        color-mix(in srgb, var(--background) 38%, transparent) 80%,
-        transparent 100%
-      );
-    }
   }
 
   @media (min-width: 1024px) {
