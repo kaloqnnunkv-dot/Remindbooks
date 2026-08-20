@@ -4,29 +4,46 @@
 Съдържанието — корици, снимки в блога, изображения на продукти — се качва през
 админ панела и живее в хранилището.
 
-**Лицензът на всички снимки тук е CC0 1.0 (обществено достояние).** Свободна
-употреба, включително търговска, без задължение да се посочва автор. Имената
-по-долу стоят от добро възпитание, а не по изискване.
+**Произход:** всички са предоставени от собственика (папка
+`Remindbooks design`) и са направени с генератор на изображения. Няма чужди
+права и няма изискване да се посочва автор. Оригиналите не са в хранилището —
+тук са изрязаните и смалени за уеб копия.
 
-Всяка от тях е публикувана в Unsplash под CC0; копието е взето от Wikimedia
-Commons. Оригиналите са изрязани и смалени за уеб — къде се използват е
-описано в `src/lib/images.ts`.
+| Файл | Съотношение | Къде се вижда | Изходен файл |
+| --- | --- | --- | --- |
+| `hero-library.jpg` | 2:1 | Начална страница — фон на заглавната секция | `1_library_1.png` |
+| `banner-books.jpg` | 21:9 | Заглавна лента на `/knigi` | `1_library.png` |
+| `banner-pdf.jpg` | 21:9 | Заглавна лента на `/pdf` | `2_books_mug.png` |
+| `banner-audio.jpg` | 21:9 | Заглавна лента на `/audio` | `2_cup_books.png` |
+| `banner-blog.jpg` | 21:9 | Заглавна лента на `/blog` | `5_notebook.png` |
+| `about-reading.jpg` | 3:2 | „За нас“ — начална страница и `/za-nas` | `DFdz0.jpg` |
+| `blog-placeholder.jpg` | 3:2 | Публикация в блога без своя корица | `3_journal.png` |
 
-| Файл | Съотношение | Къде се вижда | Автор | Оригинал |
-| --- | --- | --- | --- | --- |
-| `hero-library.jpg` | 2:1 | Начална страница — фон на заглавната секция | Gabriel Ghnassia (@gabrielghnassia) | [Commons](https://commons.wikimedia.org/wiki/File:Chantilly_library_study_(Unsplash).jpg) |
-| `banner-books.jpg` | 21:9 | Заглавна лента на `/knigi` | Dmitrij Paskevic (@zeak) | [Commons](https://commons.wikimedia.org/wiki/File:Trinity_College_Dublin_(Unsplash).jpg) |
-| `banner-pdf.jpg` | 21:9 | Заглавна лента на `/pdf` | freestocks.org (@freestocks) | [Commons](https://commons.wikimedia.org/wiki/File:Reading_on_an_e-book_reader_(Unsplash).jpg) |
-| `banner-audio.jpg` | 21:9 | Заглавна лента на `/audio` | Alphacolor 13 (@duck58cth) | [Commons](https://commons.wikimedia.org/wiki/File:Brown_headphones_iPad_(Unsplash).jpg) |
-| `banner-blog.jpg` | 21:9 | Заглавна лента на `/blog` | Drew Coffman (@drewcoffman) | [Commons](https://commons.wikimedia.org/wiki/File:Reading_at_a_cafe_(Unsplash).jpg) |
-| `about-reading.jpg` | 3:2 | „За нас“ — начална страница и `/za-nas` | Thought Catalog (@thoughtcatalog) | [Commons](https://commons.wikimedia.org/wiki/File:Woman_roads_poetry_book_while_drinking_coffee_(Unsplash).jpg) |
-| `blog-placeholder.jpg` | 3:2 | Публикация в блога без своя корица | Roman Kraft (@romankraft) | [Commons](https://commons.wikimedia.org/wiki/File:Old_books_on_a_shelf_(Unsplash).jpg) |
+Къде се използва всяко от тях в кода: `src/lib/images.ts`.
+
+## За разделителната способност
+
+Изходните файлове са между 495 и 1168 пиксела широки. За малките рамки
+(лентите, картите) това стига. За фона на заглавната секция — не: там снимката
+се показва през целия екран, тоест над 1440 пиксела, а на екран с двойна
+плътност и над 2800. Копието тук е увеличено до 1600 пиксела с изостряне, но
+увеличаването не добавя детайл — на голям монитор снимката ще личи, че е мека.
+
+Ако това пречи: същият кадър, поръчан наново при 2400 пиксела ширина или
+повече, се слага на мястото на `hero-library.jpg` без промяна в кода.
 
 ## Ако някоя снимка бъде подменена
 
-1. Новият файл трябва да е с лиценз, който позволява търговска употреба — CC0,
-   обществено достояние или Unsplash License. Резултат от търсене в Google
-   **не е** лиценз.
-2. Изрязва се в същото съотношение като заменения файл. Иначе рамката, в която
+1. Изрязва се в същото съотношение като заменения файл. Иначе рамката, в която
    стои, ще я разтегли — съотношенията са в таблицата по-горе.
+2. Ако новата снимка е тъмна, воалът върху лентите (`.photo-wash` в
+   `globals.css`) трябва да се сгъсти. Сегашните стойности са отмерени за
+   светли снимки; върху тъмна снимка тъмният текст не се чете.
 3. Редът в таблицата се обновява.
+
+## Неизползвани файлове от папката с дизайна
+
+Стоят на разположение, ако потрябват: `3_leaf_book.png`, `4_notebook.png`,
+`4_open_book.png` (книга с букет — става за корица на бюлетина),
+`5_bench_books.png`, `5_shelf_vase.png`. Трите файла `ChatGPT Image …` са
+сборни листове с по няколко кадъра — от тях се използват отделните снимки.

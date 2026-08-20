@@ -67,6 +67,18 @@ const READ_Z = 380;
 const SWIPE_SPAN = 240;
 
 /**
+ * Докъде се приближават страниците в режим „Разлисти“.
+ *
+ * Откъсът се чертае към 700px ширина, а на телефон листът се показва широк
+ * около 150px — тройното приближение стига, за да се чете, без да покаже
+ * повече от това, което има в картинката.
+ */
+const MAX_ZOOM = 3;
+
+/** С колко се променя приближението при едно натискане на + или −. */
+const ZOOM_STEP = 1.45;
+
+/**
  * Колко ширина заема сцената в естествения си размер.
  *
  * Стойностите са измерени в браузър, не изчислени: перспективата увеличава
@@ -85,7 +97,7 @@ const BOOK_BOX = { closed: 300, reading: 740, h: 560 };
  * `gutter` е въздухът, който остава от двете страни. Без него ветрилото опира
  * ръбовете на телефона и изглежда като недоглеждане, а не като подредба.
  */
-const FAN_BOX = { w: 813, h: 600, sideX: 232, minSpread: 0.62, gutter: 16 };
+const FAN_BOX = { w: 813, h: 600, sideX: 232, minSpread: 0.62, gutter: 24 };
 
 /**
  * На телефон ширината стига за книгата, но сцената остава висока 560px и изяжда
@@ -173,6 +185,70 @@ export function Book3D({
   const fit = useFitScene(BOOK_BOX.h);
 
   /**
+   * Приближение на разлистените страници.
+   *
+   * Стойността живее в ref и стига до CSS през променлива, а не през state:
+   * при щипване с два пръста тя се мени на всеки кадър, а пречертаването на
+   * цялата книга дотогава заяждаше. `zoom` в state е само за бутоните и за
+   * надписа с процентите — изравнява се, щом пръстите се вдигнат.
+   */
+  const [zoom, setZoom] = useState(1);
+  const zoomRef = useRef(1);
+  /** Докъде е дотътрена приближената страница, в екранни пиксели. */
+  const pan = useRef({ x: 0, y: 0 });
+  /** Показалците върху сцената в момента — по два от тях се разпознава щипване. */
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; zoom: number } | null>(null);
+
+  const writeZoom = () => {
+    const host = fit.hostRef.current;
+    if (!host) return;
+    host.style.setProperty("--zoom", String(Math.round(zoomRef.current * 1000) / 1000));
+    host.style.setProperty("--pan-x", `${Math.round(pan.current.x)}px`);
+    host.style.setProperty("--pan-y", `${Math.round(pan.current.y)}px`);
+  };
+
+  /**
+   * Влаченето не може да извади страницата от рамката.
+   *
+   * По хоризонтала излишъкът е от двете страни, защото сцената е центрирана.
+   * По вертикала мащабът тръгва от горния ръб (`transform-origin`), тоест
+   * целият излишък е долу — оттам и несиметричните граници.
+   */
+  const clampPan = () => {
+    const k = fit.scale.current;
+    const z = zoomRef.current;
+    const overX = Math.max(0, BOOK_BOX.reading * k * z - fit.avail.current) / 2;
+    const overY = Math.max(0, BOOK_BOX.h * k * (z - 1));
+    pan.current.x = Math.max(-overX, Math.min(overX, pan.current.x));
+    pan.current.y = Math.max(-overY, Math.min(0, pan.current.y));
+  };
+
+  const applyZoom = (next: number) => {
+    zoomRef.current = Math.max(1, Math.min(MAX_ZOOM, next));
+    // Върнато в изходно положение приближението не оставя изместена страница.
+    if (zoomRef.current === 1) pan.current = { x: 0, y: 0 };
+    clampPan();
+    writeZoom();
+  };
+
+  /** Бутоните и надписът показват това, което вече се вижда. */
+  const stepZoom = (factor: number) => {
+    applyZoom(zoomRef.current * factor);
+    setZoom(zoomRef.current);
+  };
+
+  // Затворената книга не носи приближение — иначе при следващото разлистване
+  // читателят щеше да завари страницата отместена от предния път.
+  useEffect(() => {
+    if (!reading) {
+      applyZoom(1);
+      setZoom(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reading]);
+
+  /**
    * Разлистената книга е две страници и е приближена към читателя — иска над
    * два пъти повече ширина от затворената. Затова мащабът има две цели и
    * кадровият цикъл по-долу минава между тях заедно със самото приближаване.
@@ -230,6 +306,7 @@ export function Book3D({
     reading: false,
     dragging: false,
     swiping: false, // плъзгане за прелистване
+    panning: false, // влачене на приближена страница
     swipeFrom: 0,
     swipeDir: 0 as 0 | 1 | -1, // 0 = посоката още не е решена
     swipeLeaf: -1,
@@ -340,6 +417,31 @@ export function Book3D({
     // Тя следва ръката през целия си път и остава там, където я оставите —
     // пуснете ли я, доизминава пътя си или се връща.
     if (v.reading) {
+      if (pointers.current.has(e.pointerId)) {
+        pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      }
+
+      // Два пръста менят приближението. Разстоянието между тях спрямо това
+      // при захващането дава множителя — така щипването е плавно и обратимо.
+      if (pinch.current && pointers.current.size >= 2) {
+        const [a, b] = [...pointers.current.values()];
+        const dist = Math.hypot(a!.x - b!.x, a!.y - b!.y);
+        applyZoom(pinch.current.zoom * (dist / pinch.current.dist));
+        return;
+      }
+
+      // Приближената страница се влачи, вместо да се прелиства: иначе долният
+      // ѝ край и десният ѝ ръб остават недостъпни.
+      if (v.panning) {
+        pan.current.x += e.clientX - v.lastX;
+        pan.current.y += e.clientY - v.lastY;
+        v.lastX = e.clientX;
+        v.lastY = e.clientY;
+        clampPan();
+        writeZoom();
+        return;
+      }
+
       if (!v.swiping) return;
 
       // Посоката се решава веднъж, при първото осезаемо движение, и оттам
@@ -416,7 +518,30 @@ export function Book3D({
     // събитията идват тук дори когато жестът излезе извън сцената.
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
     if (v.reading) {
+      // Вторият пръст превръща жеста в щипване. Започнатото прелистване се
+      // отменя — иначе щипването щеше да отгърне страница за из път.
+      if (pointers.current.size >= 2) {
+        const [a, b] = [...pointers.current.values()];
+        pinch.current = {
+          dist: Math.hypot(a!.x - b!.x, a!.y - b!.y) || 1,
+          zoom: zoomRef.current,
+        };
+        v.swiping = false;
+        v.panning = false;
+        if (drag) setDrag(null);
+        return;
+      }
+
+      if (zoomRef.current > 1) {
+        v.panning = true;
+        v.lastX = e.clientX;
+        v.lastY = e.clientY;
+        return;
+      }
+
       v.swiping = true;
       v.swipeFrom = e.clientX;
       v.swipeDir = 0;
@@ -430,6 +555,16 @@ export function Book3D({
 
   const endDrag = (e: React.PointerEvent) => {
     const v = s.current;
+    pointers.current.delete(e.pointerId);
+
+    // Щипването свършва, щом остане един пръст. Тогава state догонва това,
+    // което вече се вижда, за да се обновят бутоните и процентите.
+    if (pinch.current && pointers.current.size < 2) {
+      pinch.current = null;
+      setZoom(zoomRef.current);
+    }
+
+    v.panning = false;
     v.dragging = false;
     v.swiping = false;
 
@@ -469,10 +604,11 @@ export function Book3D({
         // Височината следва мащаба, иначе смалената книга оставя под себе си
         // празна лента, висока колкото разликата.
         height: `calc(var(--fit, 1) * ${BOOK_BOX.h}px)`,
-        // Смалената сцена стои в рамките на екрана, но меките сенки на книгата
-        // излизат извън измерената кутия. Отрязват се, за да не се появи
-        // хоризонтално плъзгане на страницата заради няколко невидими пиксела.
-        overflowX: "clip",
+        // Отрязва по двете оси. Меките сенки на книгата излизат извън
+        // измерената кутия и без това биха родили хоризонтално плъзгане на
+        // страницата; приближената страница пък излиза нарочно — тя се стига с
+        // влачене, а не с преливане навън.
+        overflow: "clip",
         // При четене жестът е изцяло наш. Иначе оставяме вертикалното
         // плъзгане на браузъра, за да може страницата да се превърта с пръст
         // — хоризонталното влачене продължава да стига до нас.
@@ -747,6 +883,33 @@ export function Book3D({
           >
             Напред ›
           </button>
+          {/* Приближение. Откъсът е чертан в едър размер, но листът се
+              показва дребен — особено на телефон, където двойната страница
+              стои в ширината на екрана. */}
+          <span className="inline-flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => stepZoom(1 / ZOOM_STEP)}
+              disabled={zoom <= 1.001}
+              aria-label="Отдалечи"
+              className="h-10 w-10 rounded-md border border-border font-sans text-lg font-bold leading-none disabled:opacity-40"
+            >
+              −
+            </button>
+            <span className="w-14 text-center font-mono text-xs text-muted-foreground tabular-nums">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              type="button"
+              onClick={() => stepZoom(ZOOM_STEP)}
+              disabled={zoom >= MAX_ZOOM - 0.001}
+              aria-label="Приближи"
+              className="h-10 w-10 rounded-md border border-border font-sans text-lg font-bold leading-none disabled:opacity-40"
+            >
+              +
+            </button>
+          </span>
+
           <button
             type="button"
             onClick={() => {
@@ -762,6 +925,14 @@ export function Book3D({
         </>
       )}
     </div>
+    )}
+
+    {/* Щипването с два пръста никой не го отгатва, ако не му се каже. */}
+    {reading && (
+      <p className="mt-2 text-center font-sans text-xs text-muted-foreground">
+        Плъзнете настрани, за да прелистите. Щипнете с два пръста или ползвайте
+        + и −, за да приближите; приближената страница се влачи.
+      </p>
     )}
     </div>
   );

@@ -2,6 +2,26 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/**
+ * Едрината на сайта на голям екран.
+ *
+ * Размерите в темата са в `rem` — шрифтове, отстояния, радиуси, ширината на
+ * колоната. Затова цялата страница се смалява от едно място: коренния шрифт.
+ * Под 1024px стойността не важи, тоест мобилният изглед остава непроменен, а
+ * съотношенията се запазват навсякъде.
+ *
+ * В проценти, а не в пиксели, за да продължи да следва размера, зададен от
+ * четящия в браузъра му.
+ *
+ * Размерите в пиксели не следват това. Такъв е само геометрията на книгата в
+ * `book-3d.tsx` — CSS 3D се пише в пиксели и се мащабира по своя сметка.
+ */
+@media (min-width: 1024px) {
+  :root {
+    font-size: 93.75%; /* 15px при подразбиращи се 16px */
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  ReMindBooks — дизайн токени                                        */
 /*  Базирани на темата, копирана от 21st.dev (топла хартиена палитра)  */
@@ -267,7 +287,12 @@
    * размер, преди скриптът да я смали.
    */
   .fit-scene {
-    transform: scale(var(--fit, 1));
+    /* `--fit` вписва сцената в екрана; `--zoom` е приближението, което читателят
+       сам избира (бутоните + и − или щипване с два пръста), а `--pan-*` е
+       мястото, до което е дотътрил приближената страница. Редът е важен:
+       преместването се прилага след мащаба, тоест в екранни пиксели. */
+    transform: translate(var(--pan-x, 0px), var(--pan-y, 0px))
+      scale(calc(var(--fit, 1) * var(--zoom, 1)));
     transform-origin: top center;
   }
 
@@ -286,10 +311,14 @@
   /**
    * Воал върху снимка.
    *
-   * Темата е светла хартия, а хубавите снимки на книги са тъмни. Вместо да
-   * сменяме цвета на текста върху всяка снимка, върху нея пада воал в цвета на
-   * фона: буквите остават тъмни и четими, а снимката личи като текстура.
-   * Воалът е най-плътен отляво, където стои текстът, и изтънява надясно.
+   * Вместо да сменяме цвета на текста върху всяка снимка, върху нея пада воал
+   * в цвета на фона: буквите остават тъмни и четими, а снимката си остава
+   * снимка. Воалът е най-плътен отляво, където стои текстът, и изтънява
+   * надясно.
+   *
+   * Стойностите са отмерени за светлите снимки в `public/images`. Ако някой
+   * ден на тяхно място дойде тъмна снимка, воалът трябва да се сгъсти — иначе
+   * тъмен текст върху тъмна снимка не се чете.
    *
    * Работи и в тъмната тема без промяна — `--background` там е тъмен, тоест
    * същата сметка потъмнява снимката вместо да я избелва.
@@ -306,16 +335,16 @@
     background:
       linear-gradient(
         95deg,
-        color-mix(in srgb, var(--background) 96%, transparent) 0%,
-        color-mix(in srgb, var(--background) 90%, transparent) 40%,
-        color-mix(in srgb, var(--background) 50%, transparent) 72%,
-        color-mix(in srgb, var(--background) 20%, transparent) 100%
+        color-mix(in srgb, var(--background) 70%, transparent) 0%,
+        color-mix(in srgb, var(--background) 60%, transparent) 40%,
+        color-mix(in srgb, var(--background) 28%, transparent) 72%,
+        color-mix(in srgb, var(--background) 8%, transparent) 100%
       ),
       linear-gradient(
         to bottom,
-        color-mix(in srgb, var(--background) 16%, transparent) 0%,
+        color-mix(in srgb, var(--background) 10%, transparent) 0%,
         transparent 42%,
-        color-mix(in srgb, var(--background) 26%, transparent) 100%
+        color-mix(in srgb, var(--background) 16%, transparent) 100%
       );
   }
 
@@ -381,14 +410,27 @@
     .photo-wash::after {
       background: linear-gradient(
         to bottom,
-        color-mix(in srgb, var(--background) 89%, transparent) 0%,
-        color-mix(in srgb, var(--background) 85%, transparent) 100%
+        color-mix(in srgb, var(--background) 62%, transparent) 0%,
+        color-mix(in srgb, var(--background) 56%, transparent) 100%
       );
     }
-
   }
 
-  @media (min-width: 1024px) {
+  /**
+   * Колоната със съдържание.
+   *
+   * Полетата отстрани са 1.5rem, а не 1rem: при 16px текстът и картите опираха
+   * ръба на телефона. Ширината е 75rem вместо 80rem — на широк екран редът
+   * ставаше толкова дълъг, че картите и заглавията изглеждаха уголемени.
+   */
+  .container-page {
+    width: 100%;
+    margin-inline: auto;
+    max-width: 75rem;
+    padding-inline: 1.5rem;
+  }
+
+  @media (min-width: 640px) {
     .container-page {
       padding-inline: 2rem;
     }
