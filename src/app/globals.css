@@ -253,6 +253,91 @@
     border-top: 1px solid var(--border);
   }
 
+  /**
+   * Воал върху снимка.
+   *
+   * Темата е светла хартия, а хубавите снимки на книги са тъмни. Вместо да
+   * сменяме цвета на текста върху всяка снимка, върху нея пада воал в цвета на
+   * фона: буквите остават тъмни и четими, а снимката личи като текстура.
+   * Воалът е най-плътен отляво, където стои текстът, и изтънява надясно.
+   *
+   * Работи и в тъмната тема без промяна — `--background` там е тъмен, тоест
+   * същата сметка потъмнява снимката вместо да я избелва.
+   */
+  .photo-wash::after,
+  .hero-photo::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+  }
+
+  .photo-wash::after {
+    background:
+      linear-gradient(
+        95deg,
+        color-mix(in srgb, var(--background) 96%, transparent) 0%,
+        color-mix(in srgb, var(--background) 90%, transparent) 40%,
+        color-mix(in srgb, var(--background) 50%, transparent) 72%,
+        color-mix(in srgb, var(--background) 20%, transparent) 100%
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--background) 16%, transparent) 0%,
+        transparent 42%,
+        color-mix(in srgb, var(--background) 26%, transparent) 100%
+      );
+  }
+
+  /* Заглавната секция: снимката е текстура зад заглавието и се стопява до
+     чиста хартия надолу, за да стъпи ветрилото с книгите върху фон, а не
+     върху снимка — иначе корица върху корица не се чете.
+
+     Първият слой е сияние точно под заглавието: там воалът е най-плътен, за да
+     остане текстът четим, а горе-вдясно снимката се вижда почти изцяло. */
+  .hero-photo::after {
+    background:
+      radial-gradient(
+        125% 100% at 6% 14%,
+        color-mix(in srgb, var(--background) 94%, transparent) 0%,
+        color-mix(in srgb, var(--background) 76%, transparent) 34%,
+        transparent 68%
+      ),
+      linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--background) 18%, transparent) 0%,
+        color-mix(in srgb, var(--background) 32%, transparent) 30%,
+        color-mix(in srgb, var(--background) 70%, transparent) 62%,
+        color-mix(in srgb, var(--background) 94%, transparent) 86%,
+        var(--background) 100%
+      );
+  }
+
+  /**
+   * На тесен екран текстът заема цялата ширина, а диагоналният воал пази само
+   * левия край — точките на измерване вдясно падаха под 2:1. Затова под 640px
+   * воалът е равен: снимката остава като текстура, а текстът си остава четим.
+   */
+  @media (max-width: 639px) {
+    .photo-wash::after {
+      background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--background) 89%, transparent) 0%,
+        color-mix(in srgb, var(--background) 85%, transparent) 100%
+      );
+    }
+
+    .hero-photo::after {
+      background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--background) 78%, transparent) 0%,
+        color-mix(in srgb, var(--background) 86%, transparent) 48%,
+        var(--background) 100%
+      );
+    }
+  }
+
   .container-page {
     width: 100%;
     margin-inline: auto;

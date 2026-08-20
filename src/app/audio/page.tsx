@@ -8,8 +8,9 @@ import { publicUrl } from "@/lib/storage";
 import { formatPrice, formatDuration, truncate, stripHtml } from "@/lib/format";
 import { getCategories, orderByFor, type SortOption } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
+import { IMAGES } from "@/lib/images";
 
-import { PageHeader, EmptyState, Badge, ButtonLink } from "@/components/ui";
+import { PageBanner, EmptyState, Badge, ButtonLink } from "@/components/ui";
 import { CatalogControls } from "@/components/catalog-controls";
 import { Pagination } from "@/components/pagination";
 import { AudioPlayer } from "@/components/audio-player";
@@ -76,7 +77,8 @@ export default async function AudioPage({
 
   return (
     <div className="container-page py-12">
-      <PageHeader
+      <PageBanner
+        image={IMAGES.audio}
         title="Аудио съдържание"
         description="Медитации, водени практики и авторски четения. Част от материалите са напълно безплатни — натиснете play и слушайте."
       />

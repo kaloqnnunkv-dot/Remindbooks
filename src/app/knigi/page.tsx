@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { PageHeader, EmptyState, ButtonLink } from "@/components/ui";
+import { PageBanner, EmptyState, ButtonLink } from "@/components/ui";
 import { ProductCard, ProductGrid } from "@/components/product-card";
 import { CatalogControls } from "@/components/catalog-controls";
 import { Pagination } from "@/components/pagination";
@@ -8,6 +8,7 @@ import { getProducts, getCategories, type SortOption } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
 import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
+import { IMAGES } from "@/lib/images";
 import { formatPrice } from "@/lib/format";
 import { AddBundleButton } from "@/components/add-to-cart";
 import Image from "next/image";
@@ -63,7 +64,8 @@ export default async function BooksPage({
 
   return (
     <div className="container-page py-12">
-      <PageHeader
+      <PageBanner
+        image={IMAGES.books}
         title="Физически книги"
         description="Хартиени издания с доставка до адрес или офис на куриер в цялата страна."
       />

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 
@@ -221,6 +222,56 @@ export function PageHeader({
         )}
       </div>
       {children}
+    </div>
+  );
+}
+
+/**
+ * Заглавие на страница върху снимка.
+ *
+ * Същото като `PageHeader`, но с фотография отзад — за страниците, които
+ * посетителят отваря първи (каталозите и блога). Снимката е декорация:
+ * `alt` е празен нарочно, за да не я четат екранните четци.
+ *
+ * Текстът остава тъмен, а не бял: върху снимката пада воал в цвета на фона
+ * (`.photo-wash` в globals.css). Така една и съща лента работи и над светла,
+ * и над тъмна снимка, без да гадаем цвят на текста за всяка от тях.
+ */
+export function PageBanner({
+  title,
+  description,
+  image,
+  children,
+}: {
+  title: string;
+  description?: string;
+  /** Път до файл в `public/images` — виж `IMAGES` в `src/lib/images.ts`. */
+  image: string;
+  children?: ReactNode;
+}) {
+  return (
+    <div className="photo-wash relative mb-10 overflow-hidden rounded-md border border-border bg-muted">
+      <Image
+        src={image}
+        alt=""
+        aria-hidden="true"
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover"
+      />
+
+      <div className="relative z-10 flex flex-wrap items-end justify-between gap-4 px-6 py-12 sm:px-10 sm:py-14">
+        <div>
+          <h1 className="text-3xl sm:text-4xl rule">{title}</h1>
+          {description && (
+            <p className="mt-4 max-w-xl text-muted-foreground leading-relaxed">
+              {description}
+            </p>
+          )}
+        </div>
+        {children}
+      </div>
     </div>
   );
 }

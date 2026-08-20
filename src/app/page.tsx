@@ -5,10 +5,11 @@ import type { Metadata } from "next";
 import { ButtonLink, SectionHeading, Card } from "@/components/ui";
 import { ProductCard, ProductGrid } from "@/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { BookIcon, FileTextIcon, HeadphonesIcon } from "@/components/icons";
+import { FileTextIcon, HeadphonesIcon } from "@/components/icons";
 import { HeroBooks } from "@/components/book-3d";
 import { productHref } from "@/components/product-card";
 import { publicUrl } from "@/lib/storage";
+import { IMAGES } from "@/lib/images";
 import {
   getBestsellers,
   getLatestByType,
@@ -172,20 +173,35 @@ export default async function HomePage() {
       {/* Кратко "За нас" */}
       <section className="section-alt-strong border-b border-border" aria-labelledby="about-teaser">
         <div className="container-page py-16">
-        <Card className="p-8 sm:p-12 bg-card border border-border">
-          <div className="max-w-3xl">
-            <p className="font-sans text-xs font-bold uppercase tracking-[0.15em] text-primary">
-              За нас
-            </p>
-            <h2 id="about-teaser" className="mt-3 text-2xl sm:text-3xl">
-              Историята зад Remind Books
-            </h2>
-            <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
-              {aboutText}
-            </p>
-            <ButtonLink href="/za-nas" variant="outline" className="mt-6">
-              Прочети повече
-            </ButtonLink>
+        <Card className="overflow-hidden bg-card border border-border">
+          <div className="grid lg:grid-cols-[1.1fr_1fr]">
+            <div className="p-8 sm:p-12">
+              <p className="font-sans text-xs font-bold uppercase tracking-[0.15em] text-primary">
+                За нас
+              </p>
+              <h2 id="about-teaser" className="mt-3 text-2xl sm:text-3xl">
+                Историята зад Remind Books
+              </h2>
+              <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
+                {aboutText}
+              </p>
+              <ButtonLink href="/za-nas" variant="outline" className="mt-6">
+                Прочети повече
+              </ButtonLink>
+            </div>
+
+            {/* На тесен екран снимката застава под текста и затова има своя
+                височина; от lg нагоре се разтяга по височината на картата. */}
+            <div className="relative min-h-56 sm:min-h-72 lg:min-h-full">
+              <Image
+                src={IMAGES.about}
+                alt=""
+                aria-hidden="true"
+                fill
+                sizes="(max-width: 1024px) 100vw, 40vw"
+                className="object-cover"
+              />
+            </div>
           </div>
         </Card>
         </div>
@@ -203,19 +219,15 @@ export default async function HomePage() {
                   href={`/blog/${post.slug}`}
                   className="block relative aspect-[3/2] bg-muted rounded-md overflow-hidden border border-border"
                 >
-                  {post.coverImage ? (
-                    <Image
-                      src={post.coverImage}
-                      alt={post.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 33vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                      <BookIcon size={32} />
-                    </div>
-                  )}
+                  {/* Без корица публикацията показва обща снимка вместо празна
+                      рамка с иконка — редицата остава равна. */}
+                  <Image
+                    src={post.coverImage ?? IMAGES.postFallback}
+                    alt={post.coverImage ? post.title : ""}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                  />
                 </Link>
 
                 <time
@@ -276,19 +288,26 @@ export default async function HomePage() {
 
 function Hero({ books }: { books: HeroBook[] }) {
   return (
-    <section className="relative overflow-hidden border-b border-border">
-      {/* Мека текстура от градиенти — зарежда се мигновено, без изображения */}
-      <div
+    <section className="hero-photo relative overflow-hidden border-b border-border">
+      {/* Стара библиотека зад заглавието. Снимката е декорация, затова `alt` е
+          празен — екранните четци няма какво да прочетат от нея.
+
+          Воалът върху нея живее в globals.css (`.hero-photo`): отгоре снимката
+          се вижда, а надолу се стопява до чиста хартия. Така ветрилото с
+          книгите стъпва върху фон, а не върху друга снимка — корица върху
+          корица не се чете. */}
+      <Image
+        src={IMAGES.hero}
+        alt=""
         aria-hidden="true"
-        className="absolute inset-0 opacity-[0.4]"
-        style={{
-          backgroundImage:
-            "radial-gradient(circle at 15% 20%, var(--accent) 0%, transparent 45%), radial-gradient(circle at 85% 70%, var(--secondary) 0%, transparent 50%)",
-        }}
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[center_38%]"
       />
 
       <div className="container-page relative z-10">
-        <div className="max-w-2xl pt-10 pb-2 sm:pt-12 lg:pt-14">
+        <div className="max-w-2xl pt-12 pb-2 sm:pt-14 lg:pt-16">
           <h1 className="text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
             Книги, които връщат посоката
           </h1>

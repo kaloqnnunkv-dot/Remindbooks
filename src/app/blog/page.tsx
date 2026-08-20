@@ -6,9 +6,10 @@ import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
 import { formatDate, truncate, stripHtml } from "@/lib/format";
 
-import { PageHeader, EmptyState, ButtonLink, cn } from "@/components/ui";
+import { PageBanner, EmptyState, ButtonLink, cn } from "@/components/ui";
 import { Pagination } from "@/components/pagination";
 import { BookIcon } from "@/components/icons";
+import { IMAGES } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -67,7 +68,8 @@ export default async function BlogPage({
 
   return (
     <div className="container-page py-12">
-      <PageHeader
+      <PageBanner
+        image={IMAGES.blog}
         title="Вътрешен компас"
         description="Мисли, практики и истории за хората, които търсят своята посока."
       />
@@ -136,20 +138,16 @@ export default async function BlogPage({
                     href={`/blog/${post.slug}`}
                     className="block relative aspect-[3/2] bg-muted rounded-md overflow-hidden border border-border"
                   >
-                    {cover ? (
-                      <Image
-                        src={cover}
-                        alt={post.title}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        priority={i < 3}
-                        className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                        <BookIcon size={32} />
-                      </div>
-                    )}
+                    {/* Публикация без корица показва обща снимка вместо празна
+                        рамка с иконка — редицата остава равна. */}
+                    <Image
+                      src={cover ?? IMAGES.postFallback}
+                      alt={cover ? post.title : ""}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      priority={i < 3}
+                      className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
                   </Link>
 
                   <div className="mt-4 flex flex-wrap items-center gap-2">

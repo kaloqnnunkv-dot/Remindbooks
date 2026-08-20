@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { PageHeader, EmptyState, Card } from "@/components/ui";
+import { PageBanner, EmptyState, Card } from "@/components/ui";
 import { ProductCard, ProductGrid } from "@/components/product-card";
 import { CatalogControls } from "@/components/catalog-controls";
 import { Pagination } from "@/components/pagination";
 import { FileTextIcon, DownloadIcon, CheckIcon } from "@/components/icons";
 import { getProducts, getCategories, type SortOption } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
+import { IMAGES } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,8 @@ export default async function PdfPage({
 
   return (
     <div className="container-page py-12">
-      <PageHeader
+      <PageBanner
+        image={IMAGES.pdf}
         title="PDF книги"
         description="Плащате с карта и книгата се отключва веднага в профила ви. Без адрес за доставка, без излишни данни."
       />

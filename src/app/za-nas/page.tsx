@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
 import { PageHeader, Card, ButtonLink } from "@/components/ui";
 import { NewsletterForm } from "@/components/newsletter-form";
+import { IMAGES } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +55,10 @@ async function getContent(): Promise<Record<string, string>> {
 
 export default async function AboutPage() {
   const c = await getContent();
-  const image = publicUrl(c.about_image || null);
+  // Собственикът може да качи своя снимка от панела. Докато не го е направил,
+  // мястото не зее празно — стои обща снимка от оформлението.
+  const ownImage = publicUrl(c.about_image || null);
+  const image = ownImage ?? IMAGES.about;
 
   const values = [
     { title: c.about_values_1_title, text: c.about_values_1_text },
@@ -68,18 +72,17 @@ export default async function AboutPage() {
         <PageHeader title={c.about_title!} description={c.about_intro} />
       </div>
 
-      {image && (
-        <div className="relative aspect-[21/9] my-10 bg-muted rounded-md overflow-hidden border border-border">
-          <Image
-            src={image}
-            alt="Remind Books"
-            fill
-            sizes="100vw"
-            priority
-            className="object-cover"
-          />
-        </div>
-      )}
+      <div className="relative aspect-[21/9] my-10 bg-muted rounded-md overflow-hidden border border-border">
+        <Image
+          src={image}
+          alt={ownImage ? "Remind Books" : ""}
+          aria-hidden={ownImage ? undefined : "true"}
+          fill
+          sizes="100vw"
+          priority
+          className="object-cover"
+        />
+      </div>
 
       <div className="grid lg:grid-cols-3 gap-12 mt-4">
         <div className="lg:col-span-2">
