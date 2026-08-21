@@ -197,6 +197,14 @@ export const InstagramIcon = (p: IconProps) => (
   </Icon>
 );
 
+export const ImageIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <circle cx="8.5" cy="9.5" r="1.6" />
+    <path d="m4 17 5-4.5 4 3.5 3-2.5 4 3.5" />
+  </Icon>
+);
+
 export const PackageIcon = (p: IconProps) => (
   <Icon {...p}>
     <path d="m12 2 9 5v10l-9 5-9-5V7l9-5Z" />

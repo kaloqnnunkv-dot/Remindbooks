@@ -13,10 +13,13 @@ export function Logo({
   className,
   priority = false,
   width = 168,
+  src = "/logo.webp",
 }: {
   className?: string;
   priority?: boolean;
   width?: number;
+  /** Подменено лого от админ панела. Празно означава вграденото. */
+  src?: string;
 }) {
   // Оригиналът е 430×176 — запазваме съотношението.
   const height = Math.round((width * 176) / 430);
@@ -26,7 +29,7 @@ export function Logo({
   // кой ще надделее, което води до различен размер на различни страници.
   return (
     <Image
-      src="/logo.webp"
+      src={src}
       alt="Remind Books"
       width={width}
       height={height}
@@ -41,10 +44,12 @@ export function LogoLink({
   className,
   width,
   priority,
+  src,
 }: {
   className?: string;
   width?: number;
   priority?: boolean;
+  src?: string;
 }) {
   return (
     <Link
@@ -52,7 +57,7 @@ export function LogoLink({
       aria-label="Remind Books — начална страница"
       className={cn("inline-flex shrink-0 items-center", className)}
     >
-      <Logo width={width} priority={priority} />
+      <Logo width={width} priority={priority} src={src} />
     </Link>
   );
 }

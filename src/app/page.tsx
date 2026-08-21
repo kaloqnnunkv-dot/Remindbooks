@@ -2,19 +2,15 @@ import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-import { ButtonLink, SectionHeading, Card } from "@/components/ui";
-import { ProductCard, ProductGrid } from "@/components/product-card";
+import { ButtonLink, SectionHeading, Card, cn } from "@/components/ui";
+import { ProductCard } from "@/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
 import { FileTextIcon, HeadphonesIcon } from "@/components/icons";
 import { HeroBooks } from "@/components/book-3d";
 import { productHref } from "@/components/product-card";
 import { publicUrl } from "@/lib/storage";
-import { IMAGES } from "@/lib/images";
-import {
-  getBestsellers,
-  getLatestByType,
-  getLatestPosts,
-} from "@/lib/queries";
+import { getSiteImages } from "@/lib/images";
+import { getLatestByType, getLatestPosts } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
 import { formatDate, truncate } from "@/lib/format";
 import { db } from "@/lib/db";
@@ -110,39 +106,20 @@ async function getAboutText(): Promise<string> {
 }
 
 export default async function HomePage() {
-  const [bestsellers, pdfBooks, audioItems, posts, favoriteIds, aboutText, heroBooks] =
+  const [pdfBooks, audioItems, posts, favoriteIds, aboutText, heroBooks, images] =
     await Promise.all([
-      getBestsellers(4),
       getLatestByType("PDF", 4),
       getLatestByType("AUDIO", 3),
       getLatestPosts(3),
       getFavoriteIds(),
       getAboutText(),
       getHeroBooks(),
+      getSiteImages(),
     ]);
 
   return (
     <>
-      <Hero books={heroBooks} />
-
-      {/* Най-продавани физически книги */}
-      {bestsellers.length > 0 && (
-        <section className="section-alt border-b border-border" aria-labelledby="bestsellers">
-          <div className="container-page py-16">
-          <SectionHeading title="Най-продавани" href="/knigi" />
-          <ProductGrid>
-            {bestsellers.map((p, i) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                isFavorite={favoriteIds.has(p.id)}
-                priority={i < 2}
-              />
-            ))}
-          </ProductGrid>
-          </div>
-        </section>
-      )}
+      <Hero books={heroBooks} heroImage={images.hero} />
 
       {/* Промо секция PDF книги */}
       <PromoSection
@@ -154,6 +131,7 @@ export default async function HomePage() {
         icon={<FileTextIcon size={28} />}
         products={pdfBooks}
         favoriteIds={favoriteIds}
+        pattern
       />
 
       {/* Промо секция аудио */}
@@ -171,7 +149,10 @@ export default async function HomePage() {
       />
 
       {/* Кратко "За нас" */}
-      <section className="section-alt-strong border-b border-border" aria-labelledby="about-teaser">
+      <section
+        className="pattern-books section-alt-strong border-b border-border"
+        aria-labelledby="about-teaser"
+      >
         <div className="container-page py-16">
         <Card className="overflow-hidden bg-card border border-border">
           <div className="grid lg:grid-cols-[1.1fr_1fr]">
@@ -194,7 +175,7 @@ export default async function HomePage() {
                 височина; от lg нагоре се разтяга по височината на картата. */}
             <div className="relative min-h-56 sm:min-h-72 lg:min-h-full">
               <Image
-                src={IMAGES.about}
+                src={images.about}
                 alt=""
                 aria-hidden="true"
                 fill
@@ -209,7 +190,7 @@ export default async function HomePage() {
 
       {/* От блога */}
       {posts.length > 0 && (
-        <section className="border-b border-border" aria-labelledby="from-blog">
+        <section className="pattern-books border-b border-border" aria-labelledby="from-blog">
           <div className="container-page py-16">
           <SectionHeading title="От блога" href="/blog" linkLabel="Всички публикации" />
           <div className="grid gap-8 md:grid-cols-3">
@@ -222,7 +203,7 @@ export default async function HomePage() {
                   {/* Без корица публикацията показва обща снимка вместо празна
                       рамка с иконка — редицата остава равна. */}
                   <Image
-                    src={post.coverImage ?? IMAGES.postFallback}
+                    src={post.coverImage ?? images.postFallback}
                     alt={post.coverImage ? post.title : ""}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
@@ -266,7 +247,7 @@ export default async function HomePage() {
       )}
 
       {/* Бюлетин */}
-      <section className="section-alt-strong" aria-labelledby="newsletter">
+      <section className="pattern-books section-alt-strong" aria-labelledby="newsletter">
         <div className="container-page py-16">
         <Card className="p-8 sm:p-12 text-center bg-card border border-border">
           <h2 id="newsletter" className="text-2xl sm:text-3xl">
@@ -286,7 +267,7 @@ export default async function HomePage() {
   );
 }
 
-function Hero({ books }: { books: HeroBook[] }) {
+function Hero({ books, heroImage }: { books: HeroBook[]; heroImage: string }) {
   return (
     <section className="relative overflow-hidden border-b border-border">
       {/* Стара библиотека зад заглавието, в пълния си цвят. Снимката е
@@ -294,7 +275,7 @@ function Hero({ books }: { books: HeroBook[] }) {
           прочетат от нея. Единственото избелване по нея е сиянието под самото
           заглавие (`.hero-title` в globals.css), колкото буквите да се четат. */}
       <Image
-        src={IMAGES.hero}
+        src={heroImage}
         alt=""
         aria-hidden="true"
         fill
@@ -336,6 +317,7 @@ function PromoSection({
   favoriteIds,
   reversed = false,
   tone = "plain",
+  pattern = false,
 }: {
   eyebrow: string;
   title: string;
@@ -348,14 +330,18 @@ function PromoSection({
   reversed?: boolean;
   /** Редуването на фонове прави границите между секциите видими. */
   tone?: "plain" | "alt";
+  /** Рисунката с книги отзад. Не на всяка секция — иначе става шумно. */
+  pattern?: boolean;
 }) {
   if (products.length === 0) return null;
 
   return (
     <section
-      className={
-        tone === "alt" ? "section-alt border-b border-border" : "border-b border-border"
-      }
+      className={cn(
+        tone === "alt" ? "section-alt" : "",
+        pattern && "pattern-books",
+        "border-b border-border",
+      )}
     >
       <div className="container-page py-16">
       <div

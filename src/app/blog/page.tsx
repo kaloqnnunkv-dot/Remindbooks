@@ -9,7 +9,7 @@ import { formatDate, truncate, stripHtml } from "@/lib/format";
 import { PageBanner, EmptyState, ButtonLink, cn } from "@/components/ui";
 import { Pagination } from "@/components/pagination";
 import { BookIcon } from "@/components/icons";
-import { IMAGES } from "@/lib/images";
+import { getSiteImages } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +41,7 @@ export default async function BlogPage({
     ...(params.tag ? { tags: { some: { slug: params.tag } } } : {}),
   };
 
-  const [posts, total, tags] = await Promise.all([
+  const [posts, total, tags, images] = await Promise.all([
     db.post.findMany({
       where,
       orderBy: { publishedAt: "desc" },
@@ -62,6 +62,7 @@ export default async function BlogPage({
       },
       orderBy: { name: "asc" },
     }),
+    getSiteImages(),
   ]);
 
   const pages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -69,7 +70,7 @@ export default async function BlogPage({
   return (
     <div className="container-page py-12">
       <PageBanner
-        image={IMAGES.blog}
+        image={images.blog}
         title="Вътрешен компас"
         description="Мисли, практики и истории за хората, които търсят своята посока."
       />
@@ -141,7 +142,7 @@ export default async function BlogPage({
                     {/* Публикация без корица показва обща снимка вместо празна
                         рамка с иконка — редицата остава равна. */}
                     <Image
-                      src={cover ?? IMAGES.postFallback}
+                      src={cover ?? images.postFallback}
                       alt={cover ? post.title : ""}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"

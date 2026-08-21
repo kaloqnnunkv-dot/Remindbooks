@@ -22,6 +22,7 @@ export function AuthShell({
   footer,
   video,
   quote,
+  logoSrc,
 }: {
   title: string;
   subtitle?: string;
@@ -30,6 +31,8 @@ export function AuthShell({
   /** Декоративно видео за десния панел; при липса остава градиентът. */
   video?: string | null;
   quote?: string;
+  /** Логото от админ панела. Идва отвън — това е клиентски компонент. */
+  logoSrc?: string;
 }) {
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [hovering, setHovering] = useState(false);
@@ -61,7 +64,7 @@ export function AuthShell({
           />
 
           <div className="relative z-10">
-            <Logo width={150} className="h-9" />
+            <Logo width={150} src={logoSrc} className="h-9" />
 
             <h1 className="mt-8 text-3xl font-extrabold sm:text-4xl">{title}</h1>
             {subtitle && (

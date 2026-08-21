@@ -10,7 +10,9 @@ import { isStorageConfigured } from "@/lib/env";
  * файлове минават през /api/download и /api/audio, където се проверява достъп.
  */
 
-const PUBLIC_FOLDERS = ["covers", "blog"];
+// `site` са снимките от оформлението, подменяни от админ панела — публични са
+// по същия начин, по който са и кориците.
+const PUBLIC_FOLDERS = ["covers", "blog", "site"];
 
 export async function GET(
   _request: Request,

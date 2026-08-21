@@ -26,7 +26,7 @@ const LEGAL_LINKS = [
   { href: "/vrashtane", label: "Право на отказ и връщане" },
 ];
 
-export function SiteFooter() {
+export function SiteFooter({ logoSrc }: { logoSrc?: string }) {
   const year = new Date().getFullYear();
 
   return (
@@ -35,7 +35,7 @@ export function SiteFooter() {
         <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
           {/* Бранд + бюлетин */}
           <div className="lg:col-span-1">
-            <Logo width={160} className="h-10" />
+            <Logo width={160} src={logoSrc} className="h-10" />
             <p className="mt-3 text-sm text-sidebar-foreground/75 leading-relaxed">
               Книги, които връщат посоката. Истории и практики за вътрешния компас.
             </p>

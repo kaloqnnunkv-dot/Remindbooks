@@ -8,7 +8,7 @@ import { getProducts, getCategories, type SortOption } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
 import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
-import { IMAGES } from "@/lib/images";
+import { getSiteImages } from "@/lib/images";
 import { formatPrice } from "@/lib/format";
 import { AddBundleButton } from "@/components/add-to-cart";
 import Image from "next/image";
@@ -34,7 +34,7 @@ export default async function BooksPage({
   const page = Math.max(1, Number(params.stranica) || 1);
   const sort = (params.sort ?? "newest") as SortOption;
 
-  const [{ items, total, pages }, categories, favoriteIds, bundles] =
+  const [{ items, total, pages }, categories, favoriteIds, bundles, images] =
     await Promise.all([
       getProducts({
         type: "PHYSICAL",
@@ -60,12 +60,13 @@ export default async function BooksPage({
         },
         take: 3,
       }),
+      getSiteImages(),
     ]);
 
   return (
     <div className="container-page py-12">
       <PageBanner
-        image={IMAGES.books}
+        image={images.books}
         title="Физически книги"
         description="Хартиени издания с доставка до адрес или офис на куриер в цялата страна."
       />

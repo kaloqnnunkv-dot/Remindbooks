@@ -5,6 +5,8 @@ import "./globals.css";
 
 import { auth } from "@/lib/auth";
 import { cartCount } from "@/lib/cart";
+import { getThemeCss } from "@/lib/theme";
+import { getSiteImages } from "@/lib/images";
 import { env } from "@/lib/env";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -38,40 +40,47 @@ const ibmPlexMono = IBM_Plex_Mono({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(env.appUrl),
-  title: {
-    default: "Remind Books — книги, които връщат посоката",
-    template: "%s | Remind Books",
-  },
-  description:
-    "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание. Открийте своя вътрешен компас с Remind Books.",
-  keywords: [
-    "книги",
-    "PDF книги",
-    "аудио книги",
-    "медитации",
-    "саморазвитие",
-    "Remind Books",
-  ],
-  authors: [{ name: "Remind Books" }],
-  openGraph: {
-    type: "website",
-    locale: "bg_BG",
-    siteName: "Remind Books",
-    title: "Remind Books — книги, които връщат посоката",
+/**
+ * Метаданните се строят при заявка, а не са постоянни: снимката за споделяне
+ * може да бъде подменена от админ панела и адресът ѝ се чете от базата.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const images = await getSiteImages();
+  return {
+    metadataBase: new URL(env.appUrl),
+    title: {
+      default: "Remind Books — книги, които връщат посоката",
+      template: "%s | Remind Books",
+    },
     description:
-      "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание.",
-    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "Remind Books" }],
-  },
-  icons: {
-    icon: [{ url: "/logo-mark.png", type: "image/png" }],
-    apple: [{ url: "/apple-icon.png" }],
-  },
-  twitter: { card: "summary_large_image", images: ["/og-image.jpg"] },
-  robots: { index: true, follow: true },
-  alternates: { canonical: "/" },
-};
+      "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание. Открийте своя вътрешен компас с Remind Books.",
+    keywords: [
+      "книги",
+      "PDF книги",
+      "аудио книги",
+      "медитации",
+      "саморазвитие",
+      "Remind Books",
+    ],
+    authors: [{ name: "Remind Books" }],
+    openGraph: {
+      type: "website",
+      locale: "bg_BG",
+      siteName: "Remind Books",
+      title: "Remind Books — книги, които връщат посоката",
+      description:
+        "Физически и дигитални книги, аудио медитации и вдъхновяващо съдържание.",
+      images: [{ url: images.ogImage, width: 1200, height: 630, alt: "Remind Books" }],
+    },
+    icons: {
+      icon: [{ url: "/logo-mark.png", type: "image/png" }],
+      apple: [{ url: "/apple-icon.png" }],
+    },
+    twitter: { card: "summary_large_image", images: [images.ogImage] },
+    robots: { index: true, follow: true },
+    alternates: { canonical: "/" },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [
@@ -85,7 +94,12 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [session, count] = await Promise.all([auth(), cartCount()]);
+  const [session, count, themeCss, images] = await Promise.all([
+    auth(),
+    cartCount(),
+    getThemeCss(),
+    getSiteImages(),
+  ]);
 
   return (
     <html
@@ -94,6 +108,12 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-screen flex flex-col antialiased">
+        {/* Цветовете, избрани от админ панела. Стои след таблицата със стилове,
+            затова пренаписва стойностите от `globals.css` без `!important`.
+            Съдържанието е само шестнайсетични цветове — проверката е в
+            `lib/theme.ts`, защото това тук е код, не текст. */}
+        {themeCss && <style>{themeCss}</style>}
+
         <SessionProvider session={session}>
           <ToastProvider>
             <a
@@ -103,13 +123,17 @@ export default async function RootLayout({
               Към основното съдържание
             </a>
 
-            <SiteHeader cartCount={count} isLoggedIn={Boolean(session?.user)} />
+            <SiteHeader
+              cartCount={count}
+              isLoggedIn={Boolean(session?.user)}
+              logoSrc={images.logo}
+            />
 
             <main id="main" className="flex-1">
               {children}
             </main>
 
-            <SiteFooter />
+            <SiteFooter logoSrc={images.logo} />
             <SocialWidgets />
             <CookieConsent />
           </ToastProvider>

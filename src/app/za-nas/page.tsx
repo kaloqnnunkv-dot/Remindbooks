@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
 import { PageHeader, Card, ButtonLink } from "@/components/ui";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { IMAGES } from "@/lib/images";
+import { getSiteImages } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -54,11 +54,11 @@ async function getContent(): Promise<Record<string, string>> {
 }
 
 export default async function AboutPage() {
-  const c = await getContent();
+  const [c, images] = await Promise.all([getContent(), getSiteImages()]);
   // Собственикът може да качи своя снимка от панела. Докато не го е направил,
   // мястото не зее празно — стои обща снимка от оформлението.
   const ownImage = publicUrl(c.about_image || null);
-  const image = ownImage ?? IMAGES.about;
+  const image = ownImage ?? images.about;
 
   const values = [
     { title: c.about_values_1_title, text: c.about_values_1_text },

@@ -274,6 +274,38 @@
   }
 
   /**
+   * Стотици малки книги като фон на секция.
+   *
+   * Плочката (`public/images/pattern-books.png`) носи само форма — тя е маска,
+   * а цветът идва от темата. Затова рисунката се сменя заедно с палитрата и
+   * работи и в тъмната тема, вместо да носи собствени цветове, които после да
+   * не си отиват с нея.
+   *
+   * Стои под съдържанието (`z-index: -1`), но над фона на самата секция.
+   * `isolation` държи този отрицателен слой вътре в секцията — иначе би
+   * пропаднал под нея.
+   */
+  .pattern-books {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .pattern-books::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: color-mix(in srgb, var(--primary) 26%, transparent);
+    -webkit-mask-image: url("/images/pattern-books.png");
+    mask-image: url("/images/pattern-books.png");
+    -webkit-mask-size: 400px 168px;
+    mask-size: 400px 168px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+  }
+
+  /**
    * Мащаб на триизмерните сцени с книги (виж `book-3d.tsx`).
    *
    * Геометрията на книгата е в пиксели — така се пише CSS 3D и така движението

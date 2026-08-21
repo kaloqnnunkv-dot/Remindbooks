@@ -14,6 +14,8 @@ import {
   ALLOWED_IMAGE_TYPES,
   MAX_IMAGE_BYTES,
 } from "@/lib/storage";
+import { IMAGE_SLOTS, type ImageSlot } from "@/lib/images";
+import { THEME_TOKENS, isHexColor } from "@/lib/theme";
 import type { AdminState } from "./admin-products";
 
 const empty: AdminState = { ok: false, message: "" };
@@ -347,4 +349,152 @@ export async function toggleUserRole(userId: string): Promise<AdminState> {
         ? "Администраторските права са отнети."
         : "Потребителят вече е администратор.",
   };
+}
+
+// ------------------------------------------------------------------
+// Оформление: снимки и цветове
+// ------------------------------------------------------------------
+
+/** Страниците, по които се вижда оформлението. */
+const APPEARANCE_PATHS = [
+  "/",
+  "/knigi",
+  "/pdf",
+  "/audio",
+  "/blog",
+  "/za-nas",
+  "/admin/oformlenie",
+];
+
+function revalidateAppearance(): void {
+  for (const path of APPEARANCE_PATHS) revalidatePath(path);
+}
+
+/**
+ * Подменя една от снимките в оформлението.
+ *
+ * Старият файл се изтрива след като новият е качен — ако качването се провали,
+ * сайтът остава с досегашната снимка вместо с празна рамка.
+ */
+export async function saveSiteImage(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  await requireAdmin();
+
+  const slot = String(formData.get("slot") ?? "") as ImageSlot;
+  const info = IMAGE_SLOTS.find((s) => s.slot === slot);
+  if (!info) return { ...empty, message: "Непознато място за снимка." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ...empty, message: "Изберете файл." };
+  }
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    return { ...empty, message: "Позволени са JPG, PNG, WebP и AVIF." };
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return { ...empty, message: "Файлът е над 8 MB." };
+  }
+
+  const previous = await db.setting.findUnique({ where: { key: info.setting } });
+
+  const key = makeKey("site", file.name);
+  await uploadFile(key, Buffer.from(await file.arrayBuffer()), file.type);
+
+  await db.setting.upsert({
+    where: { key: info.setting },
+    create: { key: info.setting, value: key },
+    update: { value: key },
+  });
+
+  if (previous?.value && previous.value !== key) await deleteFile(previous.value);
+
+  revalidateAppearance();
+  return { ok: true, message: `Снимката „${info.label}“ е подменена.` };
+}
+
+/** Връща вградената снимка и изтрива качената. */
+export async function resetSiteImage(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  await requireAdmin();
+
+  const slot = String(formData.get("slot") ?? "") as ImageSlot;
+  const info = IMAGE_SLOTS.find((s) => s.slot === slot);
+  if (!info) return { ...empty, message: "Непознато място за снимка." };
+
+  const existing = await db.setting.findUnique({ where: { key: info.setting } });
+  if (!existing) return { ok: true, message: "Вече е вградената снимка." };
+
+  await db.setting.delete({ where: { key: info.setting } });
+  if (existing.value) await deleteFile(existing.value);
+
+  revalidateAppearance();
+  return { ok: true, message: `„${info.label}“ отново е вградената снимка.` };
+}
+
+/**
+ * Запазва цветовете на темата.
+ *
+ * Приемат се само шестнайсетични цветове: стойността влиза в `<style>` на
+ * страницата, тоест е код. Празно поле означава „върни изходния цвят“ и редът
+ * се изтрива, вместо да се пази стойност, равна на подразбиращата се.
+ */
+export async function saveTheme(
+  _prev: AdminState,
+  formData: FormData,
+): Promise<AdminState> {
+  await requireAdmin();
+
+  const errors: Record<string, string> = {};
+  const writes: { key: string; value: string }[] = [];
+  const clears: string[] = [];
+
+  for (const token of THEME_TOKENS) {
+    const raw = String(formData.get(token.setting) ?? "").trim();
+    if (!raw) {
+      clears.push(token.setting);
+      continue;
+    }
+    if (!isHexColor(raw)) {
+      errors[token.setting] = "Очаква се цвят като #a67c52.";
+      continue;
+    }
+    writes.push({ key: token.setting, value: raw.toLowerCase() });
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return { ok: false, message: "Проверете отбелязаните цветове.", errors };
+  }
+
+  for (const write of writes) {
+    await db.setting.upsert({
+      where: { key: write.key },
+      create: write,
+      update: { value: write.value },
+    });
+  }
+  if (clears.length > 0) {
+    await db.setting.deleteMany({ where: { key: { in: clears } } });
+  }
+
+  // Темата се вижда навсякъде, не само по страниците с оформление.
+  revalidatePath("/", "layout");
+  revalidateAppearance();
+  return { ok: true, message: "Цветовете са запазени." };
+}
+
+/** Връща цялата палитра към изходната. */
+export async function resetTheme(): Promise<AdminState> {
+  await requireAdmin();
+
+  await db.setting.deleteMany({
+    where: { key: { in: THEME_TOKENS.map((t) => t.setting) } },
+  });
+
+  revalidatePath("/", "layout");
+  revalidateAppearance();
+  return { ok: true, message: "Палитрата е върната към изходната." };
 }

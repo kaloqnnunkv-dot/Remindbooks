@@ -12,6 +12,7 @@ import {
   GiftIcon,
   SettingsIcon,
   FileTextIcon,
+  ImageIcon,
 } from "../icons";
 import { cn } from "../ui";
 
@@ -54,7 +55,10 @@ const GROUPS: {
   },
   {
     title: "Настройки",
-    links: [{ href: "/admin/nastroyki", label: "Настройки", icon: SettingsIcon }],
+    links: [
+      { href: "/admin/oformlenie", label: "Оформление", icon: ImageIcon },
+      { href: "/admin/nastroyki", label: "Настройки", icon: SettingsIcon },
+    ],
   },
 ];
 

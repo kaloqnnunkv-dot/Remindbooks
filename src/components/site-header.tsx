@@ -27,9 +27,12 @@ const NAV = [
 export function SiteHeader({
   cartCount,
   isLoggedIn,
+  logoSrc,
 }: {
   cartCount: number;
   isLoggedIn: boolean;
+  /** Логото от админ панела. Идва отвън, защото това е клиентски компонент. */
+  logoSrc?: string;
 }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -74,7 +77,7 @@ export function SiteHeader({
               aria-label="Remind Books — начална страница"
               className="shrink-0 transition-opacity hover:opacity-80"
             >
-              <Logo width={240} priority className="h-[3.375rem] sm:h-[3.75rem]" />
+              <Logo width={240} priority src={logoSrc} className="h-[3.375rem] sm:h-[3.75rem]" />
             </Link>
 
             {/* Навигация — десктоп */}

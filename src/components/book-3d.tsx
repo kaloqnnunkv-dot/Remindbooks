@@ -4,6 +4,8 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import { MinusIcon, PlusIcon } from "./icons";
+
 /**
  * Книга в CSS 3D.
  *
@@ -892,9 +894,9 @@ export function Book3D({
               onClick={() => stepZoom(1 / ZOOM_STEP)}
               disabled={zoom <= 1.001}
               aria-label="Отдалечи"
-              className="h-10 w-10 rounded-md border border-border font-sans text-lg font-bold leading-none disabled:opacity-40"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border disabled:opacity-40"
             >
-              −
+              <MinusIcon size={16} />
             </button>
             <span className="w-14 text-center font-mono text-xs text-muted-foreground tabular-nums">
               {Math.round(zoom * 100)}%
@@ -904,9 +906,9 @@ export function Book3D({
               onClick={() => stepZoom(ZOOM_STEP)}
               disabled={zoom >= MAX_ZOOM - 0.001}
               aria-label="Приближи"
-              className="h-10 w-10 rounded-md border border-border font-sans text-lg font-bold leading-none disabled:opacity-40"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border disabled:opacity-40"
             >
-              +
+              <PlusIcon size={16} />
             </button>
           </span>
 

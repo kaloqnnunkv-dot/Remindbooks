@@ -8,7 +8,7 @@ import { publicUrl } from "@/lib/storage";
 import { formatPrice, formatDuration, truncate, stripHtml } from "@/lib/format";
 import { getCategories, orderByFor, type SortOption } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
-import { IMAGES } from "@/lib/images";
+import { getSiteImages } from "@/lib/images";
 
 import { PageBanner, EmptyState, Badge, ButtonLink } from "@/components/ui";
 import { CatalogControls } from "@/components/catalog-controls";
@@ -48,7 +48,7 @@ export default async function AudioPage({
     ...(params.kategoria ? { category: { slug: params.kategoria } } : {}),
   };
 
-  const [items, total, categories, favoriteIds, entitlements] = await Promise.all([
+  const [items, total, categories, favoriteIds, entitlements, images] = await Promise.all([
     db.product.findMany({
       where,
       orderBy: orderByFor(sort),
@@ -70,6 +70,7 @@ export default async function AudioPage({
           select: { productId: true },
         })
       : Promise.resolve([]),
+    getSiteImages(),
   ]);
 
   const ownedIds = new Set(entitlements.map((e) => e.productId));
@@ -78,7 +79,7 @@ export default async function AudioPage({
   return (
     <div className="container-page py-12">
       <PageBanner
-        image={IMAGES.audio}
+        image={images.audio}
         title="Аудио съдържание"
         description="Медитации, водени практики и авторски четения. Част от материалите са напълно безплатни — натиснете play и слушайте."
       />

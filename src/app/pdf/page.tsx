@@ -6,7 +6,7 @@ import { Pagination } from "@/components/pagination";
 import { FileTextIcon, DownloadIcon, CheckIcon } from "@/components/icons";
 import { getProducts, getCategories, type SortOption } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
-import { IMAGES } from "@/lib/images";
+import { getSiteImages } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +28,7 @@ export default async function PdfPage({
   const page = Math.max(1, Number(params.stranica) || 1);
   const sort = (params.sort ?? "newest") as SortOption;
 
-  const [{ items, total, pages }, categories, favoriteIds] = await Promise.all([
+  const [{ items, total, pages }, categories, favoriteIds, images] = await Promise.all([
     getProducts({
       type: "PDF",
       categorySlug: params.kategoria,
@@ -38,12 +38,13 @@ export default async function PdfPage({
     }),
     getCategories(),
     getFavoriteIds(),
+    getSiteImages(),
   ]);
 
   return (
     <div className="container-page py-12">
       <PageBanner
-        image={IMAGES.pdf}
+        image={images.pdf}
         title="PDF книги"
         description="Плащате с карта и книгата се отключва веднага в профила ви. Без адрес за доставка, без излишни данни."
       />

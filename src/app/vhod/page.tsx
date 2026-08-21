@@ -8,6 +8,7 @@ import { env } from "@/lib/env";
 import { publicUrl } from "@/lib/storage";
 import { LoginForm } from "@/components/auth-forms";
 import { AuthShell } from "@/components/auth/auth-shell";
+import { getSiteImages } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
 
@@ -35,13 +36,18 @@ export default async function LoginPage({
   const session = await auth();
   if (session?.user) redirect("/profil");
 
-  const [params, video] = await Promise.all([searchParams, getPanelVideo()]);
+  const [params, video, images] = await Promise.all([
+    searchParams,
+    getPanelVideo(),
+    getSiteImages(),
+  ]);
 
   return (
     <AuthShell
       title="Вход в профила"
       subtitle="Достъп до вашите поръчки, книги и любими заглавия."
       video={video}
+      logoSrc={images.logo}
       quote="Правилната книга, срещната в правилния момент, връща посоката."
       footer={
         <div className="space-y-3 text-sm">
