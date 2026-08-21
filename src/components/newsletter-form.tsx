@@ -43,7 +43,7 @@ export function NewsletterForm({
   if (status === "ok") {
     return (
       <p
-        className={`text-sm ${variant === "footer" ? "text-sidebar-foreground/80" : "text-foreground"}`}
+        className={`text-sm ${variant === "footer" ? "text-footer-foreground/80" : "text-foreground"}`}
         role="status"
       >
         ✓ {message}
@@ -83,7 +83,7 @@ export function NewsletterForm({
       )}
 
       <p
-        className={`text-xs ${variant === "footer" ? "text-sidebar-foreground/60" : "text-muted-foreground"}`}
+        className={`text-xs ${variant === "footer" ? "text-footer-foreground/60" : "text-muted-foreground"}`}
       >
         Без спам. Отписване по всяко време.
       </p>
