@@ -5,7 +5,6 @@ import type { Metadata } from "next";
 import { ButtonLink, SectionHeading, Card, cn } from "@/components/ui";
 import { ProductCard } from "@/components/product-card";
 import { NewsletterForm } from "@/components/newsletter-form";
-import { FileTextIcon, HeadphonesIcon } from "@/components/icons";
 import { HeroBooks } from "@/components/book-3d";
 import { productHref } from "@/components/product-card";
 import { publicUrl } from "@/lib/storage";
@@ -128,7 +127,6 @@ export default async function HomePage() {
         description="Без чакане и без доставка. Плащате с карта и книгата се отключва в профила ви за секунди. Всяко заглавие има безплатен откъс, за да прелистите преди да решите."
         href="/pdf"
         linkLabel="Разгледай PDF книгите"
-        icon={<FileTextIcon size={28} />}
         products={pdfBooks}
         favoriteIds={favoriteIds}
         pattern
@@ -141,7 +139,6 @@ export default async function HomePage() {
         description="Записи, които можете да слушате навсякъде — сутрешни практики, водени медитации и авторски четения. Част от съдържанието е напълно безплатно."
         href="/audio"
         linkLabel="Към аудио съдържанието"
-        icon={<HeadphonesIcon size={28} />}
         products={audioItems}
         favoriteIds={favoriteIds}
         reversed
@@ -191,7 +188,7 @@ export default async function HomePage() {
       {/* От блога */}
       {posts.length > 0 && (
         <section className="pattern-books border-b border-border" aria-labelledby="from-blog">
-          <div className="container-page py-16">
+          <div className="text-on-pattern container-page py-16">
           <SectionHeading title="От блога" href="/blog" linkLabel="Всички публикации" />
           <div className="grid gap-8 md:grid-cols-3">
             {posts.map((post) => (
@@ -228,7 +225,7 @@ export default async function HomePage() {
                 </h3>
 
                 {post.excerpt && (
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed line-clamp-3">
+                  <p className="mt-2 text-[15px] leading-relaxed text-secondary-foreground line-clamp-3">
                     {truncate(post.excerpt, 140)}
                   </p>
                 )}
@@ -312,7 +309,6 @@ function PromoSection({
   description,
   href,
   linkLabel,
-  icon,
   products,
   favoriteIds,
   reversed = false,
@@ -324,7 +320,6 @@ function PromoSection({
   description: string;
   href: string;
   linkLabel: string;
-  icon: React.ReactNode;
   products: Awaited<ReturnType<typeof getLatestByType>>;
   favoriteIds: Set<string>;
   reversed?: boolean;
@@ -349,16 +344,21 @@ function PromoSection({
           reversed ? "lg:[&>*:first-child]:order-2" : ""
         }`}
       >
-        <div className="lg:sticky lg:top-24">
-          <span className="inline-flex items-center justify-center h-12 w-12 rounded-md bg-primary/12 text-primary">
-            {icon}
-          </span>
-          <p className="mt-4 font-sans text-xs font-bold uppercase tracking-[0.15em] text-primary">
+        <div className="text-on-pattern lg:sticky lg:top-24">
+          <p className="font-sans text-[13px] font-bold uppercase tracking-[0.15em] text-primary">
             {eyebrow}
           </p>
           <h2 className="mt-2 text-2xl sm:text-3xl">{title}</h2>
-          <p className="mt-4 text-muted-foreground leading-relaxed">{description}</p>
-          <ButtonLink href={href} variant="outline" className="mt-6">
+          <p className="mt-4 text-[17px] leading-relaxed text-secondary-foreground">
+            {description}
+          </p>
+          {/* Плътен фон и мека сянка: очертаният бутон се губеше върху
+              рисунката, защото тя минаваше под него. */}
+          <ButtonLink
+            href={href}
+            variant="outline"
+            className="mt-6 bg-card shadow-soft hover:shadow-lift"
+          >
             {linkLabel}
           </ButtonLink>
         </div>

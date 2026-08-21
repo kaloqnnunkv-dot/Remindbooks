@@ -290,13 +290,34 @@
     isolation: isolate;
   }
 
+  /**
+   * Текст върху рисунката с книги.
+   *
+   * Рисунката е дребна и с контраст: тънките ѝ линии минават през буквите и
+   * текстът се губи. Сиянието в цвета на фона отделя буквите от нея, без да
+   * променя нито техния цвят, нито фона — вместо да гасим рисунката още
+   * повече, отделяме текста от нея.
+   *
+   * Слага се на обхващащия елемент и важи за текста вътре в него. В картите
+   * не е нужно — там текстът стои върху плътен фон.
+   *
+   * Работи и в тъмната тема: `--background` там е тъмен, тоест сиянието
+   * потъмнява, вместо да избелва.
+   */
+  .text-on-pattern,
+  .text-on-pattern :where(h1, h2, h3, p, span, time, a, li) {
+    text-shadow:
+      0 1px 2px color-mix(in srgb, var(--background) 88%, transparent),
+      0 0 10px color-mix(in srgb, var(--background) 72%, transparent);
+  }
+
   .pattern-books::before {
     content: "";
     position: absolute;
     inset: 0;
     z-index: -1;
     pointer-events: none;
-    background-color: color-mix(in srgb, var(--primary) 26%, transparent);
+    background-color: color-mix(in srgb, var(--primary) 18%, transparent);
     -webkit-mask-image: url("/images/pattern-books.png");
     mask-image: url("/images/pattern-books.png");
     -webkit-mask-size: 400px 168px;
