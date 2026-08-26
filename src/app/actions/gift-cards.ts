@@ -8,6 +8,7 @@ import { generateGiftCardCode } from "@/lib/pricing";
 import { giftCardSchema, fieldErrors } from "@/lib/validation";
 import { limitByIp } from "@/lib/rate-limit";
 import { db } from "@/lib/db";
+import { formatPrice } from "@/lib/format";
 
 export type GiftCardState = {
   ok: boolean;
@@ -17,8 +18,10 @@ export type GiftCardState = {
 
 const empty: GiftCardState = { ok: false, message: "" };
 
-const MIN_CENTS = 1000; // 10 лв.
-const MAX_CENTS = 50000; // 500 лв.
+// Границите живеят в настройките на магазина, за да ги четат и формата, и
+// страницата, която ги обявява на клиента.
+const MIN_CENTS = env.shop.giftCardMinCents;
+const MAX_CENTS = env.shop.giftCardMaxCents;
 
 /**
  * Купуване на подаръчна карта.
@@ -56,8 +59,10 @@ export async function purchaseGiftCard(
   if (amountCents < MIN_CENTS || amountCents > MAX_CENTS) {
     return {
       ok: false,
-      message: "Стойността трябва да е между 10 и 500 лв.",
-      errors: { amountCents: "Стойността трябва да е между 10 и 500 лв." },
+      message: `Стойността трябва да е между ${formatPrice(MIN_CENTS)} и ${formatPrice(MAX_CENTS)}.`,
+      errors: {
+        amountCents: `Стойността трябва да е между ${formatPrice(MIN_CENTS)} и ${formatPrice(MAX_CENTS)}.`,
+      },
     };
   }
 
@@ -89,7 +94,7 @@ export async function purchaseGiftCard(
           price_data: {
             currency: env.shop.currency,
             product_data: {
-              name: `Подаръчна карта Remind Books — ${(amountCents / 100).toFixed(2)} лв.`,
+              name: `Подаръчна карта Remind Books — ${formatPrice(amountCents)}`,
               description: `За: ${recipientName || recipientEmail}`,
             },
             unit_amount: amountCents,

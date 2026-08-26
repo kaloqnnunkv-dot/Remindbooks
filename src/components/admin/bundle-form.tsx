@@ -185,7 +185,7 @@ export function BundleForm({
 
         <div className="max-w-xs">
           <Field
-            label="Цена (лв.)"
+            label="Цена (€)"
             htmlFor="bn-price"
             required
             error={state.errors?.priceCents}

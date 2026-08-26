@@ -24,7 +24,15 @@ function withProtocol(value: string | undefined): string {
 
 export const publicConfig = {
   appUrl: withProtocol(process.env.NEXT_PUBLIC_APP_URL),
-  currencyLabel: "лв.",
+  currencyLabel: "€",
+  /**
+   * Границите за подаръчна карта, в евроцентове.
+   *
+   * Стоят тук, а не в `env.ts`, защото ги чете и формата в браузъра. `env.ts`
+   * ги преизползва, тъй че сървърната проверка и надписът пред клиента не могат
+   * да се разминат.
+   */
+  giftCard: { minCents: 500, maxCents: 25000 },
   social: {
     facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "https://facebook.com",
     tiktok: process.env.NEXT_PUBLIC_TIKTOK_URL ?? "https://tiktok.com",

@@ -265,7 +265,7 @@ export function ProductForm({
 
         <div className="grid sm:grid-cols-2 gap-4">
           <Field
-            label="Цена (лв.)"
+            label="Цена (€)"
             htmlFor="p-price"
             required={!isFree}
             error={state.errors?.priceCents}
@@ -282,7 +282,7 @@ export function ProductForm({
           </Field>
 
           <Field
-            label="Стара цена (лв.)"
+            label="Стара цена (€)"
             htmlFor="p-compare"
             hint="Показва се зачертана. Оставете празно, ако няма промоция."
             error={state.errors?.compareAtCents}

@@ -111,7 +111,7 @@ export default async function PdfBookPage({
     offers: {
       "@type": "Offer",
       price: (book.priceCents / 100).toFixed(2),
-      priceCurrency: "BGN",
+      priceCurrency: env.shop.currency.toUpperCase(),
       availability: "https://schema.org/InStock",
       url: `${env.appUrl}/pdf/${book.slug}`,
     },

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { formatPrice } from "@/lib/format";
 import { env, isStripeConfigured } from "@/lib/env";
 import { requireStripe } from "@/lib/stripe";
 import { getDetailedCart, clearCart } from "@/lib/cart";
@@ -56,7 +57,7 @@ export async function checkPromoCode(code: string): Promise<PromoCheckResult> {
 
   return {
     ok: true,
-    message: `Кодът е приложен: −${(result.discountCents / 100).toFixed(2)} лв.`,
+    message: `Кодът е приложен: −${formatPrice(result.discountCents)}`,
     discountCents: result.discountCents,
     code: trimmed,
   };
@@ -94,7 +95,7 @@ export async function checkGiftCard(code: string): Promise<GiftCardCheckResult> 
 
   return {
     ok: true,
-    message: `Налична стойност: ${(card.balanceCents / 100).toFixed(2)} лв.`,
+    message: `Налична стойност: ${formatPrice(card.balanceCents)}`,
     balanceCents: card.balanceCents,
     code: trimmed,
   };

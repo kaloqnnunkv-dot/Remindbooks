@@ -6,6 +6,8 @@
  * се изключват. Това позволява поетапно пускане (първо съдържание, после плащания).
  */
 
+import { publicConfig } from "./public-config";
+
 function optional(name: string): string | undefined {
   const v = process.env[name];
   return v && v.length > 0 ? v : undefined;
@@ -121,15 +123,26 @@ export const env = {
     groupId: optional("MAILERLITE_GROUP_ID"),
   },
 
+  /**
+   * Всички суми са в евроцентове (Int).
+   *
+   * Магазинът работи в евро от въвеждането му в България. Стойностите по
+   * подразбиране тук са в евро — ако в средата е останала сума от времето на
+   * лева, тя ще се приложи както е и доставката ще излезе двойно.
+   */
   shop: {
-    /** Цена на доставка в стотинки. */
-    shippingCents: Number(optional("SHIPPING_CENTS") ?? 599),
-    /** Безплатна доставка над тази сума (стотинки). 0 = изключено. */
-    freeShippingOverCents: Number(optional("FREE_SHIPPING_OVER_CENTS") ?? 5000),
-    /** Такса за наложен платеж в стотинки. */
+    /** Цена на доставка в евроцентове. */
+    shippingCents: Number(optional("SHIPPING_CENTS") ?? 299),
+    /** Безплатна доставка над тази сума (евроцентове). 0 = изключено. */
+    freeShippingOverCents: Number(optional("FREE_SHIPPING_OVER_CENTS") ?? 2500),
+    /** Такса за наложен платеж в евроцентове. */
     codFeeCents: Number(optional("COD_FEE_CENTS") ?? 0),
-    currency: "bgn",
-    currencyLabel: "лв.",
+    /** Долна и горна граница за подаръчна карта, в евроцентове. */
+    giftCardMinCents: publicConfig.giftCard.minCents,
+    giftCardMaxCents: publicConfig.giftCard.maxCents,
+    /** Кодът, с който сумите отиват към Stripe (ISO 4217, малки букви). */
+    currency: "eur",
+    currencyLabel: "€",
   },
 
   features: {

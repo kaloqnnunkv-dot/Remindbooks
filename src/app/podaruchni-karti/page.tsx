@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { env } from "@/lib/env";
+import { formatPrice } from "@/lib/format";
 import { PageHeader, Card } from "@/components/ui";
 import { GiftCardForm } from "@/components/gift-card-form";
 import { GiftIcon, MailIcon, TagIcon } from "@/components/icons";
@@ -36,7 +37,8 @@ export default function GiftCardsPage() {
             </h2>
             <ol className="space-y-4 text-sm">
               <Step icon={<TagIcon size={16} />} title="Избирате стойност">
-                От 10 до 500 лв. — колкото прецените.
+                От {formatPrice(env.shop.giftCardMinCents)} до{" "}
+                {formatPrice(env.shop.giftCardMaxCents)} — колкото прецените.
               </Step>
               <Step icon={<MailIcon size={16} />} title="Получателят получава имейл">
                 С уникален код и вашето лично съобщение.

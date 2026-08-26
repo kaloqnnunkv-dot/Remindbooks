@@ -116,7 +116,7 @@ export default async function BookPage({
     offers: {
       "@type": "Offer",
       price: (book.priceCents / 100).toFixed(2),
-      priceCurrency: "BGN",
+      priceCurrency: env.shop.currency.toUpperCase(),
       availability: outOfStock
         ? "https://schema.org/OutOfStock"
         : "https://schema.org/InStock",

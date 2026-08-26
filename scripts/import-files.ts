@@ -194,7 +194,7 @@ async function main() {
     });
 
     console.log(
-      `✓ ${meta.title}  ·  ${excerpt.total} стр. → откъс ${excerpt.take} стр.  ·  ${(meta.price / 100).toFixed(2)} лв.`,
+      `✓ ${meta.title}  ·  ${excerpt.total} стр. → откъс ${excerpt.take} стр.  ·  ${(meta.price / 100).toFixed(2)} €`,
     );
   }
 

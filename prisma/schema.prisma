@@ -1,5 +1,5 @@
 // ReMindBooks v2.0 — модел на данните
-// Всички суми се пазят в стотинки (Int), за да се избегнат грешки с плаваща запетая.
+// Всички суми се пазят в евроцентове (Int), за да се избегнат грешки с плаваща запетая.
 
 generator client {
   provider = "prisma-client-js"
@@ -130,7 +130,7 @@ model Product {
   description String      @db.Text
   shortDesc   String?     @db.Text
 
-  // Цени в стотинки. priceCents = текуща цена, compareAtCents = зачертана "стара" цена.
+  // Цени в евроцентове. priceCents = текуща, compareAtCents = зачертана "стара".
   priceCents     Int
   compareAtCents Int?
 
@@ -414,7 +414,7 @@ model PromoCode {
   id            String       @id @default(cuid())
   code          String       @unique
   discountType  DiscountType
-  // PERCENT: 1..100, FIXED: стойност в стотинки
+  // PERCENT: 1..100, FIXED: стойност в евроцентове
   amount        Int
   minOrderCents Int?
   startsAt      DateTime?

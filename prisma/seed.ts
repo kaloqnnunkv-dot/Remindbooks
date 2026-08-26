@@ -102,8 +102,8 @@ async function main() {
   <li>За всеки, който предпочита въпроси пред съвети.</li>
 </ul>
 <blockquote>Посоката не се намира отвън. Само се разпознава отвътре.</blockquote>`,
-      priceCents: 2490,
-      compareAtCents: 2990,
+      priceCents: 1290,
+      compareAtCents: 1590,
       stock: 24,
       categoryId: categories.samorazvitie,
       isPublished: true,
@@ -119,7 +119,7 @@ async function main() {
         "Трийсет сутрешни практики за хора, които мразят сутрините.",
       description: `<p>Не всяка сутрин трябва да започва в пет часа с ледена вана. Тази книга предлага друг подход — по-тих, по-човешки и, за изненада на мнозина, по-устойчив.</p>
 <p>Трийсет кратки глави, всяка от които се чете за пет минути и се практикува за десет.</p>`,
-      priceCents: 1990,
+      priceCents: 990,
       stock: 12,
       categoryId: categories.meditacia,
       isPublished: true,
@@ -134,7 +134,7 @@ async function main() {
         "Как да говорим за нещата, които обикновено премълчаваме.",
       description: `<p>Повечето отношения не се разпадат заради големите скандали, а заради разговорите, които никога не се случват.</p>
 <p>Клиничен психолог с двадесетгодишна практика разказва как се води труден разговор — без обвинения, без отстъпление и без илюзията, че ще бъде лесно.</p>`,
-      priceCents: 2790,
+      priceCents: 1490,
       stock: 3,
       lowStockAlert: 5,
       categoryId: categories.otnoshenia,
@@ -148,7 +148,7 @@ async function main() {
       shortDesc: "Четиридесет писма от хора, минали по пътя преди нас.",
       description: `<p>Сборник от четиридесет писма, написани от хора на различна възраст и професия до собственото им двадесетгодишно „аз“.</p>
 <p>Някои са смешни. Други болят. Всички са истински.</p>`,
-      priceCents: 2290,
+      priceCents: 1190,
       stock: 18,
       categoryId: categories.poezia,
       isPublished: true,
@@ -168,8 +168,8 @@ async function main() {
   <li>Правилото на петте минути и защо работи.</li>
   <li>Как да проектирате среда, в която е по-лесно да започнете.</li>
 </ul>`,
-      priceCents: 1490,
-      compareAtCents: 1990,
+      priceCents: 790,
+      compareAtCents: 990,
       previewPages: 8,
       categoryId: categories.samorazvitie,
       isPublished: true,
@@ -183,7 +183,7 @@ async function main() {
       shortDesc: "От А до Я — понятията, които всеки чува, но малцина разбират.",
       description: `<p>Осъзнатост, присъствие, приемане — думи, които се повтарят толкова често, че са загубили смисъл.</p>
 <p>Тази дигитална книга връща значението им, обяснено просто и без езотерика.</p>`,
-      priceCents: 1290,
+      priceCents: 690,
       previewPages: 6,
       categoryId: categories.meditacia,
       isPublished: true,
@@ -196,7 +196,7 @@ async function main() {
       shortDesc: "Работна тетрадка с упражнения при тревожност.",
       description: `<p>Практическа работна тетрадка с 24 упражнения, базирани на когнитивно-поведенчески подход.</p>
 <p><em>Не замества професионална помощ, но е добро начало.</em></p>`,
-      priceCents: 1790,
+      priceCents: 890,
       previewPages: 10,
       categoryId: categories.psihologia,
       isPublished: true,
@@ -224,7 +224,7 @@ async function main() {
       shortDesc: "Двадесет и пет минути за преход към съня.",
       description: `<p>Водена практика за вечерта, създадена за хора, чийто ум не спира, когато главата докосне възглавницата.</p>
 <p>Записана с меко темпо и дълги паузи. Може да заспите преди края — това е целта.</p>`,
-      priceCents: 990,
+      priceCents: 490,
       durationSeconds: 1508,
       categoryId: categories.meditacia,
       isPublished: true,
@@ -237,8 +237,8 @@ async function main() {
       shortDesc: "Пълната книга, прочетена от самата авторка.",
       description: `<p>Цялата книга „Вътрешният компас“ в авторско изпълнение — четири часа и половина.</p>
 <p>Авторката добавя коментари между главите, които ги няма в печатното издание.</p>`,
-      priceCents: 2490,
-      compareAtCents: 2990,
+      priceCents: 1290,
+      compareAtCents: 1590,
       durationSeconds: 16200,
       categoryId: categories.samorazvitie,
       isPublished: true,

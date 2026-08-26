@@ -48,7 +48,7 @@ export function PromoCodeForm() {
         </Field>
 
         <Field
-          label={discountType === "PERCENT" ? "Процент" : "Сума (лв.)"}
+          label={discountType === "PERCENT" ? "Процент" : "Сума (€)"}
           htmlFor="pc-amount"
           required
           error={state.errors?.amountRaw}
@@ -65,7 +65,7 @@ export function PromoCodeForm() {
       </div>
 
       <Field
-        label="Минимална поръчка (лв.)"
+        label="Минимална поръчка (€)"
         htmlFor="pc-min"
         hint="Оставете празно, ако няма изискване."
         error={state.errors?.minOrderCents}

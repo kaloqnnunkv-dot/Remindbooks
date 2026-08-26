@@ -118,7 +118,7 @@ export default async function AudioDetailPage({
           offers: {
             "@type": "Offer",
             price: (item.priceCents / 100).toFixed(2),
-            priceCurrency: "BGN",
+            priceCurrency: env.shop.currency.toUpperCase(),
             url: `${env.appUrl}/audio/${item.slug}`,
           },
         }),

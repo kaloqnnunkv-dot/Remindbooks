@@ -1,8 +1,8 @@
 /** Валутата е фиксирана за проекта. Тук нарочно НЕ се импортира `env`,
  *  за да може модулът да се използва и в клиентски компоненти. */
-const CURRENCY_LABEL = "лв.";
+const CURRENCY_LABEL = "€";
 
-/** Форматира сума в стотинки като "24,90 лв." */
+/** Форматира сума в евроцентове като "12,90 €" */
 export function formatPrice(cents: number): string {
   const value = (cents / 100).toLocaleString("bg-BG", {
     minimumFractionDigits: 2,

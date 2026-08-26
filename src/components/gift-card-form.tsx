@@ -3,15 +3,17 @@
 import { useActionState, useState } from "react";
 import { purchaseGiftCard, type GiftCardState } from "@/app/actions/gift-cards";
 import { formatPrice } from "@/lib/format";
+import { publicConfig } from "@/lib/public-config";
 import { Alert, Button, Card, Field, Input, Textarea, cn } from "./ui";
 
 const initialState: GiftCardState = { ok: false, message: "" };
 
-const PRESET_AMOUNTS = [2000, 3000, 5000, 10000];
+// Кръгли суми в евро.
+const PRESET_AMOUNTS = [1000, 2000, 5000, 10000];
 
 export function GiftCardForm() {
   const [state, action, pending] = useActionState(purchaseGiftCard, initialState);
-  const [amount, setAmount] = useState("30.00");
+  const [amount, setAmount] = useState("20.00");
 
   return (
     <Card className="p-6 sm:p-8">
@@ -48,7 +50,7 @@ export function GiftCardForm() {
           <Field
             label="Или въведете сума"
             htmlFor="gc-amount"
-            hint="От 10.00 до 500.00 лв."
+            hint={`От ${formatPrice(publicConfig.giftCard.minCents)} до ${formatPrice(publicConfig.giftCard.maxCents)}`}
             error={state.errors?.amountCents}
           >
             <Input
