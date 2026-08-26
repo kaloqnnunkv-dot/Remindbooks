@@ -92,10 +92,16 @@ export default async function AnalyticsPage({
         orderBy: { _sum: { quantity: "desc" } },
         take: 10,
       }),
-      // Дневен приход за графиката
+      // Дневен приход за графиката.
+      //
+      // Денят се реже по софийска полунощ, а не по UTC: без превръщането
+      // поръчка, платена в 01:30 през нощта, влизаше в предишния ден, защото
+      // връзката към базата работи в UTC. Обратното превръщане връща момент,
+      // а не гола дата — иначе датата се тълкува пак като UTC при показването.
       from
         ? db.$queryRaw<{ day: Date; total: bigint; orders: bigint }[]>`
-            SELECT DATE_TRUNC('day', "paidAt") AS day,
+            SELECT DATE_TRUNC('day', "paidAt" AT TIME ZONE 'Europe/Sofia')
+                     AT TIME ZONE 'Europe/Sofia' AS day,
                    SUM("totalCents")::bigint AS total,
                    COUNT(*)::bigint AS orders
             FROM "Order"
@@ -104,7 +110,8 @@ export default async function AnalyticsPage({
             GROUP BY 1 ORDER BY 1 ASC
           `
         : db.$queryRaw<{ day: Date; total: bigint; orders: bigint }[]>`
-            SELECT DATE_TRUNC('month', "paidAt") AS day,
+            SELECT DATE_TRUNC('month', "paidAt" AT TIME ZONE 'Europe/Sofia')
+                     AT TIME ZONE 'Europe/Sofia' AS day,
                    SUM("totalCents")::bigint AS total,
                    COUNT(*)::bigint AS orders
             FROM "Order"

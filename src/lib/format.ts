@@ -11,6 +11,18 @@ export function formatPrice(cents: number): string {
   return `${value} ${CURRENCY_LABEL}`;
 }
 
+/**
+ * Часовата зона на магазина.
+ *
+ * Моментите се пазят в базата в UTC — така е правилно и не се пипа. Тук се
+ * задава изрично зоната, в която се показват, вместо да се разчита на машината:
+ * сървърът работи в UTC, тоест без това часовете излизаха с три часа назад през
+ * лятото. Изрично зададена, зоната прави и сървърното, и браузърното
+ * изчертаване еднакви — иначе всеки посетител виждаше своя час, а React се
+ * оплакваше от разминаване при хидратацията.
+ */
+const TIME_ZONE = "Europe/Sofia";
+
 /** Форматира дата на български: "5 август 2026 г." */
 export function formatDate(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -18,9 +30,11 @@ export function formatDate(date: Date | string): string {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: TIME_ZONE,
   });
 }
 
+/** Форматира дата и час: "26.08.2026 г., 12:02". */
 export function formatDateTime(date: Date | string): string {
   const d = typeof date === "string" ? new Date(date) : date;
   return d.toLocaleString("bg-BG", {
@@ -29,6 +43,7 @@ export function formatDateTime(date: Date | string): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: TIME_ZONE,
   });
 }
 
