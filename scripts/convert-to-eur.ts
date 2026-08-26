@@ -52,7 +52,45 @@ function line(label: string, before: number, after: number): string {
   return `    ${label.padEnd(26)} ${fmt(before).padStart(9)} → ${fmt(after).padStart(9)}`;
 }
 
+/**
+ * Показва към коя база е насочен скриптът, без потребителското име и паролата.
+ *
+ * Две бази лесно се бъркат — локалната и тази в Railway. Скриптът мени суми и
+ * няма връщане назад, затова адресът се изписва, преди да е пипнато каквото и
+ * да е, и се проверява дали изобщо е достижим оттук.
+ */
+function describeTarget(): string {
+  const raw = process.env.DATABASE_URL ?? "";
+  try {
+    const url = new URL(raw);
+    return `${url.hostname}:${url.port || "5432"}${url.pathname}`;
+  } catch {
+    return "(DATABASE_URL липсва или е нечетим)";
+  }
+}
+
 async function main() {
+  const target = describeTarget();
+  console.log(`База: ${target}`);
+
+  // Вътрешният адрес на Railway се резолва само вътре в тяхната мрежа.
+  // `railway run` изпълнява командата тук, на локалната машина, затова оттам
+  // тази база е недостижима — нужен е публичният адрес на услугата.
+  if (target.includes(".railway.internal")) {
+    console.error(
+      [
+        "",
+        "Този адрес работи само вътре в Railway, не и оттук.",
+        "Вземете DATABASE_PUBLIC_URL от услугата Postgres и пуснете:",
+        "",
+        '  DATABASE_URL="<публичният адрес>" npm run db:eur',
+        "",
+      ].join("\n"),
+    );
+    process.exitCode = 1;
+    return;
+  }
+
   const done = await db.setting.findUnique({ where: { key: DONE_KEY } });
   if (done && !force) {
     console.log(
