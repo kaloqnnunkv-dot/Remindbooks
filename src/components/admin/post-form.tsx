@@ -72,7 +72,7 @@ export function PostForm({ post }: { post?: PostFormData }) {
           label="Съдържание"
           htmlFor="b-body"
           required
-          hint="Поддържа HTML: <p>, <h2>, <h3>, <strong>, <em>, <ul>, <ol>, <li>, <blockquote>, <a href>, <img src>."
+          hint="Пишете на воля: празен ред започва нов абзац, ред с „- “ е точка от списък, „1. “ прави номериран, **текст** удебелява. HTML също се приема."
           error={state.errors?.body}
         >
           <Textarea

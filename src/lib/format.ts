@@ -78,6 +78,102 @@ export function stripHtml(html: string): string {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * Превръща описание, писано на ръка, в HTML.
+ *
+ * Описанията се показват като HTML, а HTML слива редовете: празните редове и
+ * тиретата, с които човек подрежда текста в панела, изчезват и всичко излиза
+ * слято. Затова текстът се превежда тук, преди да стигне до страницата.
+ *
+ * Правилата са тези, които всеки пише и без да са му казани:
+ *
+ *   празен ред        →  нов абзац
+ *   нов ред           →  нов ред в същия абзац
+ *   „- “ или „• “     →  точка от списък
+ *   „1. “ или „1) “   →  точка от номериран списък
+ *   **удебелено**     →  удебелено
+ *
+ * Текст, писан направо на HTML, минава непокътнат — по описанията, въведени
+ * преди това, не се пипа. Разпознава се по блоков таг: `<p>`, `<ul>` и така
+ * нататък.
+ *
+ * Всичко останало се екранира, преди да се сглоби. Описанието идва от админ
+ * панела, но и там въведеното е текст, не код — една ъглова скоба, написана
+ * между другото, не бива да разваля страницата.
+ */
+const BLOCK_HTML = /<(?:p|div|ul|ol|li|h[1-6]|blockquote|br|table|figure|section)\b/i;
+
+export function richText(value: string | null | undefined): string {
+  const text = (value ?? "").trim();
+  if (!text) return "";
+  if (BLOCK_HTML.test(text)) return text;
+
+  const escape = (line: string) =>
+    line
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      // Удебеляването е след екранирането, за да остане единственият таг,
+      // който сами добавяме вътре в реда.
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+
+  const blocks: string[] = [];
+  let list: { tag: "ul" | "ol"; items: string[] } | null = null;
+  let paragraph: string[] = [];
+
+  const closeList = () => {
+    if (!list) return;
+    const items = list.items.map((item) => `<li>${item}</li>`).join("");
+    blocks.push(`<${list.tag}>${items}</${list.tag}>`);
+    list = null;
+  };
+
+  const closeParagraph = () => {
+    if (paragraph.length === 0) return;
+    blocks.push(`<p>${paragraph.join("<br />")}</p>`);
+    paragraph = [];
+  };
+
+  const openList = (tag: "ul" | "ol") => {
+    closeParagraph();
+    if (list === null || list.tag !== tag) {
+      closeList();
+      list = { tag, items: [] };
+    }
+    return list;
+  };
+
+  for (const raw of text.split(/\r?\n/)) {
+    const line = raw.trim();
+
+    // Празният ред затваря и списъка, и абзаца — оттам започва ново.
+    if (!line) {
+      closeList();
+      closeParagraph();
+      continue;
+    }
+
+    const bullet = /^[-*\u2022\u2013\u2014]\s+(.*)$/.exec(line);
+    if (bullet) {
+      openList("ul").items.push(escape(bullet[1]!));
+      continue;
+    }
+
+    const numbered = /^\d+[.)]\s+(.*)$/.exec(line);
+    if (numbered) {
+      openList("ol").items.push(escape(numbered[1]!));
+      continue;
+    }
+
+    closeList();
+    paragraph.push(escape(line));
+  }
+
+  closeList();
+  closeParagraph();
+  return blocks.join("");
+}
+
 /** Изчислява процент отстъпка между стара и нова цена. */
 export function discountPercent(priceCents: number, compareAtCents?: number | null): number | null {
   if (!compareAtCents || compareAtCents <= priceCents) return null;

@@ -211,7 +211,7 @@ export function ProductForm({
           label="Пълно описание"
           htmlFor="p-description"
           required
-          hint="Поддържа HTML: <p>, <strong>, <em>, <ul>, <li>, <h2>, <blockquote>."
+          hint="Пишете на воля: празен ред започва нов абзац, ред с „- “ е точка от списък, „1. “ прави номериран, **текст** удебелява. HTML също се приема."
           error={state.errors?.description}
         >
           <Textarea
@@ -219,8 +219,8 @@ export function ProductForm({
             name="description"
             defaultValue={product?.description}
             required
-            rows={10}
-            className="font-mono text-xs"
+            rows={12}
+            className="text-sm leading-relaxed"
           />
         </Field>
 

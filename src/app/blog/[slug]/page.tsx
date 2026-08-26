@@ -6,7 +6,7 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { publicUrl } from "@/lib/storage";
-import { formatDate, truncate, stripHtml } from "@/lib/format";
+import { formatDate, richText, stripHtml, truncate } from "@/lib/format";
 
 import { Breadcrumbs, SectionHeading } from "@/components/ui";
 import { ShareButtons } from "@/components/share-buttons";
@@ -167,7 +167,7 @@ export default async function PostPage({
 
         <div
           className="prose-rmb mt-10 text-[17px]"
-          dangerouslySetInnerHTML={{ __html: post.body }}
+          dangerouslySetInnerHTML={{ __html: richText(post.body) }}
         />
 
         <ShareButtons

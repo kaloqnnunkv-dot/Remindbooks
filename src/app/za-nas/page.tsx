@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { richText } from "@/lib/format";
 
 import { db } from "@/lib/db";
 import { publicUrl } from "@/lib/storage";
@@ -89,7 +90,7 @@ export default async function AboutPage() {
           <h2 className="text-2xl rule mb-6">Нашата история</h2>
           <div
             className="prose-rmb text-[17px]"
-            dangerouslySetInnerHTML={{ __html: c.about_story! }}
+            dangerouslySetInnerHTML={{ __html: richText(c.about_story!) }}
           />
         </div>
 

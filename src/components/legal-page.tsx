@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LEGAL_META } from "@/lib/legal-content";
 import { Breadcrumbs } from "./ui";
+import { richText } from "@/lib/format";
 
 const LEGAL_NAV = Object.values(LEGAL_META);
 
@@ -25,7 +26,7 @@ export function LegalPage({
 
           <div
             className="prose-rmb text-[15px]"
-            dangerouslySetInnerHTML={{ __html: content }}
+            dangerouslySetInnerHTML={{ __html: richText(content) }}
           />
         </div>
 

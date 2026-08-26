@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { env } from "@/lib/env";
 import { publicUrl } from "@/lib/storage";
-import { formatPrice, discountPercent, truncate, stripHtml } from "@/lib/format";
+import { discountPercent, formatPrice, richText, stripHtml, truncate } from "@/lib/format";
 import { getRelatedProducts, getRatingSummary } from "@/lib/queries";
 import { getFavoriteIds } from "@/app/actions/favorites";
 
@@ -227,7 +227,7 @@ export default async function PdfBookPage({
             </h2>
             <div
               className="prose-rmb text-[15px]"
-              dangerouslySetInnerHTML={{ __html: book.description }}
+              dangerouslySetInnerHTML={{ __html: richText(book.description) }}
             />
           </div>
 

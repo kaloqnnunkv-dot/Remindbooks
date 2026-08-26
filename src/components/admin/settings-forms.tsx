@@ -192,7 +192,7 @@ function AboutSettings({ settings }: { settings: Record<string, string> }) {
         <Field
           label="Нашата история"
           htmlFor="s-about-story"
-          hint="Поддържа HTML: <p>, <strong>, <em>."
+          hint="Пишете на воля: празен ред започва нов абзац, ред с „- “ е точка от списък, „1. “ прави номериран, **текст** удебелява. HTML също се приема."
         >
           <Textarea
             id="s-about-story"
