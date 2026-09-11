@@ -11,6 +11,7 @@ import { computeTotals, validatePromo } from "@/lib/pricing";
 import { createPendingOrder, fulfillOrder } from "@/lib/orders";
 import { shippingSchema, fieldErrors } from "@/lib/validation";
 import { limitByIp } from "@/lib/rate-limit";
+import { publicUrl } from "@/lib/storage";
 
 export type CheckoutState = {
   ok: boolean;
@@ -384,6 +385,34 @@ export async function submitDigitalCheckout(
 // Stripe сесия
 // ------------------------------------------------------------------
 
+/**
+ * Пълен адрес на корицата за Stripe.
+ *
+ * В базата се пази ключът на файла (`products/xxx.jpg`), не адрес. Stripe
+ * приема само пълен адрес с домейн — относителен път се отхвърля и сесията
+ * изобщо не се създава, тоест плащането пропада. Затова ключът минава през
+ * хранилището, а ако оттам излезе относителен път (когато
+ * NEXT_PUBLIC_MEDIA_HOST не е зададена), се долепя адресът на сайта.
+ *
+ * При каквото и да е съмнение се връща null: по-добре ред без снимка,
+ * отколкото счупено плащане.
+ */
+function coverUrl(key?: string | null): string | null {
+  const resolved = publicUrl(key);
+  if (!resolved) return null;
+
+  try {
+    const url = new URL(resolved, env.appUrl);
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    // Stripe тегли снимката от своите сървъри — адрес, който сочи към машината
+    // на разработчика, не значи нищо за тях.
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 async function createStripeSession(input: {
   orderId: string;
   orderNumber: string;
@@ -416,21 +445,21 @@ async function createStripeSession(input: {
           },
         ]
       : [
-          ...input.lines.map((l) => ({
-            price_data: {
-              currency: env.shop.currency,
-              product_data: {
-                name: l.title.slice(0, 250),
-                // Stripe показва корицата до реда, докато клиентът въвежда
-                // картата. Приема само пълен адрес — относителен път се
-                // отхвърля и сесията не се създава, затова се подава само
-                // когато хранилището връща адрес с домейн.
-                ...(l.image?.startsWith("http") ? { images: [l.image] } : {}),
+          ...input.lines.map((l) => {
+            // Stripe показва корицата до реда, докато клиентът въвежда картата.
+            const image = coverUrl(l.image);
+            return {
+              price_data: {
+                currency: env.shop.currency,
+                product_data: {
+                  name: l.title.slice(0, 250),
+                  ...(image ? { images: [image] } : {}),
+                },
+                unit_amount: l.unitCents,
               },
-              unit_amount: l.unitCents,
-            },
-            quantity: l.quantity,
-          })),
+              quantity: l.quantity,
+            };
+          }),
           ...(input.shippingCents > 0
             ? [
                 {
