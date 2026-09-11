@@ -20,6 +20,7 @@ import {
 } from "@/components/admin/admin-ui";
 import { Badge } from "@/components/ui";
 import { Pagination } from "@/components/pagination";
+import { OrderRowActions } from "@/components/admin/order-row-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +76,9 @@ export default async function AdminOrdersPage({
         id: true, orderNumber: true, status: true, totalCents: true,
         createdAt: true, email: true, firstName: true, lastName: true,
         paymentMethod: true, fulfillmentType: true, trackingNumber: true,
+        // Платената поръчка носи счетоводни последици при изтриване —
+        // предупреждението пред администратора зависи от това.
+        paidAt: true,
         _count: { select: { items: true } },
       },
     }),
@@ -144,6 +148,9 @@ export default async function AdminOrdersPage({
                 <Th>Тип / Плащане</Th>
                 <Th>Статус</Th>
                 <Th className="text-right">Сума</Th>
+                <Th className="text-right">
+                  <span className="sr-only">Действия</span>
+                </Th>
               </tr>
             </thead>
             <tbody>
@@ -201,6 +208,14 @@ export default async function AdminOrdersPage({
 
                   <Td className="text-right font-sans font-bold whitespace-nowrap">
                     {formatPrice(order.totalCents)}
+                  </Td>
+
+                  <Td className="text-right">
+                    <OrderRowActions
+                      orderId={order.id}
+                      orderNumber={order.orderNumber}
+                      isPaid={order.paidAt !== null}
+                    />
                   </Td>
                 </tr>
               ))}

@@ -204,3 +204,131 @@ export async function deleteReview(reviewId: string): Promise<AdminState> {
   revalidatePath("/admin");
   return { ok: true, message: "Ревюто е изтрито." };
 }
+
+/**
+ * Изтриване на поръчка.
+ *
+ * Служи за чистене на пробни и сгрешени записи. Истинска поръчка по-скоро се
+ * отказва или възстановява — историята трябва да остане за счетоводството.
+ *
+ * Изтриването не е само `DELETE`: при плащането поръчката е местила няколко
+ * числа настрани от себе си и те трябва да се върнат, иначе остават криви
+ * завинаги. `paidAt` е точният белег, че `fulfillOrder` е минал — записва се в
+ * същата транзакция, която прави отчитането.
+ *
+ *   наличност    връща се само ако поръчката още се брои за платена. Отказана
+ *                поръчка вече си е върнала бройките при смяната на статуса и
+ *                второ връщане би раздуло склада.
+ *   промо код    броячът на използванията се смъква с едно.
+ *   карта        удържаната стойност се връща и картата пак става активна.
+ *   достъпи      махат се, освен ако не са дадени ръчно или същата книга не е
+ *                платена и с друга поръчка.
+ *
+ * Редовете на поръчката си отиват сами — връзката е с каскада.
+ */
+export async function deleteOrder(orderId: string): Promise<AdminState> {
+  await requireAdmin();
+
+  const order = await db.order.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true,
+      orderNumber: true,
+      status: true,
+      paidAt: true,
+      userId: true,
+      promoCodeId: true,
+      giftCardId: true,
+      giftCardCents: true,
+      items: { select: { productId: true, quantity: true, typeSnapshot: true } },
+      entitlements: {
+        select: { id: true, productId: true, grantedManually: true },
+      },
+    },
+  });
+
+  if (!order) return { ...empty, message: "Поръчката не е намерена." };
+
+  // Какво точно е било пипнато — влиза в съобщението, за да се вижда че
+  // изтриването не е минало безследно.
+  const undone: string[] = [];
+
+  await db.$transaction(async (tx) => {
+    const stillCounted = ["PAID", "SHIPPED", "COMPLETED"].includes(order.status);
+
+    if (order.paidAt && stillCounted) {
+      let returned = 0;
+      for (const item of order.items) {
+        if (item.productId && item.typeSnapshot === "PHYSICAL") {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+          returned += item.quantity;
+        }
+      }
+      if (returned > 0) undone.push(`${returned} бр. върнати в наличност`);
+    }
+
+    if (order.paidAt && order.promoCodeId) {
+      // Броячът не бива да падне под нула, ако някой вече го е пипал на ръка.
+      const promo = await tx.promoCode.findUnique({
+        where: { id: order.promoCodeId },
+        select: { usedCount: true },
+      });
+      if (promo && promo.usedCount > 0) {
+        await tx.promoCode.update({
+          where: { id: order.promoCodeId },
+          data: { usedCount: promo.usedCount - 1 },
+        });
+        undone.push("промо кодът е с едно използване по-малко");
+      }
+    }
+
+    if (order.paidAt && order.giftCardId && order.giftCardCents > 0) {
+      await tx.giftCard.update({
+        where: { id: order.giftCardId },
+        data: {
+          balanceCents: { increment: order.giftCardCents },
+          status: "ACTIVE",
+        },
+      });
+      undone.push("стойността на подаръчната карта е върната");
+    }
+
+    let revoked = 0;
+    for (const ent of order.entitlements) {
+      // Ръчно отключеното е решение на администратор и не зависи от поръчката.
+      if (ent.grantedManually) continue;
+
+      // Същата книга може да е платена и с друга поръчка — записът за достъп е
+      // само един на потребител и продукт, тъй че не бива да се маха.
+      const alsoElsewhere = await tx.orderItem.count({
+        where: {
+          productId: ent.productId,
+          orderId: { not: order.id },
+          order: { userId: order.userId, paidAt: { not: null } },
+        },
+      });
+      if (alsoElsewhere > 0) continue;
+
+      await tx.entitlement.delete({ where: { id: ent.id } });
+      revoked++;
+    }
+    if (revoked > 0) {
+      undone.push(`${revoked} ${revoked === 1 ? "достъп е отнет" : "достъпа са отнети"}`);
+    }
+
+    await tx.order.delete({ where: { id: order.id } });
+  });
+
+  revalidatePath("/admin/porachki");
+  revalidatePath("/admin");
+
+  return {
+    ok: true,
+    message: undone.length
+      ? `Поръчка ${order.orderNumber} е изтрита (${undone.join("; ")}).`
+      : `Поръчка ${order.orderNumber} е изтрита.`,
+  };
+}
