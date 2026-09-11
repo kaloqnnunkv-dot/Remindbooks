@@ -2,10 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import type { ProductType } from "@prisma/client";
 
-import { saveProduct, type AdminState } from "@/app/actions/admin-products";
+import {
+  saveProduct,
+  createDirectUpload,
+  type AdminState,
+} from "@/app/actions/admin-products";
 import { formatDuration } from "@/lib/format";
 import { publicConfig } from "@/lib/public-config";
 import {
@@ -26,6 +30,9 @@ const initialState: AdminState = { ok: false, message: "" };
 
 /** Байтове в цели мегабайти — за надписите и за съобщенията при грешка. */
 const mb = (bytes: number) => Math.round(bytes / 1024 / 1024);
+
+/** Байтове в гигабайти с един знак — над един гигабайт мегабайтите не се четат. */
+const gb = (bytes: number) => (bytes / 1024 / 1024 / 1024).toFixed(1);
 
 /**
  * Размерът се проверява и тук, в браузъра, освен на сървъра.
@@ -116,6 +123,14 @@ export function ProductForm({
   const [removedImages, setRemovedImages] = useState<string[]>([]);
   /** Оплаквания за твърде големи файлове, по име на полето. */
   const [sizeErrors, setSizeErrors] = useState<Record<string, string>>({});
+  /** Ключът на аудио файл, качен направо в хранилището. */
+  const [directKey, setDirectKey] = useState<string | null>(null);
+  /** Тече ли качване в момента и докъде е стигнало. */
+  const [uploading, setUploading] = useState<{ name: string; percent: number } | null>(
+    null,
+  );
+  /** Пази течащото качване, за да може да бъде спряно. */
+  const uploadRef = useRef<XMLHttpRequest | null>(null);
 
   const isEdit = Boolean(product?.id);
   const isPhysical = type === "PHYSICAL";
@@ -126,6 +141,111 @@ export function ProductForm({
   const mainMax = isAudio
     ? publicConfig.upload.mediaBytes
     : publicConfig.upload.docBytes;
+
+  /**
+   * Качва аудио или видео направо в хранилището.
+   *
+   * През сървъра такъв файл не минава: Server Actions буферират цялото тяло в
+   * паметта и всичко над 300 MB се отрязва. Тук браузърът иска подписан адрес
+   * и праща файла право към хранилището, а към формата остава само ключът.
+   *
+   * Ако хранилището не поддържа това (локална разработка), всичко се връща по
+   * стария път — със стария таван.
+   */
+  const startDirectUpload = async (input: HTMLInputElement) => {
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const fail = (message: string) => {
+      input.value = "";
+      setUploading(null);
+      setSizeErrors((prev) => ({ ...prev, mainFile: message }));
+    };
+
+    setSizeErrors((prev) => {
+      const next = { ...prev };
+      delete next.mainFile;
+      return next;
+    });
+    setDirectKey(null);
+    setUploading({ name: file.name, percent: 0 });
+
+    let ticket;
+    try {
+      ticket = await createDirectUpload({
+        filename: file.name,
+        contentType: file.type,
+        size: file.size,
+      });
+    } catch {
+      fail("Сървърът не отговори. Проверете връзката и опитайте отново.");
+      return;
+    }
+
+    // Хранилището не е настроено — старият път с неговия таван.
+    if (ticket.unavailable) {
+      setUploading(null);
+      checkSize(input, "mainFile", mainMax);
+      return;
+    }
+    if (!ticket.ok || !ticket.url || !ticket.key) {
+      fail(ticket.message || "Качването не можа да започне.");
+      return;
+    }
+
+    const url = ticket.url;
+    const key = ticket.key;
+
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        uploadRef.current = xhr;
+        xhr.open("PUT", url);
+        xhr.setRequestHeader("Content-Type", file.type);
+        xhr.upload.onprogress = (ev) => {
+          if (!ev.lengthComputable) return;
+          setUploading({
+            name: file.name,
+            percent: Math.round((ev.loaded / ev.total) * 100),
+          });
+        };
+        xhr.onload = () =>
+          xhr.status >= 200 && xhr.status < 300
+            ? resolve()
+            : reject(new Error(`хранилището отказа (HTTP ${xhr.status})`));
+        xhr.onerror = () =>
+          reject(
+            new Error(
+              "връзката прекъсна или хранилището не приема качване от този адрес (CORS)",
+            ),
+          );
+        xhr.onabort = () => reject(new Error("прекратено"));
+        xhr.send(file);
+      });
+    } catch (err) {
+      const reason = err instanceof Error ? err.message : "неизвестна причина";
+      uploadRef.current = null;
+      if (reason === "прекратено") {
+        input.value = "";
+        setUploading(null);
+        return;
+      }
+      fail(`Качването пропадна: ${reason}.`);
+      return;
+    }
+
+    uploadRef.current = null;
+    setUploading(null);
+    setDirectKey(key);
+    // Файлът вече е в хранилището. Полето се изчиства, за да не тръгне и през
+    // сървъра при изпращане на формата — това беше цялата идея.
+    input.value = "";
+  };
+
+  const cancelUpload = () => {
+    uploadRef.current?.abort();
+    uploadRef.current = null;
+  };
 
   /**
    * Отхвърля твърде голям файл още при избирането му.
@@ -168,7 +288,12 @@ export function ProductForm({
               <button
                 key={option.value}
                 type="button"
-                onClick={() => setType(option.value)}
+                onClick={() => {
+                  setType(option.value);
+                  // Качено аудио не важи за друг тип продукт — сървърът също
+                  // отказва такъв ключ, но отметката не бива да го твърди.
+                  if (option.value !== "AUDIO") setDirectKey(null);
+                }}
                 disabled={isEdit}
                 className={cn(
                   "p-4 text-left border rounded-md transition-colors disabled:opacity-60 disabled:cursor-not-allowed",
@@ -557,13 +682,57 @@ export function ProductForm({
                   ? "application/pdf"
                   : "audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,video/mp4,video/webm"
               }
-              onChange={(e) => checkSize(e.target, "mainFile", mainMax)}
-              className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer"
+              onChange={(e) => {
+                // Аудиото и видеото тръгват направо към хранилището; PDF-ът
+                // минава през сървъра, защото от него се вади откъсът.
+                if (isAudio) void startDirectUpload(e.target);
+                else checkSize(e.target, "mainFile", mainMax);
+              }}
+              disabled={uploading !== null}
+              className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer disabled:opacity-50"
             />
+
+            {/* Скритото поле носи ключа на вече качения файл. */}
+            <input type="hidden" name="mainFileKey" value={directKey ?? ""} />
+
+            {uploading && (
+              <div className="mt-2">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-muted-foreground truncate">
+                    Качва се „{uploading.name}“ — {uploading.percent}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={cancelUpload}
+                    className="shrink-0 font-sans text-xs font-bold text-destructive hover:underline"
+                  >
+                    Прекрати
+                  </button>
+                </div>
+                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full bg-primary transition-[width] duration-200"
+                    style={{ width: `${uploading.percent}%` }}
+                  />
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Не затваряйте страницата, докато лентата не се напълни.
+                </p>
+              </div>
+            )}
+
+            {directKey && !uploading && (
+              <p className="mt-2 text-xs text-success">
+                ✓ Файлът е качен. Натиснете „
+                {isEdit ? "Запази промените" : "Създай продукт"}“, за да го
+                свържете с продукта.
+              </p>
+            )}
+
             <p className="mt-1.5 text-xs text-muted-foreground">
               {isPdf
                 ? `PDF, до ${mb(mainMax)} MB. Файлът е защитен — достъпен само след покупка.`
-                : `MP3, M4A, WAV, OGG или MP4/WebM видео. До ${mb(mainMax)} MB.`}
+                : `MP3, M4A, WAV, OGG или MP4/WebM видео. До ${gb(publicConfig.upload.directMediaBytes)} GB — качва се направо в хранилището, без да минава през сървъра.`}
             </p>
             {(sizeErrors.mainFile ?? state.errors?.mainFile) && (
               <p className="mt-1 text-xs text-destructive">
@@ -759,8 +928,15 @@ export function ProductForm({
       {state.message && !state.ok && <Alert tone="error">{state.message}</Alert>}
 
       <div className="flex flex-wrap items-center gap-3 sticky bottom-0 py-4 bg-background border-t border-border">
-        <Button type="submit" size="lg" disabled={pending}>
-          {pending ? "Запазване…" : isEdit ? "Запази промените" : "Създай продукт"}
+        {/* Изпращане по време на качване би записало продукт без файл. */}
+        <Button type="submit" size="lg" disabled={pending || uploading !== null}>
+          {uploading
+            ? `Качване… ${uploading.percent}%`
+            : pending
+              ? "Запазване…"
+              : isEdit
+                ? "Запази промените"
+                : "Създай продукт"}
         </Button>
         <ButtonLink href="/admin/produkti" variant="ghost">
           Отказ

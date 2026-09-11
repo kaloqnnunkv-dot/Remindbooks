@@ -1,0 +1,14 @@
+[
+  {
+    "AllowedOrigins": [
+      "https://remindbooks-production.up.railway.app",
+      "https://remindbooks.com",
+      "https://www.remindbooks.com",
+      "http://localhost:3000"
+    ],
+    "AllowedMethods": ["PUT"],
+    "AllowedHeaders": ["content-type"],
+    "ExposeHeaders": ["etag"],
+    "MaxAgeSeconds": 3600
+  }
+]

@@ -24,8 +24,109 @@ import {
   MAX_IMAGE_BYTES,
   MAX_DOC_BYTES,
   MAX_MEDIA_BYTES,
+  MAX_DIRECT_BYTES,
+  signedUploadUrl,
+  statFile,
   type UploadFolder,
 } from "@/lib/storage";
+import { isStorageConfigured } from "@/lib/env";
+
+/**
+ * Подписан адрес за качване на аудио или видео направо в хранилището.
+ *
+ * Голям файл, минал през Server Action, се буферира изцяло в паметта на
+ * сървъра и се блъска в `bodySizeLimit` — оттам и таванът от 300 MB. Оттук
+ * браузърът получава адрес, праща файла право към R2 и връща на формата само
+ * ключа.
+ *
+ * Само за аудио и видео. PDF нарочно остава по стария път: от него се вади
+ * автоматичният безплатен откъс, а за това е нужен самият файл на сървъра.
+ *
+ * Когато хранилището не е настроено (локална папка при разработка), се връща
+ * отказ и формата минава по стария път.
+ */
+export async function createDirectUpload(input: {
+  filename: string;
+  contentType: string;
+  size: number;
+}): Promise<{
+  ok: boolean;
+  message: string;
+  url?: string;
+  key?: string;
+  /** Хранилището не поддържа директно качване — формата да мине по стария път. */
+  unavailable?: boolean;
+}> {
+  await requireAdmin();
+
+  if (!isStorageConfigured) {
+    return { ok: false, unavailable: true, message: "Директното качване не е налично." };
+  }
+
+  const allowed = [...ALLOWED_AUDIO_TYPES, ...ALLOWED_VIDEO_TYPES];
+  if (!allowed.includes(input.contentType)) {
+    return {
+      ok: false,
+      message: `Неподдържан тип файл: ${input.contentType || "неизвестен"}.`,
+    };
+  }
+
+  if (!Number.isFinite(input.size) || input.size <= 0) {
+    return { ok: false, message: "Файлът изглежда празен." };
+  }
+
+  if (input.size > MAX_DIRECT_BYTES) {
+    const gb = (MAX_DIRECT_BYTES / 1024 / 1024 / 1024).toFixed(1);
+    return { ok: false, message: `Файлът е твърде голям (максимум ${gb} GB).` };
+  }
+
+  const key = makeKey("audio", input.filename);
+  const url = await signedUploadUrl(key, input.contentType);
+
+  if (!url) {
+    return { ok: false, message: "Адресът за качване не можа да бъде издаден." };
+  }
+
+  return { ok: true, message: "", url, key };
+}
+
+/**
+ * Проверява ключ, дошъл от браузъра след директно качване.
+ *
+ * Сървърът не е видял файла, затова не вярва на думата на формата. Ключът
+ * трябва да сочи в папката за аудио — иначе подменен ключ би пренасочил
+ * продукта към чужд файл — и зад него трябва наистина да стои качен файл.
+ */
+async function verifyDirectKey(
+  raw: FormDataEntryValue | null,
+): Promise<{ key: string | null; error?: string }> {
+  if (typeof raw !== "string" || raw.trim() === "") return { key: null };
+
+  const key = raw.trim();
+  if (!key.startsWith("audio/") || key.includes("..")) {
+    return { key: null, error: "Невалиден ключ на качен файл." };
+  }
+
+  const info = await statFile(key);
+  if (!info) {
+    return { key: null, error: "Качването не е завършило — опитайте отново." };
+  }
+  if (info.size > MAX_DIRECT_BYTES) {
+    await deleteFile(key);
+    return { key: null, error: "Каченият файл е над позволения размер." };
+  }
+
+  // Типът се проверява ТУК, а не се разчита на подписа. Измерено срещу R2:
+  // подписаният адрес пропуска и файл с друг Content-Type, тоест обещанието,
+  // дадено при издаването на адреса, не обвързва качения файл.
+  const allowed = [...ALLOWED_AUDIO_TYPES, ...ALLOWED_VIDEO_TYPES];
+  if (info.contentType && !allowed.includes(info.contentType)) {
+    await deleteFile(key);
+    return { key: null, error: `Неподдържан тип файл: ${info.contentType}.` };
+  }
+
+  return { key };
+}
 
 export type AdminState = {
   ok: boolean;
@@ -154,12 +255,26 @@ export async function saveProduct(
   const mainFolder: UploadFolder = isAudio ? "audio" : "pdf";
   const mainMax = isAudio ? MAX_MEDIA_BYTES : MAX_DOC_BYTES;
 
-  const mainFile = await handleUpload(
-    formData.get("mainFile"),
-    mainFolder,
-    mainAllowed,
-    mainMax,
-  );
+  // Аудиото и видеото може вече да са в хранилището — качени направо от
+  // браузъра, защото през сървъра не биха минали. Тогава тук идва само ключ.
+  //
+  // Ключът се приема само при аудио продукт. Иначе качено аудио, последвано от
+  // смяна на типа на PDF, би вързало аудио файл като книга за четене.
+  const direct = isAudio
+    ? await verifyDirectKey(formData.get("mainFileKey"))
+    : { key: null as string | null, error: undefined as string | undefined };
+  if (direct.error) {
+    return { ...empty, message: direct.error, errors: { mainFile: direct.error } };
+  }
+
+  const mainFile = direct.key
+    ? { key: direct.key }
+    : await handleUpload(
+        formData.get("mainFile"),
+        mainFolder,
+        mainAllowed,
+        mainMax,
+      );
   if (mainFile.error) {
     return { ...empty, message: mainFile.error, errors: { mainFile: mainFile.error } };
   }

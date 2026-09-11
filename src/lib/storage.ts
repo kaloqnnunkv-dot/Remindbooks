@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { promises as fs } from "node:fs";
@@ -120,6 +121,66 @@ export async function uploadFile(
   await fs.mkdir(path.dirname(dest), { recursive: true });
   await fs.writeFile(dest, body);
   return key;
+}
+
+/**
+ * Подписан адрес за качване направо в хранилището.
+ *
+ * Големите файлове не бива да минават през сървъра: Server Actions буферират
+ * цялото тяло в паметта, а Next.js реже всичко над `bodySizeLimit`. Оттам и
+ * таванът от 300 MB. С този адрес браузърът праща файла право към R2 и през
+ * сървъра минава само ключът.
+ *
+ * Валидността е дълга нарочно — аудиокнига от два гигабайта по бавна връзка
+ * се качва с часове, а адресът, изтекъл по средата, значи качване от нулата.
+ *
+ * Връща null, когато хранилището не е настроено (локална папка) — тогава
+ * качването няма къде да отиде директно и се минава по стария път.
+ */
+export async function signedUploadUrl(
+  key: string,
+  contentType: string,
+  expiresInSeconds = 6 * 60 * 60,
+): Promise<string | null> {
+  if (!s3) return null;
+
+  return getSignedUrl(
+    clientFor(key),
+    new PutObjectCommand({
+      Bucket: bucketFor(key),
+      Key: key,
+      ContentType: contentType,
+    }),
+    { expiresIn: expiresInSeconds },
+  );
+}
+
+/**
+ * Данни за вече качен файл, без да се тегли съдържанието му.
+ *
+ * Нужно е, защото при директно качване сървърът не вижда файла — вярва на
+ * ключ, дошъл от браузъра. Тази проверка потвърждава, че зад ключа наистина
+ * стои файл и че е с очаквания размер.
+ */
+export async function statFile(
+  key: string,
+): Promise<{ size: number; contentType: string | null } | null> {
+  try {
+    if (s3) {
+      const head = await clientFor(key).send(
+        new HeadObjectCommand({ Bucket: bucketFor(key), Key: key }),
+      );
+      return {
+        size: head.ContentLength ?? 0,
+        contentType: head.ContentType ?? null,
+      };
+    }
+
+    const stat = await fs.stat(localPathFor(key));
+    return { size: stat.size, contentType: null };
+  } catch {
+    return null;
+  }
 }
 
 export async function deleteFile(key: string): Promise<void> {
@@ -251,3 +312,5 @@ export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"];
 export const MAX_IMAGE_BYTES = publicConfig.upload.imageBytes;
 export const MAX_DOC_BYTES = publicConfig.upload.docBytes;
 export const MAX_MEDIA_BYTES = publicConfig.upload.mediaBytes;
+/** Таванът при качване направо в хранилището — там сървърът не е тясното място. */
+export const MAX_DIRECT_BYTES = publicConfig.upload.directMediaBytes;
