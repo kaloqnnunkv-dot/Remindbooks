@@ -128,6 +128,9 @@ async function verifyDirectKey(
   return { key };
 }
 
+/** Повече от толкова снимки в галерията не носят стойност, а утежняват страницата. */
+const GALLERY_LIMIT = 8;
+
 export type AdminState = {
   ok: boolean;
   message: string;
@@ -237,6 +240,59 @@ export async function saveProduct(
 
   if (productId && !existing) {
     return { ...empty, message: "Продуктът не е намерен." };
+  }
+
+  /**
+   * Снимките за галерията се проверяват тук, преди каквото и да е качване.
+   *
+   * Досега негодните се прескачаха мълчаливо насред записа: избираш пет
+   * снимки, влизат четири и никъде не пише защо. Проверката отпред значи, че
+   * или минават всички, или не се записва нищо и се казва кое пречи.
+   */
+  const galleryFiles = formData
+    .getAll("galleryFiles")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+
+  // Колко места остават в галерията след премахнатите в тази форма.
+  //
+  // Броят на премахнатите се чете от базата, а не от формата: премахването
+  // по-долу пипа само снимки на този продукт, тъй че подаден чужд
+  // идентификатор би освободил място, което всъщност не се освобождава.
+  const existingImages = productId
+    ? await db.productImage.count({ where: { productId } })
+    : 0;
+  const removingImages =
+    productId && data.removeImageIds && data.removeImageIds.length > 0
+      ? await db.productImage.count({
+          where: { id: { in: data.removeImageIds }, productId },
+        })
+      : 0;
+  const freeSlots = Math.max(0, GALLERY_LIMIT - (existingImages - removingImages));
+
+  if (galleryFiles.length > 0) {
+    const badType = galleryFiles.filter((f) => !ALLOWED_IMAGE_TYPES.includes(f.type));
+    if (badType.length > 0) {
+      const error = `Неподдържан тип: ${badType.map((f) => f.name).join(", ")}. Позволени са JPG, PNG, WebP и AVIF.`;
+      return { ...empty, message: error, errors: { galleryFiles: error } };
+    }
+
+    const tooBig = galleryFiles.filter((f) => f.size > MAX_IMAGE_BYTES);
+    if (tooBig.length > 0) {
+      const limit = Math.round(MAX_IMAGE_BYTES / 1024 / 1024);
+      const names = tooBig
+        .map((f) => `${f.name} (${Math.round(f.size / 1024 / 1024)} MB)`)
+        .join(", ");
+      const error = `Над ${limit} MB: ${names}.`;
+      return { ...empty, message: error, errors: { galleryFiles: error } };
+    }
+
+    if (galleryFiles.length > freeSlots) {
+      const error =
+        freeSlots === 0
+          ? `Галерията вече е пълна (${GALLERY_LIMIT} снимки). Премахнете някоя, за да добавите нова.`
+          : `Избрани са ${galleryFiles.length} снимки, а остават ${freeSlots} свободни места от ${GALLERY_LIMIT}.`;
+      return { ...empty, message: error, errors: { galleryFiles: error } };
+    }
   }
 
   // Качване на файлове
@@ -383,21 +439,14 @@ export async function saveProduct(
     await Promise.all(toRemove.map((i) => deleteFile(i.url)));
   }
 
-  const galleryFiles = formData
-    .getAll("galleryFiles")
-    .filter((f): f is File => f instanceof File && f.size > 0);
-
   if (galleryFiles.length > 0) {
     const existingCount = await db.productImage.count({
       where: { productId: savedId },
     });
 
-    // Ограничаваме галерията до 8 снимки — повече не носят стойност,
-    // а само утежняват страницата.
-    for (const [index, file] of galleryFiles.slice(0, 8 - existingCount).entries()) {
-      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) continue;
-      if (file.size > MAX_IMAGE_BYTES) continue;
-
+    // Типът, размерът и броят са проверени в началото — дотук стигат само
+    // снимки, които ще бъдат качени. Нищо не се прескача мълчаливо.
+    for (const [index, file] of galleryFiles.entries()) {
       const buffer = Buffer.from(await file.arrayBuffer());
       const key = makeKey("covers", file.name);
       await uploadFile(key, buffer, file.type);

@@ -34,6 +34,9 @@ const mb = (bytes: number) => Math.round(bytes / 1024 / 1024);
 /** Байтове в гигабайти с един знак — над един гигабайт мегабайтите не се четат. */
 const gb = (bytes: number) => (bytes / 1024 / 1024 / 1024).toFixed(1);
 
+/** Колкото и сървърът: повече снимки не носят стойност, а утежняват страницата. */
+const GALLERY_LIMIT = 8;
+
 /**
  * Размерът се проверява и тук, в браузъра, освен на сървъра.
  *
@@ -240,6 +243,36 @@ export function ProductForm({
     // Файлът вече е в хранилището. Полето се изчиства, за да не тръгне и през
     // сървъра при изпращане на формата — това беше цялата идея.
     input.value = "";
+  };
+
+  /**
+   * Проверява всички избрани снимки за галерията наведнъж.
+   *
+   * Полето приема много файлове, затова не става с проверката за единичен
+   * файл. Сървърът прави същата проверка — тази тук само спестява чакането.
+   */
+  const checkGallery = (input: HTMLInputElement) => {
+    const files = Array.from(input.files ?? []);
+    const oversized = files.filter(
+      (f) => f.size > publicConfig.upload.imageBytes,
+    );
+
+    const problem =
+      oversized.length > 0
+        ? `Над ${mb(publicConfig.upload.imageBytes)} MB: ${oversized
+            .map((f) => `${f.name} (${mb(f.size)} MB)`)
+            .join(", ")}.`
+        : files.length > GALLERY_LIMIT
+          ? `Избрани са ${files.length} снимки, а повече от ${GALLERY_LIMIT} не се побират.`
+          : null;
+
+    if (problem) input.value = "";
+    setSizeErrors((prev) => {
+      const next = { ...prev };
+      if (problem) next.galleryFiles = problem;
+      else delete next.galleryFiles;
+      return next;
+    });
   };
 
   const cancelUpload = () => {
@@ -648,12 +681,19 @@ export function ProductForm({
             type="file"
             multiple
             accept="image/jpeg,image/png,image/webp,image/avif"
+            onChange={(e) => checkGallery(e.target)}
             className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer"
           />
           <p className="mt-1.5 text-xs text-muted-foreground">
             Може да изберете няколко наведнъж. Показват се в галерията на
-            страницата на книгата, след корицата. Максимум 8 снимки общо.
+            страницата на книгата, след корицата. Максимум {GALLERY_LIMIT}{" "}
+            снимки общо, до {mb(publicConfig.upload.imageBytes)} MB всяка.
           </p>
+          {(sizeErrors.galleryFiles ?? state.errors?.galleryFiles) && (
+            <p className="mt-1 text-xs text-destructive">
+              {sizeErrors.galleryFiles ?? state.errors?.galleryFiles}
+            </p>
+          )}
         </div>
 
         {/* Основен файл */}
