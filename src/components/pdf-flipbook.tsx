@@ -53,10 +53,21 @@ export function PdfFlipbook({
 
       for (let n = 1; n <= count; n++) {
         const page = await doc.getPage(n);
-        // Мащаб към около 700 пиксела ширина: достатъчно четимо при
-        // приближената книга, без страницата да тежи излишно.
+        // Ширината, в която се чертае страницата.
+        //
+        // 700 пиксела стигаха, докато книгата се гледаше както е. При
+        // приближаване обаче — с бутоните, с щипване или със самия браузър —
+        // тези пиксели се разтягат и текстът омеква. Затова мярката следва
+        // плътността на екрана: на обикновен монитор си остава 700, на екран с
+        // двойна плътност става 1400.
+        //
+        // Таванът е 1400: над него страницата натежава, а спечеленото не се
+        // вижда.
+        const density = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+        const targetWidth = Math.round(700 * density);
+
         const base = page.getViewport({ scale: 1 });
-        const viewport = page.getViewport({ scale: 700 / base.width });
+        const viewport = page.getViewport({ scale: targetWidth / base.width });
 
         const canvas = document.createElement("canvas");
         canvas.width = Math.round(viewport.width);
