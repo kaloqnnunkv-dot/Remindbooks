@@ -10,6 +10,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { env, isStorageConfigured } from "./env";
+import { publicConfig } from "./public-config";
 
 /**
  * Абстракция над хранилището за файлове.
@@ -243,10 +244,10 @@ export const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"];
 /**
  * Лимити за качване.
  *
- * MAX_MEDIA_BYTES трябва да остане под `serverActions.bodySizeLimit` в
- * next.config.ts — Server Actions буферират цялото тяло в паметта.
- * 300 MB покриват аудиокнига от над 5 часа при типичен битрейт.
+ * Самите числа са в `public-config.ts`, защото ги чете и формата в браузъра.
+ * Едно място означава, че надписът под полето и отказът на сървъра не могат да
+ * се разминат.
  */
-export const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8 MB
-export const MAX_DOC_BYTES = 100 * 1024 * 1024; // 100 MB
-export const MAX_MEDIA_BYTES = 300 * 1024 * 1024; // 300 MB (аудио/видео)
+export const MAX_IMAGE_BYTES = publicConfig.upload.imageBytes;
+export const MAX_DOC_BYTES = publicConfig.upload.docBytes;
+export const MAX_MEDIA_BYTES = publicConfig.upload.mediaBytes;

@@ -33,6 +33,23 @@ export const publicConfig = {
    * да се разминат.
    */
   giftCard: { minCents: 500, maxCents: 25000 },
+  /**
+   * Тавани за качване, в байтове.
+   *
+   * Стоят тук по същата причина като границите за подаръчна карта: чете ги и
+   * формата в браузъра. Преди надписът под полето обещаваше 500 MB, а сървърът
+   * отказваше над 300 — администраторът качваше половин час, за да получи
+   * накрая грешка.
+   *
+   * `media` трябва да остане под `serverActions.bodySizeLimit` в
+   * next.config.ts: Server Actions буферират цялото тяло в паметта.
+   * 300 MB покриват аудиокнига от над 5 часа при типичен битрейт.
+   */
+  upload: {
+    imageBytes: 8 * 1024 * 1024,
+    docBytes: 100 * 1024 * 1024,
+    mediaBytes: 300 * 1024 * 1024,
+  },
   social: {
     facebook: process.env.NEXT_PUBLIC_FACEBOOK_URL ?? "https://facebook.com",
     tiktok: process.env.NEXT_PUBLIC_TIKTOK_URL ?? "https://tiktok.com",

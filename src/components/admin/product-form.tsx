@@ -7,6 +7,7 @@ import type { ProductType } from "@prisma/client";
 
 import { saveProduct, type AdminState } from "@/app/actions/admin-products";
 import { formatDuration } from "@/lib/format";
+import { publicConfig } from "@/lib/public-config";
 import {
   Alert,
   Button,
@@ -22,6 +23,25 @@ import {
 import { FileTextIcon, HeadphonesIcon, BookIcon } from "../icons";
 
 const initialState: AdminState = { ok: false, message: "" };
+
+/** Байтове в цели мегабайти — за надписите и за съобщенията при грешка. */
+const mb = (bytes: number) => Math.round(bytes / 1024 / 1024);
+
+/**
+ * Размерът се проверява и тук, в браузъра, освен на сървъра.
+ *
+ * Не е дублиране заради самото дублиране: сървърът разбира колко е голям
+ * файлът едва след като цялото тяло е пристигнало. При 780 MB през домашен
+ * интернет това е половин час чакане, накрая с код на грешка вместо обяснение.
+ * Тук отказът е мигновен и казва точно кое не е наред.
+ *
+ * Проверката на сървъра остава — тази тук е удобство, не защита.
+ */
+function tooBig(file: File, maxBytes: number): string | null {
+  if (file.size <= maxBytes) return null;
+  return `„${file.name}“ е ${mb(file.size)} MB — максимумът е ${mb(maxBytes)} MB. Файлът няма да се качи.`;
+}
+
 
 export type ProductFormData = {
   id?: string;
@@ -94,11 +114,36 @@ export function ProductForm({
     product?.coverUrl ?? null,
   );
   const [removedImages, setRemovedImages] = useState<string[]>([]);
+  /** Оплаквания за твърде големи файлове, по име на полето. */
+  const [sizeErrors, setSizeErrors] = useState<Record<string, string>>({});
 
   const isEdit = Boolean(product?.id);
   const isPhysical = type === "PHYSICAL";
   const isPdf = type === "PDF";
   const isAudio = type === "AUDIO";
+  // Същото разделение като в saveProduct: аудио и видео вървят по големия
+  // таван, всичко останало — по този за документи.
+  const mainMax = isAudio
+    ? publicConfig.upload.mediaBytes
+    : publicConfig.upload.docBytes;
+
+  /**
+   * Отхвърля твърде голям файл още при избирането му.
+   *
+   * Полето се изчиства, за да не тръгне файлът при изпращане — иначе
+   * администраторът вижда предупреждението, но качването пак започва.
+   */
+  const checkSize = (input: HTMLInputElement, field: string, maxBytes: number) => {
+    const file = input.files?.[0];
+    const problem = file ? tooBig(file, maxBytes) : null;
+    if (problem) input.value = "";
+    setSizeErrors((prev) => {
+      const next = { ...prev };
+      if (problem) next[field] = problem;
+      else delete next[field];
+      return next;
+    });
+  };
 
   return (
     <form action={action} className="space-y-6">
@@ -392,16 +437,22 @@ export function ProductForm({
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/avif"
                 onChange={(e) => {
+                  checkSize(e.target, "coverFile", publicConfig.upload.imageBytes);
+                  // Прегледът се прави само ако файлът е оцелял на проверката —
+                  // иначе се показва корица, която няма да бъде качена.
                   const file = e.target.files?.[0];
                   if (file) setCoverPreview(URL.createObjectURL(file));
                 }}
                 className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer"
               />
               <p className="mt-1.5 text-xs text-muted-foreground">
-                JPG, PNG, WebP или AVIF. До 8 MB. Препоръчително съотношение 2:3.
+                JPG, PNG, WebP или AVIF. До {mb(publicConfig.upload.imageBytes)} MB.
+                Препоръчително съотношение 2:3.
               </p>
-              {state.errors?.coverFile && (
-                <p className="mt-1 text-xs text-destructive">{state.errors.coverFile}</p>
+              {(sizeErrors.coverFile ?? state.errors?.coverFile) && (
+                <p className="mt-1 text-xs text-destructive">
+                  {sizeErrors.coverFile ?? state.errors?.coverFile}
+                </p>
               )}
             </div>
           </div>
@@ -506,15 +557,18 @@ export function ProductForm({
                   ? "application/pdf"
                   : "audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg,video/mp4,video/webm"
               }
+              onChange={(e) => checkSize(e.target, "mainFile", mainMax)}
               className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer"
             />
             <p className="mt-1.5 text-xs text-muted-foreground">
               {isPdf
-                ? "PDF, до 100 MB. Файлът е защитен — достъпен само след покупка."
-                : "MP3, M4A, WAV, OGG или MP4/WebM видео. До 500 MB."}
+                ? `PDF, до ${mb(mainMax)} MB. Файлът е защитен — достъпен само след покупка.`
+                : `MP3, M4A, WAV, OGG или MP4/WebM видео. До ${mb(mainMax)} MB.`}
             </p>
-            {state.errors?.mainFile && (
-              <p className="mt-1 text-xs text-destructive">{state.errors.mainFile}</p>
+            {(sizeErrors.mainFile ?? state.errors?.mainFile) && (
+              <p className="mt-1 text-xs text-destructive">
+                {sizeErrors.mainFile ?? state.errors?.mainFile}
+              </p>
             )}
           </div>
         )}
@@ -542,6 +596,7 @@ export function ProductForm({
                   ? "application/pdf"
                   : "audio/mpeg,audio/mp4,audio/x-m4a,audio/wav,audio/ogg"
               }
+              onChange={(e) => checkSize(e.target, "previewFile", mainMax)}
               className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer"
             />
             <p className="mt-1.5 text-xs text-muted-foreground">
@@ -549,8 +604,10 @@ export function ProductForm({
                 ? "Отделен PDF само с първите страници. Значително повишава продажбите."
                 : "Кратък откъс за прослушване преди покупка."}
             </p>
-            {state.errors?.previewFile && (
-              <p className="mt-1 text-xs text-destructive">{state.errors.previewFile}</p>
+            {(sizeErrors.previewFile ?? state.errors?.previewFile) && (
+              <p className="mt-1 text-xs text-destructive">
+                {sizeErrors.previewFile ?? state.errors?.previewFile}
+              </p>
             )}
 
             {isPdf && (
