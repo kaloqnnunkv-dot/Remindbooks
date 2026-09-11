@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useActionState, useState } from "react";
 import { savePost } from "@/app/actions/admin-content";
 import type { AdminState } from "@/app/actions/admin-products";
+import { publicConfig } from "@/lib/public-config";
 import {
   Alert,
   Button,
@@ -142,7 +143,9 @@ export function PostForm({ post }: { post?: PostFormData }) {
               className="block w-full text-sm file:mr-3 file:h-9 file:px-3 file:rounded-md file:border file:border-border file:bg-secondary file:text-secondary-foreground file:font-sans file:text-xs file:font-bold hover:file:bg-accent file:cursor-pointer"
             />
             <p className="mt-1.5 text-xs text-muted-foreground">
-              JPG, PNG, WebP или AVIF. До 8 MB. Препоръчително съотношение 16:9.
+              JPG, PNG, WebP или AVIF. До{" "}
+              {Math.round(publicConfig.upload.imageBytes / 1024 / 1024)} MB.
+              Препоръчително съотношение 16:9.
             </p>
           </div>
         </div>

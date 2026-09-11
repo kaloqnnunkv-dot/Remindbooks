@@ -18,6 +18,16 @@ import { IMAGE_SLOTS, type ImageSlot } from "@/lib/images";
 import { THEME_TOKENS, isHexColor } from "@/lib/theme";
 import type { AdminState } from "./admin-products";
 
+/**
+ * Таванът за изображения в мегабайти, за текста на съобщенията.
+ *
+ * Изписан на ръка, числото започва да лъже още при първата промяна на лимита —
+ * точно това се случи с „До 500 MB“ при аудиото.
+ */
+function imageLimitMb(): number {
+  return Math.round(MAX_IMAGE_BYTES / 1024 / 1024);
+}
+
 const empty: AdminState = { ok: false, message: "" };
 
 // ------------------------------------------------------------------
@@ -75,7 +85,10 @@ export async function savePost(
       return { ...empty, message: "Неподдържан тип изображение." };
     }
     if (coverFile.size > MAX_IMAGE_BYTES) {
-      return { ...empty, message: "Изображението е твърде голямо (максимум 8 MB)." };
+      return {
+        ...empty,
+        message: `Изображението е твърде голямо (максимум ${imageLimitMb()} MB).`,
+      };
     }
     const buffer = Buffer.from(await coverFile.arrayBuffer());
     coverKey = makeKey("blog", coverFile.name);
@@ -394,7 +407,7 @@ export async function saveSiteImage(
     return { ...empty, message: "Позволени са JPG, PNG, WebP и AVIF." };
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return { ...empty, message: "Файлът е над 8 MB." };
+    return { ...empty, message: `Файлът е над ${imageLimitMb()} MB.` };
   }
 
   const previous = await db.setting.findUnique({ where: { key: info.setting } });
