@@ -587,7 +587,24 @@ export function Book3D({
     if (el.hasPointerCapture?.(e.pointerId)) el.releasePointerCapture(e.pointerId);
   };
 
-  const face: React.CSSProperties = { position: "absolute", backfaceVisibility: "hidden" };
+  /**
+   * Общият стил на лицата (корици, листа, страници).
+   *
+   * `backface-visibility: hidden` пази обратната страна на въртящия се лист да
+   * не прозира през него. Цената е, че браузърът прави всяко лице отделен
+   * слой и го растеризира веднъж, в размера, в който е било. При приближаване
+   * този слой се разтяга, вместо да се начертае наново — оттам идва
+   * размазването, което се вижда чак от около 200% нагоре, и то по местата,
+   * доведени в полезрението с влачене след приближаването.
+   *
+   * Затова приближената книга остава без него: в покой страницата гледа право
+   * към читателя и обратната ѝ страна и без това не се вижда.
+   */
+  const zoomed = zoom > 1.01;
+  const face: React.CSSProperties = {
+    position: "absolute",
+    backfaceVisibility: zoomed ? "visible" : "hidden",
+  };
 
   return (
     <div ref={fit.hostRef} className="fit-host-book">
