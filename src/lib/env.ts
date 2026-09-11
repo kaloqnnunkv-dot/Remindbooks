@@ -8,6 +8,27 @@
 
 import { publicConfig } from "./public-config";
 
+/**
+ * Цяло неотрицателно число от средата, с резервна стойност.
+ *
+ * `Number("700 Доставка до адрес")` дава NaN, а NaN се разнася безшумно през
+ * всички сметки и накрая цената излиза празна. Затова стойност, която не е
+ * чисто число, се отхвърля и се записва в лога, вместо да се приеме.
+ */
+function wholeNumber(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined || raw.trim() === "") return fallback;
+
+  const parsed = Number(raw.trim());
+  if (!Number.isFinite(parsed) || parsed < 0 || !Number.isInteger(parsed)) {
+    console.warn(
+      `[env] ${name}="${raw}" не е цяло число. Използва се ${fallback}.`,
+    );
+    return fallback;
+  }
+  return parsed;
+}
+
 function optional(name: string): string | undefined {
   const v = process.env[name];
   return v && v.length > 0 ? v : undefined;
@@ -132,13 +153,13 @@ export const env = {
    */
   shop: {
     /** Доставка до адрес, в евроцентове. */
-    shippingCents: Number(optional("SHIPPING_CENTS") ?? 700),
+    shippingCents: wholeNumber("SHIPPING_CENTS", 700),
     /** Доставка до офис на куриера — обикновено по-евтина. */
-    shippingOfficeCents: Number(optional("SHIPPING_OFFICE_CENTS") ?? 400),
+    shippingOfficeCents: wholeNumber("SHIPPING_OFFICE_CENTS", 400),
     /** Безплатна доставка над тази сума (евроцентове). 0 = изключено. */
-    freeShippingOverCents: Number(optional("FREE_SHIPPING_OVER_CENTS") ?? 2500),
+    freeShippingOverCents: wholeNumber("FREE_SHIPPING_OVER_CENTS", 2500),
     /** Такса за наложен платеж в евроцентове. */
-    codFeeCents: Number(optional("COD_FEE_CENTS") ?? 0),
+    codFeeCents: wholeNumber("COD_FEE_CENTS", 0),
     /** Долна и горна граница за подаръчна карта, в евроцентове. */
     giftCardMinCents: publicConfig.giftCard.minCents,
     giftCardMaxCents: publicConfig.giftCard.maxCents,
