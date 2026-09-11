@@ -12,7 +12,7 @@ import { getFavoriteIds } from "@/app/actions/favorites";
 import { Badge, Breadcrumbs, SectionHeading, Alert } from "@/components/ui";
 import { ProductCard } from "@/components/product-card";
 import { ProductTypeBadge } from "@/components/product-type-badge";
-import { Book3D } from "@/components/book-3d";
+import { ProductGallery } from "@/components/product-gallery";
 import { BuyBox } from "@/components/add-to-cart";
 import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButtons } from "@/components/share-buttons";
@@ -141,7 +141,10 @@ export default async function AudioDetailPage({
 
       <div className="grid lg:grid-cols-5 gap-10 lg:gap-14">
         <div className="lg:col-span-2">
-          <Book3D cover={cover} title={item.title} />
+          <ProductGallery
+              images={cover ? [{ url: cover, alt: item.title }] : []}
+              title={item.title}
+            />
         </div>
 
         <div className="lg:col-span-3">

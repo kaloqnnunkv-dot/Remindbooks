@@ -90,6 +90,7 @@ export default async function CheckoutPage() {
           cardEnabled={isStripeConfigured}
           giftCardsEnabled={env.features.giftCards}
           shippingCents={env.shop.shippingCents}
+          shippingOfficeCents={env.shop.shippingOfficeCents}
           codFeeCents={env.shop.codFeeCents}
           freeShippingOverCents={env.shop.freeShippingOverCents}
         />

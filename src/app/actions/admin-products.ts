@@ -55,10 +55,30 @@ async function handleUpload(
     return { key: null, error: `Файлът е твърде голям (максимум ${mb} MB).` };
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const key = makeKey(folder, file.name);
-  await uploadFile(key, buffer, file.type);
-  return { key };
+  // Файлът минава изцяло през паметта на сървъра — това е ограничението на
+  // Server Actions. При голям аудио или видео файл контейнерът може да свърши
+  // с паметта, а качването към хранилището може да откаже по своя причина.
+  // И двете дотук се пукаха нагоре и посетителят получаваше само код на
+  // грешка; сега се хващат и се казва кое се е случило.
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const key = makeKey(folder, file.name);
+    await uploadFile(key, buffer, file.type);
+    return { key };
+  } catch (err) {
+    const mb = Math.round(file.size / 1024 / 1024);
+    console.error(
+      `[upload] ${folder}/${file.name} (${mb} MB, ${file.type}) се провали:`,
+      err,
+    );
+    return {
+      key: null,
+      error:
+        `Файлът (${mb} MB) не можа да бъде качен. ` +
+        "При големите аудио и видео файлове причината обикновено е паметта на " +
+        "сървъра — опитайте с по-малък файл или по-ниско качество.",
+    };
+  }
 }
 
 /** Гарантира уникален slug, добавяйки суфикс при нужда. */

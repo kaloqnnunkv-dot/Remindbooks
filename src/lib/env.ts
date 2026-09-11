@@ -131,8 +131,10 @@ export const env = {
    * лева, тя ще се приложи както е и доставката ще излезе двойно.
    */
   shop: {
-    /** Цена на доставка в евроцентове. */
-    shippingCents: Number(optional("SHIPPING_CENTS") ?? 299),
+    /** Доставка до адрес, в евроцентове. */
+    shippingCents: Number(optional("SHIPPING_CENTS") ?? 700),
+    /** Доставка до офис на куриера — обикновено по-евтина. */
+    shippingOfficeCents: Number(optional("SHIPPING_OFFICE_CENTS") ?? 400),
     /** Безплатна доставка над тази сума (евроцентове). 0 = изключено. */
     freeShippingOverCents: Number(optional("FREE_SHIPPING_OVER_CENTS") ?? 2500),
     /** Такса за наложен платеж в евроцентове. */

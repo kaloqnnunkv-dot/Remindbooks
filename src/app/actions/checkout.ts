@@ -204,6 +204,7 @@ export async function submitCheckout(
     discountCents,
     giftCardBalanceCents: giftCardBalance,
     paymentMethod: data.paymentMethod,
+    deliveryMethod: data.deliveryMethod,
   });
 
   const session = await auth();
@@ -219,6 +220,7 @@ export async function submitCheckout(
     postalCode: data.postalCode,
     notes: data.notes ?? null,
     paymentMethod: data.paymentMethod,
+    deliveryMethod: data.deliveryMethod,
     fulfillmentType: totals.requiresShipping ? "SHIPPING" : "DIGITAL",
     subtotalCents: totals.subtotalCents,
     discountCents: totals.discountCents,
@@ -256,7 +258,12 @@ export async function submitCheckout(
     orderNumber: order.orderNumber,
     email: data.email,
     totalCents: totals.totalCents,
-    lines: lines.map((l) => ({ title: l.title, unitCents: l.unitCents, quantity: l.quantity })),
+    lines: lines.map((l) => ({
+      title: l.title,
+      unitCents: l.unitCents,
+      quantity: l.quantity,
+      image: l.coverImage,
+    })),
     shippingCents: totals.shippingCents,
     discountCents: totals.discountCents + totals.giftCardCents,
   });
@@ -356,7 +363,12 @@ export async function submitDigitalCheckout(
     orderNumber: order.orderNumber,
     email,
     totalCents: totals.totalCents,
-    lines: lines.map((l) => ({ title: l.title, unitCents: l.unitCents, quantity: l.quantity })),
+    lines: lines.map((l) => ({
+      title: l.title,
+      unitCents: l.unitCents,
+      quantity: l.quantity,
+      image: l.coverImage,
+    })),
     shippingCents: 0,
     discountCents: totals.discountCents,
   });
@@ -377,7 +389,7 @@ async function createStripeSession(input: {
   orderNumber: string;
   email: string;
   totalCents: number;
-  lines: { title: string; unitCents: number; quantity: number }[];
+  lines: { title: string; unitCents: number; quantity: number; image?: string | null }[];
   shippingCents: number;
   discountCents: number;
 }): Promise<string | null> {
@@ -407,7 +419,14 @@ async function createStripeSession(input: {
           ...input.lines.map((l) => ({
             price_data: {
               currency: env.shop.currency,
-              product_data: { name: l.title.slice(0, 250) },
+              product_data: {
+                name: l.title.slice(0, 250),
+                // Stripe показва корицата до реда, докато клиентът въвежда
+                // картата. Приема само пълен адрес — относителен път се
+                // отхвърля и сесията не се създава, затова се подава само
+                // когато хранилището връща адрес с домейн.
+                ...(l.image?.startsWith("http") ? { images: [l.image] } : {}),
+              },
               unit_amount: l.unitCents,
             },
             quantity: l.quantity,

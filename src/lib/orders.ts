@@ -244,6 +244,8 @@ export async function createPendingOrder(data: {
   postalCode?: string | null;
   notes?: string | null;
   paymentMethod: "CARD" | "COD";
+  /** Дигиталните поръчки нямат доставка — тогава остава подразбиращото се. */
+  deliveryMethod?: "ADDRESS" | "OFFICE";
   fulfillmentType: "SHIPPING" | "DIGITAL";
   subtotalCents: number;
   discountCents: number;
@@ -268,6 +270,7 @@ export async function createPendingOrder(data: {
     notes: data.notes ?? null,
     status: "PENDING",
     paymentMethod: data.paymentMethod,
+    deliveryMethod: data.deliveryMethod ?? "ADDRESS",
     fulfillmentType: data.fulfillmentType,
     subtotalCents: data.subtotalCents,
     discountCents: data.discountCents,

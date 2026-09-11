@@ -18,7 +18,7 @@ import { FavoriteButton } from "@/components/favorite-button";
 import { ShareButtons } from "@/components/share-buttons";
 import { ReviewSection } from "@/components/reviews";
 import { PdfFlipbook } from "@/components/pdf-flipbook";
-import { Book3D } from "@/components/book-3d";
+import { ProductGallery } from "@/components/product-gallery";
 import { CheckIcon, DownloadIcon} from "@/components/icons";
 
 export const dynamic = "force-dynamic";
@@ -143,7 +143,10 @@ export default async function PdfBookPage({
       <div className="grid lg:grid-cols-5 gap-10 lg:gap-14">
         <div className="lg:col-span-2">
           <div className="relative">
-            <Book3D cover={cover} title={book.title} />
+            <ProductGallery
+              images={cover ? [{ url: cover, alt: book.title }] : []}
+              title={book.title}
+            />
             <span className="absolute left-3 top-3 z-10">
               <ProductTypeBadge type="PDF" />
             </span>

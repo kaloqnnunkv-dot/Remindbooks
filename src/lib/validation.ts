@@ -85,6 +85,10 @@ export const shippingSchema = z.object({
   city: z.string().trim().min(2, "Моля, въведете град.").max(100),
   postalCode: z.string().trim().min(4, "Моля, въведете пощенски код.").max(20),
   notes: z.string().trim().max(1000).optional(),
+  // По подразбиране адрес: ако полето липсва по някаква причина, поръчката
+  // минава с по-скъпата тарифа вместо да се отхвърли с грешка, която клиентът
+  // няма как да поправи.
+  deliveryMethod: z.enum(["ADDRESS", "OFFICE"]).default("ADDRESS"),
   paymentMethod: z.enum(["CARD", "COD"]),
   promoCode: z.string().trim().max(50).optional(),
   giftCardCode: z.string().trim().max(50).optional(),

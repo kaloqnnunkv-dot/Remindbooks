@@ -86,6 +86,8 @@ export function computeTotals(
     discountCents?: number;
     giftCardBalanceCents?: number;
     paymentMethod?: "CARD" | "COD";
+    /** До адрес или до офис — двете са с различна тарифа. */
+    deliveryMethod?: "ADDRESS" | "OFFICE";
   } = {},
 ): CartTotals {
   const subtotalCents = lines.reduce((sum, l) => sum + l.unitCents * l.quantity, 0);
@@ -100,7 +102,11 @@ export function computeTotals(
   if (requiresShipping) {
     const threshold = env.shop.freeShippingOverCents;
     const qualifiesFree = threshold > 0 && afterDiscount >= threshold;
-    shippingCents = qualifiesFree ? 0 : env.shop.shippingCents;
+    const rate =
+      opts.deliveryMethod === "OFFICE"
+        ? env.shop.shippingOfficeCents
+        : env.shop.shippingCents;
+    shippingCents = qualifiesFree ? 0 : rate;
     if (opts.paymentMethod === "COD") shippingCents += env.shop.codFeeCents;
   }
 

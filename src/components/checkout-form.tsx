@@ -28,6 +28,7 @@ export function CheckoutForm({
   cardEnabled,
   giftCardsEnabled,
   shippingCents,
+  shippingOfficeCents,
   codFeeCents,
   freeShippingOverCents,
 }: {
@@ -37,7 +38,10 @@ export function CheckoutForm({
   codEnabled: boolean;
   cardEnabled: boolean;
   giftCardsEnabled: boolean;
+  /** Тарифата за доставка до адрес. */
   shippingCents: number;
+  /** Тарифата за доставка до офис на куриера. */
+  shippingOfficeCents: number;
   codFeeCents: number;
   freeShippingOverCents: number;
 }) {
@@ -46,6 +50,8 @@ export function CheckoutForm({
   const [paymentMethod, setPaymentMethod] = useState<"CARD" | "COD">(
     cardEnabled ? "CARD" : "COD",
   );
+  // До офис е по-евтино, затова стои първо и е избрано по подразбиране.
+  const [deliveryMethod, setDeliveryMethod] = useState<"ADDRESS" | "OFFICE">("OFFICE");
   const [discountCents, setDiscountCents] = useState(0);
   const [giftCardBalance, setGiftCardBalance] = useState(0);
 
@@ -53,8 +59,10 @@ export function CheckoutForm({
   const afterDiscount = Math.max(0, totals.subtotalCents - discountCents);
   const qualifiesFreeShipping =
     freeShippingOverCents > 0 && afterDiscount >= freeShippingOverCents;
+  const deliveryRate =
+    deliveryMethod === "OFFICE" ? shippingOfficeCents : shippingCents;
   const liveShipping =
-    (qualifiesFreeShipping ? 0 : shippingCents) +
+    (qualifiesFreeShipping ? 0 : deliveryRate) +
     (paymentMethod === "COD" ? codFeeCents : 0);
   const beforeGiftCard = afterDiscount + liveShipping;
   const appliedGiftCard = Math.min(giftCardBalance, beforeGiftCard);
@@ -126,11 +134,40 @@ export function CheckoutForm({
               </Field>
             </div>
 
+            {/* Изборът стои преди адреса, защото сменя и цената, и това, което
+                се очаква да бъде написано в полето под него. */}
+            <fieldset>
+              <legend className="mb-2 block font-sans text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Начин на доставка
+              </legend>
+              <input type="hidden" name="deliveryMethod" value={deliveryMethod} />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <DeliveryOption
+                  checked={deliveryMethod === "OFFICE"}
+                  onChange={() => setDeliveryMethod("OFFICE")}
+                  title="До офис на куриера"
+                  price={shippingOfficeCents}
+                  free={qualifiesFreeShipping}
+                />
+                <DeliveryOption
+                  checked={deliveryMethod === "ADDRESS"}
+                  onChange={() => setDeliveryMethod("ADDRESS")}
+                  title="До адрес"
+                  price={shippingCents}
+                  free={qualifiesFreeShipping}
+                />
+              </div>
+            </fieldset>
+
             <Field
-              label="Адрес"
+              label={deliveryMethod === "OFFICE" ? "Офис на куриера" : "Адрес за доставка"}
               htmlFor="c-address"
               required
-              hint="Улица, номер, вход, апартамент — или офис на куриер."
+              hint={
+                deliveryMethod === "OFFICE"
+                  ? "Град и офис — например „Спиди, офис Дружба 2“."
+                  : "Улица, номер, вход, апартамент."
+              }
               error={state.errors?.addressLine}
             >
               <Input
@@ -138,6 +175,11 @@ export function CheckoutForm({
                 name="addressLine"
                 defaultValue={defaults.addressLine}
                 required
+                placeholder={
+                  deliveryMethod === "OFFICE"
+                    ? "Спиди, офис …"
+                    : "ул. …, №…, вх. …, ап. …"
+                }
                 autoComplete="street-address"
               />
             </Field>
@@ -292,6 +334,49 @@ export function CheckoutForm({
         </div>
       </aside>
     </form>
+  );
+}
+
+/**
+ * Един от двата начина на доставка.
+ *
+ * Цената стои в самия избор, защото разликата между офис и адрес е точно тя —
+ * ако не се вижда тук, клиентът я открива чак в сметката отдясно.
+ */
+function DeliveryOption({
+  checked,
+  onChange,
+  title,
+  price,
+  free,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  title: string;
+  price: number;
+  free: boolean;
+}) {
+  return (
+    <label
+      className={cn(
+        "flex items-center justify-between gap-3 p-4 border rounded-md cursor-pointer transition-colors",
+        checked ? "border-primary bg-primary/5" : "border-border hover:border-primary/50",
+      )}
+    >
+      <span className="flex items-center gap-3">
+        <input
+          type="radio"
+          name="deliveryChoice"
+          checked={checked}
+          onChange={onChange}
+          className="h-4 w-4 accent-[var(--primary)]"
+        />
+        <span className="font-sans text-sm font-bold">{title}</span>
+      </span>
+      <span className="font-sans text-sm font-bold whitespace-nowrap">
+        {free ? "безплатно" : formatPrice(price)}
+      </span>
+    </label>
   );
 }
 

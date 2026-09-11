@@ -293,6 +293,12 @@ enum FulfillmentType {
   DIGITAL // дигитално доставяне
 }
 
+// Къде отива пратката. Цената на доставката е различна за двете.
+enum DeliveryMethod {
+  ADDRESS // до адрес на клиента
+  OFFICE // до офис на куриера
+}
+
 model Order {
   id          String @id @default(cuid())
   orderNumber String @unique // напр. RMB-2026-000123
@@ -313,6 +319,10 @@ model Order {
   status          OrderStatus     @default(PENDING)
   paymentMethod   PaymentMethod   @default(CARD)
   fulfillmentType FulfillmentType
+
+  // Подразбира се адрес: заварените поръчки са правени, когато избор нямаше, а
+  // тогавашната цена беше тази за адрес.
+  deliveryMethod DeliveryMethod @default(ADDRESS)
 
   subtotalCents Int
   discountCents Int @default(0)
