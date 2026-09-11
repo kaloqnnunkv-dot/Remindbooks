@@ -4,7 +4,6 @@ import Link from "next/link";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { formatPrice, BG_ORDER_STATUS } from "@/lib/format";
-import { clearCart } from "@/lib/cart";
 import { Card, ButtonLink, Badge, Alert } from "@/components/ui";
 import { statusTone } from "@/lib/order-status";
 import { CheckIcon, DownloadIcon, MailIcon } from "@/components/icons";
@@ -23,9 +22,14 @@ export default async function CheckoutSuccessPage({
 }) {
   const params = await searchParams;
 
-  // Кошницата се изчиства при връщане от Stripe. Плащането обаче се потвърждава
-  // САМО от webhook-а — тази страница не променя статуса на поръчката.
-  await clearCart();
+  // Кошницата НЕ се изчиства тук. Next.js не позволява писане по бисквитките,
+  // докато страница се рисува — опитът хвърляше грешка и посетителят виждаше
+  // „нещо се обърка“, въпреки че поръчката е минала и имейлът е тръгнал.
+  //
+  // При наложен платеж кошницата се чисти в самото действие, а при плащане с
+  // карта — в маршрута, през който Stripe връща клиента (`/api/checkout/uspeh`).
+  //
+  // Плащането се потвърждава САМО от webhook-а; тази страница не пипа статуса.
 
   const order = params.order
     ? await db.order.findUnique({

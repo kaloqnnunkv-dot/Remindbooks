@@ -434,7 +434,9 @@ async function createStripeSession(input: {
       locale: "bg",
       client_reference_id: input.orderId,
       metadata: { orderId: input.orderId, orderNumber: input.orderNumber },
-      success_url: `${env.appUrl}/checkout/uspeh?order=${input.orderNumber}&session_id={CHECKOUT_SESSION_ID}`,
+      // През маршрут, а не направо към страницата: там се изчиства кошницата,
+      // което на страница е забранено.
+      success_url: `${env.appUrl}/api/checkout/uspeh?order=${input.orderNumber}`,
       cancel_url: `${env.appUrl}/kolichka?cancelled=1`,
       // Сесията изтича след 30 минути — освобождава резервираните бройки.
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
