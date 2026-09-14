@@ -173,7 +173,15 @@ export const env = {
     reviews: optional("FEATURE_REVIEWS") !== "false",
     giftCards: optional("FEATURE_GIFT_CARDS") !== "false",
     comments: optional("FEATURE_BLOG_COMMENTS") !== "false",
-    googleLogin: Boolean(optional("GOOGLE_CLIENT_ID")),
+    /**
+     * Бутонът „Вход с Google“ се показва само когато провайдърът наистина е
+     * регистриран, а за това са нужни И двата ключа. Само с единия бутонът се
+     * появяваше, но натискането му връщаше грешка — а това е тъкмо
+     * положението по средата на настройката, когато първо се добавя единият.
+     */
+    googleLogin: Boolean(
+      optional("GOOGLE_CLIENT_ID") && optional("GOOGLE_CLIENT_SECRET"),
+    ),
   },
 
   social: {
