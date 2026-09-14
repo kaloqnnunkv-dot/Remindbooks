@@ -135,8 +135,8 @@ export function DigitalCheckoutForm({
         {state.message && !state.ok && <Alert tone="error">{state.message}</Alert>}
       </div>
 
-      <aside className="lg:col-span-1 flex flex-col gap-4">
-        {/* Сметката следва погледа, докато се попълват данните горе. */}
+      {/* Както при физическата поръчка — бутонът е част от самата кутия. */}
+      <aside className="lg:col-span-1">
         <div className="lg:sticky lg:top-24">
           <OrderSummary
             lines={lines}
@@ -144,24 +144,24 @@ export function DigitalCheckoutForm({
             discountCents={discountCents}
             totalCents={liveTotal}
             showShipping={false}
+            footer={
+              <>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full"
+                  disabled={pending || !cardEnabled}
+                >
+                  {pending ? "Обработване…" : `Плати ${formatPrice(liveTotal)}`}
+                </Button>
+
+                <p className="mt-3 text-xs text-muted-foreground text-center leading-relaxed">
+                  Плащането се обработва сигурно от Stripe. Не съхраняваме данни
+                  на вашата карта.
+                </p>
+              </>
+            }
           />
-        </div>
-
-        {/* Бутонът се лепи за долния ръб — вж. бележката в checkout-form.tsx. */}
-        <div className="sticky bottom-0 z-20 mt-auto border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={pending || !cardEnabled}
-          >
-            {pending ? "Обработване…" : `Плати ${formatPrice(liveTotal)}`}
-          </Button>
-
-          <p className="mt-2 text-xs text-muted-foreground text-center leading-relaxed">
-            Плащането се обработва сигурно от Stripe. Не съхраняваме данни на
-            вашата карта.
-          </p>
         </div>
       </aside>
     </form>

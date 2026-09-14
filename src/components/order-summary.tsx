@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Image from "next/image";
 import { formatPrice } from "@/lib/format";
 import { Card } from "./ui";
@@ -24,6 +25,7 @@ export function OrderSummary({
   shippingCents,
   totalCents,
   showShipping = true,
+  footer,
 }: {
   lines: SummaryLine[];
   subtotalCents: number;
@@ -32,14 +34,24 @@ export function OrderSummary({
   shippingCents?: number;
   totalCents: number;
   showShipping?: boolean;
+  /** Бутонът за плащане и бележката под него — част от същата кутия. */
+  footer?: ReactNode;
 }) {
-  // Закачането за ръба е грижа на страницата, която ползва обобщението: то
-  // стои в колона заедно с бутона и двете се лепят за различни ръбове.
-  return (
-    <Card className="p-6">
-      <h2 className="font-sans text-lg font-bold mb-5">Вашата поръчка</h2>
+  /*
+    Кутията се побира в екрана цялата, заедно с бутона.
 
-      <ul className="space-y-3 mb-5 max-h-72 overflow-y-auto">
+    Бутонът стои вътре, под общата сума, защото там му е мястото: човек гледа
+    сумата и натиска. Отделен от кутията изглеждаше като чужда лента.
+
+    За да не изтласка бутона надолу дълга поръчка, височината на кутията е
+    ограничена до екрана, а списъкът с книгите се свива и се превърта сам.
+    Сумата и бутонът не се свиват — те трябва да се виждат винаги.
+  */
+  return (
+    <Card className="flex flex-col p-6 lg:max-h-[calc(100vh-7rem)]">
+      <h2 className="shrink-0 font-sans text-lg font-bold mb-5">Вашата поръчка</h2>
+
+      <ul className="space-y-3 mb-5 max-h-72 overflow-y-auto lg:min-h-0 lg:flex-1">
         {lines.map((line, i) => (
           <li key={i} className="flex gap-3">
             <div className="relative w-12 h-[4.5rem] shrink-0 bg-card rounded-sm overflow-hidden border border-border">
@@ -75,7 +87,7 @@ export function OrderSummary({
         ))}
       </ul>
 
-      <dl className="space-y-2 text-sm pt-4 border-t border-border">
+      <dl className="shrink-0 space-y-2 text-sm pt-4 border-t border-border">
         <Row label="Междинна сума" value={formatPrice(subtotalCents)} />
 
         {discountCents > 0 && (
@@ -107,6 +119,8 @@ export function OrderSummary({
           <dd>{formatPrice(totalCents)}</dd>
         </div>
       </dl>
+
+      {footer && <div className="shrink-0 pt-5">{footer}</div>}
     </Card>
   );
 }

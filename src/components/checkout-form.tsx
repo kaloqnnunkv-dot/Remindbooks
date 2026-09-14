@@ -302,8 +302,11 @@ export function CheckoutForm({
       </div>
 
       {/* Обобщение */}
-      <aside className="lg:col-span-1 flex flex-col gap-4">
-        {/* Сметката следва погледа, докато се попълват данните горе. */}
+      {/*
+        Кутията следва погледа и се побира цяла в екрана — бутонът е вътре в
+        нея, под общата сума, и затова не може да изостане надолу.
+      */}
+      <aside className="lg:col-span-1">
         <div className="lg:sticky lg:top-24">
           <OrderSummary
             lines={lines}
@@ -312,39 +315,29 @@ export function CheckoutForm({
             giftCardCents={appliedGiftCard}
             shippingCents={liveShipping}
             totalCents={liveTotal}
+            footer={
+              <>
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full"
+                  disabled={pending || (!cardEnabled && !codEnabled)}
+                >
+                  {pending
+                    ? "Обработване…"
+                    : paymentMethod === "CARD"
+                      ? `Плати ${formatPrice(liveTotal)}`
+                      : "Завърши поръчката"}
+                </Button>
+
+                <p className="mt-3 text-xs text-muted-foreground text-center leading-relaxed">
+                  {paymentMethod === "CARD"
+                    ? "Ще бъдете пренасочени към защитената страница на Stripe."
+                    : "Ще платите в брой на куриера при получаване."}
+                </p>
+              </>
+            }
           />
-        </div>
-
-        {/*
-          Бутонът се лепи за ДОЛНИЯ ръб на екрана и е отделен от сметката.
-
-          Преди двете стояха в един блок, закачен за горния ръб. Щом блокът
-          надвиши височината на екрана — а при няколко книги това става лесно —
-          долната му част остава недостижима и бутонът изчезва нагоре. На
-          телефон закачане изобщо нямаше и той просто отплуваше.
-
-          Като сиблинг на сметката всеки се лепи за своя ръб и двата се виждат
-          едновременно.
-        */}
-        <div className="sticky bottom-0 z-20 mt-auto border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full"
-            disabled={pending || (!cardEnabled && !codEnabled)}
-          >
-            {pending
-              ? "Обработване…"
-              : paymentMethod === "CARD"
-                ? `Плати ${formatPrice(liveTotal)}`
-                : "Завърши поръчката"}
-          </Button>
-
-          <p className="mt-2 text-xs text-muted-foreground text-center leading-relaxed">
-            {paymentMethod === "CARD"
-              ? "Ще бъдете пренасочени към защитената страница на Stripe."
-              : "Ще платите в брой на куриера при получаване."}
-          </p>
         </div>
       </aside>
     </form>
