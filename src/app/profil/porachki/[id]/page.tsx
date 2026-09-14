@@ -8,6 +8,7 @@ import {
   formatPrice,
   formatDateTime,
   BG_ORDER_STATUS,
+  orderStatusLabel,
   BG_PAYMENT_METHOD,
   BG_PRODUCT_TYPE,
 } from "@/lib/format";
@@ -78,7 +79,7 @@ export default async function OrderDetailPage({
             {formatDateTime(order.createdAt)}
           </p>
         </div>
-        <Badge tone={statusTone(order.status)}>{BG_ORDER_STATUS[order.status]}</Badge>
+        <Badge tone={statusTone(order.status)}>{orderStatusLabel(order.status, order.paymentMethod)}</Badge>
       </div>
 
       {/* Статус на изпращане */}

@@ -204,6 +204,26 @@ export const BG_ORDER_STATUS: Record<string, string> = {
   REFUNDED: "Възстановена",
 };
 
+/**
+ * Надписът на статуса, съобразен с начина на плащане.
+ *
+ * Вътре в системата PAID значи „потвърдена и отчетена“: наличността е
+ * намалена, достъпите са дадени, поръчката чака изпращане. При наложен платеж
+ * обаче пари не са постъпили — клиентът плаща на куриера и спокойно може да не
+ * си вземе пратката, а тя да се върне. „Платена“ в този момент е невярно и
+ * пред собственика, и пред клиента.
+ *
+ * Сменя се само думата. Статусът отдолу остава PAID, защото цялата логика —
+ * приходи, наличности, отчитане — се крепи на него.
+ */
+export function orderStatusLabel(
+  status: string,
+  paymentMethod?: string | null,
+): string {
+  if (status === "PAID" && paymentMethod === "COD") return "В обработка";
+  return BG_ORDER_STATUS[status] ?? status;
+}
+
 export const BG_PRODUCT_TYPE: Record<string, string> = {
   PHYSICAL: "Физическа книга",
   PDF: "PDF книга",

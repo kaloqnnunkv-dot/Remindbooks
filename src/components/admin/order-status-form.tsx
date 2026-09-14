@@ -4,7 +4,7 @@ import { useActionState, useState } from "react";
 import type { OrderStatus } from "@prisma/client";
 import { updateOrderStatus } from "@/app/actions/admin-orders";
 import type { AdminState } from "@/app/actions/admin-products";
-import { BG_ORDER_STATUS } from "@/lib/format";
+import { orderStatusLabel } from "@/lib/format";
 import { Alert, Button, Checkbox, Field, Input, Select } from "../ui";
 
 const initialState: AdminState = { ok: false, message: "" };
@@ -24,12 +24,15 @@ export function OrderStatusForm({
   trackingNumber,
   isShipping,
   customerEmail,
+  paymentMethod,
 }: {
   orderId: string;
   currentStatus: OrderStatus;
   trackingNumber: string;
   isShipping: boolean;
   customerEmail: string;
+  /** При наложен платеж „Платена“ се чете като „В обработка“. */
+  paymentMethod: "CARD" | "COD";
 }) {
   const [state, action, pending] = useActionState(updateOrderStatus, initialState);
   const [status, setStatus] = useState<OrderStatus>(currentStatus);
@@ -51,7 +54,7 @@ export function OrderStatusForm({
           >
             {STATUSES.map((s) => (
               <option key={s} value={s}>
-                {BG_ORDER_STATUS[s]}
+                {orderStatusLabel(s, paymentMethod)}
               </option>
             ))}
           </Select>
@@ -84,16 +87,18 @@ export function OrderStatusForm({
           />
           <span className="text-sm">
             Изпрати имейл до клиента ({customerEmail}) за новия статус „
-            {BG_ORDER_STATUS[status]}“.
+            {orderStatusLabel(status, paymentMethod)}“.
           </span>
         </label>
       )}
 
       {isCancelling && wasCounted && (
         <Alert tone="error">
-          Тази поръчка е била платена. При смяна към „
-          {BG_ORDER_STATUS[status]}“ количествата на физическите книги ще бъдат
-          върнати обратно в склада.
+          {paymentMethod === "COD"
+            ? "Тази поръчка е потвърдена и количествата са ѝ запазени."
+            : "Тази поръчка е била платена."}{" "}
+          При смяна към „{orderStatusLabel(status, paymentMethod)}“ количествата
+          на физическите книги ще бъдат върнати обратно в склада.
         </Alert>
       )}
 

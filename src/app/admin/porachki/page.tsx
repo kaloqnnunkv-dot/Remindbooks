@@ -7,6 +7,7 @@ import {
   formatPrice,
   formatDateTime,
   BG_ORDER_STATUS,
+  orderStatusLabel,
   BG_PAYMENT_METHOD,
 } from "@/lib/format";
 import { statusTone } from "@/lib/order-status";
@@ -197,7 +198,7 @@ export default async function AdminOrdersPage({
 
                   <Td>
                     <Badge tone={statusTone(order.status)}>
-                      {BG_ORDER_STATUS[order.status]}
+                      {orderStatusLabel(order.status, order.paymentMethod)}
                     </Badge>
                     {order.trackingNumber && (
                       <p className="mt-1 font-mono text-[11px] text-muted-foreground">

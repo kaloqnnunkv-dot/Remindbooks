@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { formatPrice, formatDate, BG_ORDER_STATUS } from "@/lib/format";
+import { formatPrice, formatDate, BG_ORDER_STATUS, orderStatusLabel } from "@/lib/format";
 import { Card, Badge, ButtonLink, EmptyState } from "@/components/ui";
 import { statusTone } from "@/lib/order-status";
 import { BookIcon, HeartIcon, PackageIcon } from "@/components/icons";
@@ -29,7 +29,7 @@ export default async function ProfileOverviewPage() {
         orderBy: { createdAt: "desc" },
         take: 3,
         select: {
-          id: true, orderNumber: true, status: true,
+          id: true, orderNumber: true, status: true, paymentMethod: true,
           totalCents: true, createdAt: true,
           _count: { select: { items: true } },
         },
@@ -98,7 +98,7 @@ export default async function ProfileOverviewPage() {
                 </div>
                 <div className="flex items-center gap-4">
                   <Badge tone={statusTone(order.status)}>
-                    {BG_ORDER_STATUS[order.status]}
+                    {orderStatusLabel(order.status, order.paymentMethod)}
                   </Badge>
                   <span className="font-sans font-bold">
                     {formatPrice(order.totalCents)}

@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { formatDate, formatPrice, BG_ORDER_STATUS, BG_PRODUCT_TYPE } from "@/lib/format";
+import { formatDate, formatPrice, BG_ORDER_STATUS, orderStatusLabel, BG_PRODUCT_TYPE } from "@/lib/format";
 import { statusTone } from "@/lib/order-status";
 import { AdminHeader, AdminTable, Th, Td, StatTile } from "@/components/admin/admin-ui";
 import { EntitlementManager } from "@/components/admin/entitlement-manager";
@@ -33,7 +33,7 @@ export default async function AdminUserDetailPage({
         orders: {
           orderBy: { createdAt: "desc" },
           select: {
-            id: true, orderNumber: true, status: true,
+            id: true, orderNumber: true, status: true, paymentMethod: true,
             totalCents: true, createdAt: true,
           },
         },
@@ -116,7 +116,7 @@ export default async function AdminUserDetailPage({
                       </Td>
                       <Td>
                         <Badge tone={statusTone(order.status)}>
-                          {BG_ORDER_STATUS[order.status]}
+                          {orderStatusLabel(order.status, order.paymentMethod)}
                         </Badge>
                       </Td>
                       <Td className="text-right font-sans font-bold whitespace-nowrap">

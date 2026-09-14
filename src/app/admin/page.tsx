@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { db } from "@/lib/db";
-import { formatPrice, formatDate, BG_ORDER_STATUS } from "@/lib/format";
+import { formatPrice, formatDate, BG_ORDER_STATUS, orderStatusLabel } from "@/lib/format";
 import { statusTone, REVENUE_STATUSES } from "@/lib/order-status";
 import { AdminHeader, StatTile, AdminTable, Th, Td, AdminEmpty } from "@/components/admin/admin-ui";
 import { Badge, ButtonLink, Card } from "@/components/ui";
@@ -55,6 +55,8 @@ export default async function AdminDashboard() {
       take: 8,
       select: {
         id: true, orderNumber: true, status: true, totalCents: true,
+        // Надписът на статуса зависи от начина на плащане.
+        paymentMethod: true,
         createdAt: true, email: true, firstName: true, lastName: true,
         fulfillmentType: true,
       },
@@ -228,7 +230,7 @@ export default async function AdminDashboard() {
                   </Td>
                   <Td>
                     <Badge tone={statusTone(order.status)}>
-                      {BG_ORDER_STATUS[order.status]}
+                      {orderStatusLabel(order.status, order.paymentMethod)}
                     </Badge>
                   </Td>
                   <Td className="text-right font-sans font-bold whitespace-nowrap">

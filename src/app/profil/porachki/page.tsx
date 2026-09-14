@@ -7,6 +7,7 @@ import {
   formatPrice,
   formatDate,
   BG_ORDER_STATUS,
+  orderStatusLabel,
   BG_PAYMENT_METHOD,
 } from "@/lib/format";
 import { statusTone } from "@/lib/order-status";
@@ -67,7 +68,7 @@ export default async function OrdersPage() {
                       {order.orderNumber}
                     </span>
                     <Badge tone={statusTone(order.status)}>
-                      {BG_ORDER_STATUS[order.status]}
+                      {orderStatusLabel(order.status, order.paymentMethod)}
                     </Badge>
                     <Badge tone="outline">
                       {order.fulfillmentType === "DIGITAL"

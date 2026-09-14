@@ -9,6 +9,7 @@ import {
   BG_PAYMENT_METHOD,
   BG_PRODUCT_TYPE,
   BG_ORDER_STATUS,
+  orderStatusLabel,
 } from "@/lib/format";
 import { statusTone } from "@/lib/order-status";
 import { AdminHeader } from "@/components/admin/admin-ui";
@@ -62,7 +63,7 @@ export default async function AdminOrderDetailPage({
             <div className="p-5 border-b border-border flex items-center justify-between gap-3">
               <h2 className="font-sans text-lg font-bold">Артикули</h2>
               <Badge tone={statusTone(order.status)}>
-                {BG_ORDER_STATUS[order.status]}
+                {orderStatusLabel(order.status, order.paymentMethod)}
               </Badge>
             </div>
 
@@ -143,6 +144,7 @@ export default async function AdminOrderDetailPage({
             <OrderStatusForm
               orderId={order.id}
               currentStatus={order.status}
+              paymentMethod={order.paymentMethod}
               trackingNumber={order.trackingNumber ?? ""}
               isShipping={order.fulfillmentType === "SHIPPING"}
               customerEmail={order.email}

@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { db } from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { formatPrice, BG_ORDER_STATUS } from "@/lib/format";
+import { formatPrice, BG_ORDER_STATUS, orderStatusLabel } from "@/lib/format";
 import { Card, ButtonLink, Badge, Alert } from "@/components/ui";
 import { statusTone } from "@/lib/order-status";
 import { CheckIcon, DownloadIcon, MailIcon } from "@/components/icons";
@@ -106,7 +106,7 @@ export default async function CheckoutSuccessPage({
               <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
                 <h2 className="font-sans text-lg font-bold">Детайли</h2>
                 <Badge tone={statusTone(order.status)}>
-                  {BG_ORDER_STATUS[order.status]}
+                  {orderStatusLabel(order.status, order.paymentMethod)}
                 </Badge>
               </div>
 

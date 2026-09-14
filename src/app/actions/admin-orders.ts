@@ -85,6 +85,7 @@ export async function updateOrderStatus(
         email: order.email,
         firstName: order.firstName,
         status,
+        paymentMethod: order.paymentMethod,
       });
     }
   }
