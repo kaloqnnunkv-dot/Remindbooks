@@ -135,8 +135,9 @@ export function DigitalCheckoutForm({
         {state.message && !state.ok && <Alert tone="error">{state.message}</Alert>}
       </div>
 
-      <aside className="lg:col-span-1">
-        <div className="lg:sticky lg:top-24 space-y-4">
+      <aside className="lg:col-span-1 flex flex-col gap-4">
+        {/* Сметката следва погледа, докато се попълват данните горе. */}
+        <div className="lg:sticky lg:top-24">
           <OrderSummary
             lines={lines}
             subtotalCents={totals.subtotalCents}
@@ -144,7 +145,10 @@ export function DigitalCheckoutForm({
             totalCents={liveTotal}
             showShipping={false}
           />
+        </div>
 
+        {/* Бутонът се лепи за долния ръб — вж. бележката в checkout-form.tsx. */}
+        <div className="sticky bottom-0 z-20 mt-auto border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <Button
             type="submit"
             size="lg"
@@ -154,7 +158,7 @@ export function DigitalCheckoutForm({
             {pending ? "Обработване…" : `Плати ${formatPrice(liveTotal)}`}
           </Button>
 
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          <p className="mt-2 text-xs text-muted-foreground text-center leading-relaxed">
             Плащането се обработва сигурно от Stripe. Не съхраняваме данни на
             вашата карта.
           </p>

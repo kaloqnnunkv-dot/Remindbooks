@@ -33,8 +33,10 @@ export function OrderSummary({
   totalCents: number;
   showShipping?: boolean;
 }) {
+  // Закачането за ръба е грижа на страницата, която ползва обобщението: то
+  // стои в колона заедно с бутона и двете се лепят за различни ръбове.
   return (
-    <Card className="p-6 lg:sticky lg:top-24">
+    <Card className="p-6">
       <h2 className="font-sans text-lg font-bold mb-5">Вашата поръчка</h2>
 
       <ul className="space-y-3 mb-5 max-h-72 overflow-y-auto">
