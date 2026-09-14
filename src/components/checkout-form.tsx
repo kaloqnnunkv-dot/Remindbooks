@@ -302,8 +302,9 @@ export function CheckoutForm({
       </div>
 
       {/* Обобщение */}
-      <aside className="lg:col-span-1">
-        <div className="lg:sticky lg:top-24 space-y-4">
+      <aside className="lg:col-span-1 flex flex-col gap-4">
+        {/* Сметката следва погледа, докато се попълват данните горе. */}
+        <div className="lg:sticky lg:top-24">
           <OrderSummary
             lines={lines}
             subtotalCents={totals.subtotalCents}
@@ -312,7 +313,20 @@ export function CheckoutForm({
             shippingCents={liveShipping}
             totalCents={liveTotal}
           />
+        </div>
 
+        {/*
+          Бутонът се лепи за ДОЛНИЯ ръб на екрана и е отделен от сметката.
+
+          Преди двете стояха в един блок, закачен за горния ръб. Щом блокът
+          надвиши височината на екрана — а при няколко книги това става лесно —
+          долната му част остава недостижима и бутонът изчезва нагоре. На
+          телефон закачане изобщо нямаше и той просто отплуваше.
+
+          Като сиблинг на сметката всеки се лепи за своя ръб и двата се виждат
+          едновременно.
+        */}
+        <div className="sticky bottom-0 z-20 mt-auto border-t border-border bg-background/95 py-4 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <Button
             type="submit"
             size="lg"
@@ -326,7 +340,7 @@ export function CheckoutForm({
                 : "Завърши поръчката"}
           </Button>
 
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          <p className="mt-2 text-xs text-muted-foreground text-center leading-relaxed">
             {paymentMethod === "CARD"
               ? "Ще бъдете пренасочени към защитената страница на Stripe."
               : "Ще платите в брой на куриера при получаване."}
