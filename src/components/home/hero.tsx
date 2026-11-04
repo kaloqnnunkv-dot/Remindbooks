@@ -79,7 +79,7 @@ const MARKS = [
 const CARDINALS: { dir: ShelfFilter | "blog"; ang: number; label: string; cls: string }[] = [
   { dir: "PHYSICAL", ang: 0, label: "Хартиени книги", cls: "c-n" },
   { dir: "PDF", ang: 90, label: "PDF книги", cls: "c-e" },
-  { dir: "AUDIO", ang: 180, label: "Аудио", cls: "c-s" },
+  { dir: "AUDIO", ang: 180, label: "Аудио книги", cls: "c-s" },
   { dir: "blog", ang: 270, label: "Блог", cls: "c-w" },
 ];
 
