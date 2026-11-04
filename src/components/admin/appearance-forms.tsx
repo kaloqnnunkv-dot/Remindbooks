@@ -46,10 +46,20 @@ export function AppearanceForms({
       <section>
         <h2 className="font-sans text-lg font-bold">Цветове</h2>
         <p className="mt-1 mb-5 max-w-2xl text-sm text-muted-foreground">
-          Останалите цветове в темата се подреждат около тези — сенките и
-          вариациите се изчисляват от тях.
+          В дизайна „Компас на деня“ цветовете на сайта следват часа от деня —
+          сутрин, ден, вечер и нощ имат собствени палитри (в
+          <code className="mx-1">src/app/globals.css</code>). Цветовете оттук
+          затова не се прилагат. Запазените стойности стоят непокътнати, ако някой
+          ден решите да се върнете към една постоянна палитра.
         </p>
-        <ThemeForm tokens={tokens} values={themeValues} />
+        <details>
+          <summary className="cursor-pointer font-sans text-sm font-bold">
+            Запазените цветове (в момента не се прилагат)
+          </summary>
+          <div className="mt-4">
+            <ThemeForm tokens={tokens} values={themeValues} />
+          </div>
+        </details>
       </section>
     </div>
   );

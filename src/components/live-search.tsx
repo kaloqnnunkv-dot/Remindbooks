@@ -102,7 +102,7 @@ export function LiveSearch({ onClose }: { onClose: () => void }) {
         className="container-page pt-[10vh] max-w-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="bg-card border border-border rounded-md shadow-lift overflow-hidden">
+        <div className="bg-popover border border-border rounded-3xl shadow-lift overflow-hidden">
           <div className="flex items-center gap-3 px-4 border-b border-border">
             <SearchIcon className="text-muted-foreground shrink-0" />
             <input

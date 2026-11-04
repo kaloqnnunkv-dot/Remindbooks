@@ -50,11 +50,11 @@ export function ProductCard({
     product.type === "PHYSICAL" && product.stock > 0 && product.stock <= 3;
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-md border border-border bg-card transition-shadow duration-200 hover:shadow-lift">
+    <article className="glass group flex h-full flex-col overflow-hidden rounded-[24px] transition-transform duration-300 hover:-translate-y-1.5">
       <div className="relative">
         <Link
           href={href}
-          className="block relative aspect-[2/3] overflow-hidden bg-card"
+          className="block relative aspect-[2/3] overflow-hidden bg-[var(--rb-card)]"
         >
           {product.coverImage ? (
             <Image
@@ -89,7 +89,7 @@ export function ProductCard({
 
           {outOfStock && (
             <div className="absolute inset-0 bg-background/70 flex items-center justify-center">
-              <span className="font-sans text-xs font-bold uppercase tracking-wider px-3 py-1.5 bg-card border border-border rounded-sm">
+              <span className="font-sans text-xs font-extrabold px-3.5 py-1.5 bg-popover border border-border rounded-full">
                 Изчерпана
               </span>
             </div>
@@ -103,9 +103,9 @@ export function ProductCard({
         )}
       </div>
 
-      <div className="flex flex-1 flex-col p-3.5">
+      <div className="flex flex-1 flex-col p-4">
         <Link href={href} className="group/title">
-          <h3 className="font-sans text-sm font-bold leading-snug line-clamp-2 group-hover/title:text-primary transition-colors">
+          <h3 className="text-[19px] leading-[1.1] line-clamp-2 group-hover/title:text-primary transition-colors">
             {product.title}
           </h3>
         </Link>
@@ -148,7 +148,7 @@ export function ProductCard({
                 {formatPrice(product.compareAtCents)}
               </span>
             )}
-            <span className="font-sans font-bold text-base">
+            <span className="font-sans font-extrabold text-base tabular-nums">
               {product.isFree ? "Безплатно" : formatPrice(product.priceCents)}
             </span>
           </div>

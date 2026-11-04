@@ -1,17 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Metadata } from "next";
+import type { ProductType } from "@prisma/client";
 
-import { ButtonLink, SectionHeading, Card, cn } from "@/components/ui";
-import { ProductCard } from "@/components/product-card";
-import { NewsletterForm } from "@/components/newsletter-form";
-import { HeroBooks } from "@/components/book-3d";
 import { productHref } from "@/components/product-card";
+import { HomeProvider } from "@/components/home/home-context";
+import { HomeHero } from "@/components/home/hero";
+import { HomeShelf } from "@/components/home/shelf";
+import { PdfTeaser, type PdfFeature } from "@/components/home/pdf-teaser";
+import { AudioCorner } from "@/components/home/audio-corner";
+import { Values } from "@/components/home/values";
+import type { HomeItem, Motif } from "@/components/home/shared";
 import { publicUrl } from "@/lib/storage";
 import { getSiteImages } from "@/lib/images";
-import { getLatestByType, getLatestPosts } from "@/lib/queries";
-import { getFavoriteIds } from "@/app/actions/favorites";
-import { formatDate, truncate } from "@/lib/format";
+import { getLatestPosts } from "@/lib/queries";
+import { formatDate, stripHtml, truncate } from "@/lib/format";
+import { PHASE_ORDER, type Phase } from "@/lib/daylight";
 import { db } from "@/lib/db";
 
 export const metadata: Metadata = {
@@ -21,361 +25,269 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-// Страницата е динамична: layout-ът чете cookie-та (кошница, сесия), а
-// секцията с любими зависи от текущия потребител.
+// Страницата е динамична: layout-ът чете cookie-та (кошница, сесия).
 export const dynamic = "force-dynamic";
 
-export type HeroBook = {
-  id: string;
-  title: string;
-  cover: string | null;
-  href: string;
+/** Колко заглавия от всеки вид стоят на рафта на началната страница. */
+const PER_TYPE = 6;
+
+/** Книгите, избрани в админ панела (Настройки → „Книги в горната секция“). */
+const PICK_KEYS = ["hero_book_1", "hero_book_2", "hero_book_3"] as const;
+
+const SELECT = {
+  id: true,
+  slug: true,
+  type: true,
+  title: true,
+  author: true,
+  description: true,
+  shortDesc: true,
+  priceCents: true,
+  compareAtCents: true,
+  coverImage: true,
+  stock: true,
+  isFree: true,
+  isBestseller: true,
+  durationSeconds: true,
+  fileKey: true,
+  previewKey: true,
+} as const;
+
+type Row = Awaited<ReturnType<typeof fetchType>>[number];
+
+const MOTIFS_BY_TYPE: Record<ProductType, Motif[]> = {
+  PHYSICAL: ["path", "letters", "compass", "sun"],
+  PDF: ["arrow", "shards", "mirror", "waves"],
+  AUDIO: ["sun", "moon", "waves", "compass"],
 };
 
-/** Ключовете, под които администраторът пази избраните книги. */
-const HERO_KEYS = ["hero_book_1", "hero_book_2", "hero_book_3"] as const;
+function hash(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+
+function fetchType(type: ProductType) {
+  return db.product.findMany({
+    where: { type, isPublished: true },
+    orderBy: [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }],
+    take: PER_TYPE,
+    select: SELECT,
+  });
+}
+
+/** Абзаците на описанието като чист текст — за разлистващата се книжка. */
+function paragraphsOf(description: string): string[] {
+  const parts = /<p\b/i.test(description) ? description.split(/<\/p>/i) : description.split(/\n\s*\n/);
+  return parts
+    .map((p) => stripHtml(p))
+    .filter((p) => p.length > 0)
+    .map((p) => truncate(p, 230));
+}
+
+function toItem(p: Row): HomeItem {
+  const h = hash(p.id);
+  const motifs = MOTIFS_BY_TYPE[p.type];
+  // Ключът към файла не излиза към браузъра — само адресът, през който се слуша.
+  const audioSrc =
+    p.type !== "AUDIO"
+      ? null
+      : p.isFree && p.fileKey
+        ? `/api/audio/${p.id}`
+        : p.previewKey
+          ? `/api/preview/${p.id}`
+          : null;
+
+  return {
+    id: p.id,
+    slug: p.slug,
+    type: p.type,
+    title: p.title,
+    author: p.author,
+    priceCents: p.priceCents,
+    compareAtCents: p.compareAtCents,
+    cover: publicUrl(p.coverImage),
+    stock: p.stock,
+    isFree: p.isFree,
+    isBestseller: p.isBestseller,
+    durationSeconds: p.durationSeconds,
+    blurb: p.shortDesc?.trim() || truncate(stripHtml(p.description), 260),
+    href: productHref(p),
+    audioSrc,
+    hue: h % 360,
+    motif: motifs[h % motifs.length]!,
+  };
+}
 
 /**
- * Трите заглавия за hero ветрилото.
- *
- * Първо се гледа изборът от админ панела — по едно място за лявата, средната
- * и дясната книга. Празните места се допълват сами: препоръчани, после
- * най-продавани, после най-нови, и само с корица.
- *
- * Заглавие, което междувременно е скрито или изтрито, се пропуска — иначе
- * ветрилото щеше да зее или да води към несъществуваща страница.
+ * Препоръките в началната секция — по три заглавия за всяка част от деня.
+ * Сутрин: безплатна практика и леко четене; денем: PDF за действие; вечер:
+ * аудио за забавяне; нощем: хартиена книга преди сън. Където липсва заглавие
+ * от нужния вид, мястото се попълва с друго от рафта.
  */
-async function getHeroBooks(): Promise<HeroBook[]> {
-  const select = {
-    id: true,
-    slug: true,
-    title: true,
-    type: true,
-    coverImage: true,
-  } as const;
+function buildRecs(items: HomeItem[]): Record<Phase, string[]> {
+  const P = items.filter((i) => i.type === "PHYSICAL");
+  const D = items.filter((i) => i.type === "PDF");
+  const A = items.filter((i) => i.type === "AUDIO");
+  const freeAudio = A.find((a) => a.isFree) ?? A[0];
 
-  const settings = await db.setting.findMany({
-    where: { key: { in: [...HERO_KEYS] } },
-  });
-  const chosenIds = HERO_KEYS.map(
-    (k) => settings.find((s) => s.key === k)?.value?.trim() || null,
-  );
+  const plan: Record<Phase, (HomeItem | undefined)[]> = {
+    morn: [freeAudio, P[0], D[0]],
+    day: [D[0], D[1], P[1]],
+    eve: [A[1], A[0], D[2]],
+    night: [P[0], D[1], A[2]],
+  };
 
-  const picked = chosenIds.some(Boolean)
-    ? await db.product.findMany({
-        where: { id: { in: chosenIds.filter((x): x is string => Boolean(x)) }, isPublished: true },
-        select,
-      })
-    : [];
-
-  // Подредбата в панела определя коя книга къде застава, затова местата се
-  // попълват по ключ, а не по реда, в който базата ги е върнала.
-  const slots = chosenIds.map((id) => (id ? picked.find((p) => p.id === id) ?? null : null));
-
-  const missing = slots.filter((x) => !x).length;
-  if (missing > 0) {
-    const taken = slots.filter(Boolean).map((p) => p!.id);
-    const fill = await db.product.findMany({
-      where: { isPublished: true, coverImage: { not: null }, id: { notIn: taken } },
-      orderBy: [{ isFeatured: "desc" }, { isBestseller: "desc" }, { createdAt: "desc" }],
-      take: missing,
-      select,
-    });
-    for (let i = 0, f = 0; i < slots.length && f < fill.length; i++) {
-      if (!slots[i]) slots[i] = fill[f++]!;
+  const out = {} as Record<Phase, string[]>;
+  for (const phase of PHASE_ORDER) {
+    const ids: string[] = [];
+    for (const it of plan[phase]) if (it && !ids.includes(it.id)) ids.push(it.id);
+    for (const it of items) {
+      if (ids.length >= 3) break;
+      if (!ids.includes(it.id)) ids.push(it.id);
     }
+    out[phase] = ids;
   }
+  return out;
+}
 
-  return slots
-    .filter((p): p is NonNullable<typeof p> => Boolean(p))
-    .map((p) => ({
-      id: p.id,
-      title: p.title,
-      cover: publicUrl(p.coverImage),
-      href: productHref(p),
-    }));
+async function getHomeData() {
+  const [physical, pdf, audio, picks] = await Promise.all([
+    fetchType("PHYSICAL"),
+    fetchType("PDF"),
+    fetchType("AUDIO"),
+    db.setting.findMany({ where: { key: { in: [...PICK_KEYS] } } }),
+  ]);
+
+  // Избраните от админ панела заглавия застават първи на своя рафт.
+  const pickIds = PICK_KEYS.map((k) => picks.find((s) => s.key === k)?.value?.trim()).filter(Boolean);
+  const pickedFirst = (rows: Row[]) =>
+    [...rows].sort((a, b) => {
+      const ia = pickIds.indexOf(a.id);
+      const ib = pickIds.indexOf(b.id);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+
+  const items = [...pickedFirst(physical), ...pickedFirst(pdf), ...pickedFirst(audio)].map(toItem);
+
+  // Разлистващата се книжка: първото PDF заглавие с корица и описание.
+  const featuredRow = pdf.find((p) => p.coverImage && p.description) ?? pdf[0];
+  const feature: PdfFeature | null = featuredRow
+    ? {
+        item: items.find((i) => i.id === featuredRow.id)!,
+        paragraphs: paragraphsOf(featuredRow.description),
+        quote: featuredRow.shortDesc?.trim() ? truncate(featuredRow.shortDesc.trim(), 180) : null,
+      }
+    : null;
+
+  return { items, feature, recIds: buildRecs(items) };
 }
 
 async function getAboutText(): Promise<string> {
   const setting = await db.setting.findUnique({ where: { key: "about_short" } });
   return (
     setting?.value ??
-    "Remind Books започна с едно просто убеждение: правилната книга, срещната в правилния момент, може да върне посоката на цял един живот. Издаваме и подбираме заглавия за хора, които търсят своя вътрешен компас."
+    "Remind Books започна с едно просто убеждение: правилната книга, срещната в правилния момент, може да върне посоката на цял един живот."
   );
 }
 
 export default async function HomePage() {
-  const [pdfBooks, audioItems, posts, favoriteIds, aboutText, heroBooks, images] =
-    await Promise.all([
-      getLatestByType("PDF", 4),
-      getLatestByType("AUDIO", 3),
-      getLatestPosts(3),
-      getFavoriteIds(),
-      getAboutText(),
-      getHeroBooks(),
-      getSiteImages(),
-    ]);
+  const [{ items, feature, recIds }, posts, aboutText, images] = await Promise.all([
+    getHomeData(),
+    getLatestPosts(3),
+    getAboutText(),
+    getSiteImages(),
+  ]);
+
+  const tracks = items.filter((i) => i.type === "AUDIO");
 
   return (
-    <>
-      <Hero books={heroBooks} heroImage={images.hero} />
+    <div className="rb-home">
+      <HomeProvider items={items} recIds={recIds}>
+        <div className="container-page rb-top" id="top">
+          <HomeHero />
+        </div>
 
-      {/* Промо секция PDF книги */}
-      <PromoSection
-        eyebrow="Дигитални издания"
-        title="PDF книги — четете веднага"
-        description="Без чакане и без доставка. Плащате с карта и книгата се отключва в профила ви за секунди. Всяко заглавие има безплатен откъс, за да прелистите преди да решите."
-        href="/pdf"
-        linkLabel="Разгледай PDF книгите"
-        products={pdfBooks}
-        favoriteIds={favoriteIds}
-        pattern
-      />
-
-      {/* Промо секция аудио */}
-      <PromoSection
-        eyebrow="За слушане"
-        title="Аудио медитации и четения"
-        description="Записи, които можете да слушате навсякъде — сутрешни практики, водени медитации и авторски четения. Част от съдържанието е напълно безплатно."
-        href="/audio"
-        linkLabel="Към аудио съдържанието"
-        products={audioItems}
-        favoriteIds={favoriteIds}
-        reversed
-        tone="alt"
-      />
-
-      {/* Кратко "За нас" */}
-      <section
-        className="pattern-books section-alt-strong border-b border-border"
-        aria-labelledby="about-teaser"
-      >
-        <div className="container-page py-16">
-        <Card className="overflow-hidden bg-card border border-border">
-          <div className="grid lg:grid-cols-[1.1fr_1fr]">
-            <div className="p-8 sm:p-12">
-              <p className="font-sans text-xs font-bold uppercase tracking-[0.15em] text-primary">
-                За нас
-              </p>
-              <h2 id="about-teaser" className="mt-3 text-2xl sm:text-3xl">
-                Историята зад Remind Books
-              </h2>
-              <p className="mt-4 text-muted-foreground leading-relaxed text-lg">
-                {aboutText}
-              </p>
-              <ButtonLink href="/za-nas" variant="outline" className="mt-6">
-                Прочети повече
-              </ButtonLink>
+        {items.length > 0 && (
+          <section id="shelf">
+            <div className="container-page">
+              <HomeShelf />
             </div>
+          </section>
+        )}
 
-            {/* На тесен екран снимката застава под текста и затова има своя
-                височина; от lg нагоре се разтяга по височината на картата. */}
-            <div className="relative min-h-56 sm:min-h-72 lg:min-h-full">
-              <Image
-                src={images.about}
-                alt=""
-                aria-hidden="true"
-                fill
-                sizes="(max-width: 1024px) 100vw, 40vw"
-                className="object-cover"
-              />
+        <section id="pdf" style={{ paddingTop: items.length ? 0 : undefined }}>
+          <div className="container-page">
+            <PdfTeaser feature={feature} />
+          </div>
+        </section>
+
+        {tracks.length > 0 && (
+          <section id="audio" style={{ paddingTop: 0 }}>
+            <div className="container-page">
+              <AudioCorner tracks={tracks} />
+            </div>
+          </section>
+        )}
+      </HomeProvider>
+
+      <section id="about" style={{ paddingTop: 0 }}>
+        <div className="container-page">
+          <div className="about">
+            <Image src={images.about} alt="" aria-hidden="true" fill sizes="(max-width: 1240px) 100vw, 1240px" />
+            <div className="about-in">
+              <div className="card glass">
+                <div className="rb-label">За нас</div>
+                <h2 className="rb-sec" style={{ fontSize: "clamp(30px,3.6vw,44px)" }}>
+                  Историята зад Remind Books
+                </h2>
+                <p>{aboutText}</p>
+                <Link className="btn ghost" href="/za-nas" style={{ marginTop: 6 }}>
+                  Прочети повече
+                </Link>
+              </div>
+              <Values />
             </div>
           </div>
-        </Card>
         </div>
       </section>
 
-      {/* От блога */}
       {posts.length > 0 && (
-        <section className="pattern-books border-b border-border" aria-labelledby="from-blog">
-          <div className="text-on-pattern container-page py-16">
-          <SectionHeading title="От блога" href="/blog" linkLabel="Всички публикации" />
-          <div className="grid gap-8 md:grid-cols-3">
-            {posts.map((post) => (
-              <article key={post.id} className="group flex flex-col">
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="block relative aspect-[3/2] bg-muted rounded-md overflow-hidden border border-border"
-                >
-                  {/* Без корица публикацията показва обща снимка вместо празна
-                      рамка с иконка — редицата остава равна. */}
-                  <Image
-                    src={post.coverImage ?? images.postFallback}
-                    alt={post.coverImage ? post.title : ""}
-                    fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                  />
+        <section id="blog" style={{ paddingTop: 0, paddingBottom: 0 }}>
+          <div className="container-page">
+            <div className="shelf-head">
+              <div>
+                <div className="rb-label">Блог „Вътрешен компас“</div>
+                <h2 className="rb-sec">От блога</h2>
+              </div>
+              <Link className="btn ghost" href="/blog">
+                Всички публикации
+              </Link>
+            </div>
+            <div className="posts">
+              {posts.map((post) => (
+                <Link key={post.id} className="post glass" href={`/blog/${post.slug}`}>
+                  <div className="phot">
+                    <Image
+                      src={post.coverImage ?? images.postFallback}
+                      alt=""
+                      fill
+                      sizes="(max-width: 980px) 100vw, 33vw"
+                    />
+                  </div>
+                  <div className="tx">
+                    {post.publishedAt && (
+                      <time dateTime={post.publishedAt.toISOString()}>{formatDate(post.publishedAt)}</time>
+                    )}
+                    <h3>{post.title}</h3>
+                    {post.excerpt && <p>{truncate(post.excerpt, 140)}</p>}
+                  </div>
                 </Link>
-
-                <time
-                  dateTime={post.publishedAt?.toISOString()}
-                  className="mt-4 font-sans text-xs uppercase tracking-wider text-muted-foreground"
-                >
-                  {post.publishedAt ? formatDate(post.publishedAt) : ""}
-                </time>
-
-                <h3 className="mt-2 text-lg leading-snug">
-                  <Link
-                    href={`/blog/${post.slug}`}
-                    className="hover:text-primary transition-colors"
-                  >
-                    {post.title}
-                  </Link>
-                </h3>
-
-                {post.excerpt && (
-                  <p className="mt-2 text-[15px] leading-relaxed text-secondary-foreground line-clamp-3">
-                    {truncate(post.excerpt, 140)}
-                  </p>
-                )}
-
-                <Link
-                  href={`/blog/${post.slug}`}
-                  className="mt-3 font-sans text-sm font-bold text-primary hover:underline underline-offset-4 self-start"
-                >
-                  Прочети →
-                </Link>
-              </article>
-            ))}
-          </div>
+              ))}
+            </div>
           </div>
         </section>
       )}
-
-      {/* Бюлетин */}
-      <section className="pattern-books section-alt-strong" aria-labelledby="newsletter">
-        <div className="container-page py-16">
-        <Card className="p-8 sm:p-12 text-center bg-card border border-border">
-          <h2 id="newsletter" className="text-2xl sm:text-3xl">
-            Останете свързани
-          </h2>
-          <p className="mt-3 text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Нови заглавия, откъси и мисли от блога — веднъж месечно, право във
-            вашата поща.
-          </p>
-          <div className="mt-6 max-w-md mx-auto text-left">
-            <NewsletterForm source="homepage" />
-          </div>
-        </Card>
-        </div>
-      </section>
-    </>
-  );
-}
-
-function Hero({ books, heroImage }: { books: HeroBook[]; heroImage: string }) {
-  return (
-    <section className="relative overflow-hidden border-b border-border">
-      {/* Стара библиотека зад заглавието, в пълния си цвят. Снимката е
-          декорация, затова `alt` е празен — екранните четци няма какво да
-          прочетат от нея. Единственото избелване по нея е сиянието под самото
-          заглавие (`.hero-title` в globals.css), колкото буквите да се четат. */}
-      <Image
-        src={heroImage}
-        alt=""
-        aria-hidden="true"
-        fill
-        priority
-        sizes="100vw"
-        className="object-cover object-[center_38%]"
-      />
-
-      <div className="container-page relative z-10">
-        <div className="max-w-2xl pt-12 pb-2 sm:pt-14 lg:pt-16">
-          {/* `hero-title` носи сиянието, което държи буквите четими върху
-              снимката — виж globals.css. */}
-          <h1 className="hero-title text-4xl leading-[1.1] sm:text-5xl lg:text-6xl">
-            Книги, които връщат посоката
-          </h1>
-        </div>
-      </div>
-
-      {/* Ветрилото стои в собствена лента под заглавието. Не се застъпва с него
-          нарочно: докато текстът беше отгоре, прихващаше движението на мишката
-          и книгите нито се повдигаха, нито се отваряха при щракване. */}
-      {books.length > 0 && (
-        <div className="relative z-10 pb-4">
-          <HeroBooks books={books} />
-        </div>
-      )}
-    </section>
-  );
-}
-
-function PromoSection({
-  eyebrow,
-  title,
-  description,
-  href,
-  linkLabel,
-  products,
-  favoriteIds,
-  reversed = false,
-  tone = "plain",
-  pattern = false,
-}: {
-  eyebrow: string;
-  title: string;
-  description: string;
-  href: string;
-  linkLabel: string;
-  products: Awaited<ReturnType<typeof getLatestByType>>;
-  favoriteIds: Set<string>;
-  reversed?: boolean;
-  /** Редуването на фонове прави границите между секциите видими. */
-  tone?: "plain" | "alt";
-  /** Рисунката с книги отзад. Не на всяка секция — иначе става шумно. */
-  pattern?: boolean;
-}) {
-  if (products.length === 0) return null;
-
-  return (
-    <section
-      className={cn(
-        tone === "alt" ? "section-alt" : "",
-        pattern && "pattern-books",
-        "border-b border-border",
-      )}
-    >
-      <div className="container-page py-16">
-      <div
-        className={`grid lg:grid-cols-3 gap-10 items-start ${
-          reversed ? "lg:[&>*:first-child]:order-2" : ""
-        }`}
-      >
-        <div className="text-on-pattern lg:sticky lg:top-24">
-          <p className="font-sans text-[13px] font-bold uppercase tracking-[0.15em] text-primary">
-            {eyebrow}
-          </p>
-          <h2 className="mt-2 text-2xl sm:text-3xl">{title}</h2>
-          <p className="mt-4 text-[17px] leading-relaxed text-secondary-foreground">
-            {description}
-          </p>
-          {/* Плътен фон и мека сянка: очертаният бутон се губеше върху
-              рисунката, защото тя минаваше под него. */}
-          <ButtonLink
-            href={href}
-            variant="outline"
-            className="mt-6 bg-card shadow-soft hover:shadow-lift"
-          >
-            {linkLabel}
-          </ButtonLink>
-        </div>
-
-        <div className="lg:col-span-2">
-          <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 lg:gap-5">
-            {products.map((p) => (
-              <ProductCard
-                key={p.id}
-                product={p}
-                isFavorite={favoriteIds.has(p.id)}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-      </div>
-    </section>
+    </div>
   );
 }

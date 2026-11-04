@@ -11,26 +11,26 @@ export function cn(...classes: (string | false | null | undefined)[]): string {
 // ------------------------------------------------------------------
 
 const BUTTON_BASE =
-  "inline-flex items-center justify-center gap-2 font-sans font-bold rounded-md transition-all duration-150 " +
+  "inline-flex items-center justify-center gap-2 font-sans font-bold rounded-full transition-all duration-200 " +
   "disabled:opacity-50 disabled:pointer-events-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring";
 
 const VARIANTS = {
   primary:
-    "bg-primary text-primary-foreground hover:brightness-95 active:brightness-90 shadow-soft hover:shadow-lift",
+    "bg-primary text-primary-foreground shadow-[0_12px_28px_-12px_var(--rb-accent)] hover:-translate-y-0.5 active:translate-y-0",
   secondary:
-    "bg-secondary text-secondary-foreground border border-border hover:bg-accent",
+    "bg-secondary text-secondary-foreground border border-border hover:bg-accent backdrop-blur-md",
   outline:
-    "border border-primary/50 text-primary bg-transparent hover:bg-primary hover:text-primary-foreground",
+    "border border-border text-foreground bg-[var(--rb-card-2)] backdrop-blur-md hover:bg-accent",
   ghost: "text-foreground hover:bg-muted",
   destructive: "bg-destructive text-destructive-foreground hover:brightness-95",
   link: "text-primary underline underline-offset-4 hover:brightness-90",
 } as const;
 
 const SIZES = {
-  sm: "h-8 px-3 text-xs",
-  md: "h-10 px-5 text-sm",
+  sm: "h-9 px-4 text-xs",
+  md: "h-11 px-[22px] text-[15px]",
   lg: "h-12 px-7 text-base",
-  icon: "h-9 w-9",
+  icon: "h-10 w-10",
 } as const;
 
 type ButtonStyleProps = {
@@ -68,7 +68,7 @@ export function Card({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
       className={cn(
-        "bg-card text-card-foreground border border-border rounded-md",
+        "glass text-card-foreground rounded-[28px]",
         className,
       )}
       {...props}
@@ -93,7 +93,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-sans font-bold uppercase tracking-wider",
+        "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11.5px] font-sans font-extrabold",
         BADGE_TONES[tone],
         className,
       )}
@@ -119,7 +119,7 @@ export function Alert({
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
-      className={cn("border rounded-md px-4 py-3 text-sm", tones[tone], className)}
+      className={cn("border rounded-2xl px-4 py-3 text-sm", tones[tone], className)}
     >
       {children}
     </div>
@@ -131,13 +131,13 @@ export function Alert({
 // ------------------------------------------------------------------
 
 const FIELD_BASE =
-  "w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground " +
+  "w-full rounded-2xl border border-input bg-[var(--rb-card-2)] px-4 py-2 text-sm text-foreground " +
   "placeholder:text-muted-foreground/70 transition-colors " +
   "focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/25 " +
   "disabled:opacity-60 aria-[invalid=true]:border-destructive";
 
 export function Input({ className, ...props }: ComponentProps<"input">) {
-  return <input className={cn(FIELD_BASE, "h-10", className)} {...props} />;
+  return <input className={cn(FIELD_BASE, "h-11 rounded-full px-5", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
@@ -145,7 +145,7 @@ export function Textarea({ className, ...props }: ComponentProps<"textarea">) {
 }
 
 export function Select({ className, ...props }: ComponentProps<"select">) {
-  return <select className={cn(FIELD_BASE, "h-10 cursor-pointer", className)} {...props} />;
+  return <select className={cn(FIELD_BASE, "h-11 rounded-full px-5 cursor-pointer", className)} {...props} />;
 }
 
 export function Field({
@@ -169,7 +169,7 @@ export function Field({
     <div className={cn("space-y-1.5", className)}>
       <label
         htmlFor={htmlFor}
-        className="block font-sans text-xs font-bold uppercase tracking-wider text-muted-foreground"
+        className="block font-sans text-[13px] font-extrabold text-muted-foreground"
       >
         {label}
         {required && <span className="text-destructive ml-0.5">*</span>}
@@ -190,7 +190,7 @@ export function Checkbox({ className, ...props }: ComponentProps<"input">) {
     <input
       type="checkbox"
       className={cn(
-        "h-4 w-4 shrink-0 rounded-sm border border-input accent-[var(--primary)] cursor-pointer",
+        "h-4 w-4 shrink-0 rounded border border-input accent-[var(--primary)] cursor-pointer",
         className,
       )}
       {...props}
@@ -214,7 +214,7 @@ export function PageHeader({
   return (
     <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
       <div>
-        <h1 className="text-3xl sm:text-4xl rule">{title}</h1>
+        <h1 className="text-[clamp(38px,5vw,60px)] leading-[1.02] rule">{title}</h1>
         {description && (
           <p className="mt-4 text-muted-foreground max-w-2xl leading-relaxed">
             {description}
@@ -250,7 +250,7 @@ export function PageBanner({
   children?: ReactNode;
 }) {
   return (
-    <div className="photo-wash relative mb-10 overflow-hidden rounded-md border border-border bg-muted">
+    <div className="photo-wash relative mb-10 mt-4 overflow-hidden rounded-[38px] border border-border bg-muted shadow-[0_40px_90px_-50px_var(--rb-drop)]">
       <Image
         src={image}
         alt=""
@@ -263,7 +263,7 @@ export function PageBanner({
 
       <div className="relative z-10 flex flex-wrap items-end justify-between gap-4 px-6 py-12 sm:px-10 sm:py-14">
         <div>
-          <h1 className="text-3xl sm:text-4xl rule">{title}</h1>
+          <h1 className="text-[clamp(38px,5vw,60px)] leading-[1.02] rule">{title}</h1>
           {description && (
             <p className="mt-4 max-w-xl text-muted-foreground leading-relaxed">
               {description}
@@ -287,7 +287,7 @@ export function SectionHeading({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-4 mb-6">
-      <h2 className="text-2xl sm:text-3xl">{title}</h2>
+      <h2 className="text-[clamp(30px,4vw,48px)] leading-[1.02]">{title}</h2>
       {href && (
         <Link
           href={href}
@@ -312,9 +312,9 @@ export function EmptyState({
   icon?: ReactNode;
 }) {
   return (
-    <div className="text-center py-16 px-6 border border-dashed border-border rounded-md bg-card/50">
+    <div className="text-center py-16 px-6 border border-dashed border-border rounded-[28px] bg-card/50">
       {icon && <div className="flex justify-center mb-4 text-muted-foreground">{icon}</div>}
-      <h3 className="text-lg font-sans font-bold">{title}</h3>
+      <h3 className="text-2xl">{title}</h3>
       {description && (
         <p className="mt-2 text-sm text-muted-foreground max-w-md mx-auto">{description}</p>
       )}

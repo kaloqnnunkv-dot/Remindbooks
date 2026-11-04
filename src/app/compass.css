@@ -1,0 +1,687 @@
+/* ------------------------------------------------------------------ */
+/*  „Компас на деня“ — стиловете на дизайна                            */
+/*                                                                      */
+/*  Пренесени от design/remindbooks-F-sun-compass/index.html. Цветовете */
+/*  идват от фазата на деня (--rb-* в globals.css). Общите елементи     */
+/*  (небе, стъкло, бутони, меню, footer) са отгоре; началната страница */
+/*  е под `.rb-home`, за да не се смесва с останалите страници.         */
+/* ------------------------------------------------------------------ */
+
+@property --hfg { syntax: "<color>"; inherits: true; initial-value: #1e1a2c; }
+@property --hmuted { syntax: "<color>"; inherits: true; initial-value: rgba(30, 26, 44, 0.74); }
+@property --hcard { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.58); }
+@property --hcard-line { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.75); }
+
+/* ───────── небе и звезди зад цялата страница ───────── */
+.rb-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 45% at 80% 0%, color-mix(in srgb, var(--sky-low) 30%, transparent), transparent 70%),
+    radial-gradient(50% 50% at 0% 40%, color-mix(in srgb, var(--rb-accent) 9%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--sky-mid) 34%, var(--rb-ground)), var(--rb-ground) 60%);
+}
+.rb-stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1s;
+}
+.rb-page {
+  position: relative;
+  z-index: 1;
+}
+
+/* ───────── примитиви ───────── */
+.glass {
+  background: linear-gradient(160deg, var(--rb-card-2), var(--rb-card));
+  border: 1px solid var(--rb-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 30px 60px -32px var(--rb-drop);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 22px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.2;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  font-family: var(--font-sans);
+  transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+.btn.main {
+  background: var(--rb-accent);
+  color: var(--rb-on-accent);
+  box-shadow: 0 12px 28px -12px var(--rb-accent);
+}
+.btn.main:hover { transform: translateY(-2px); }
+.btn.ghost {
+  background: var(--rb-card-2);
+  border-color: var(--rb-line);
+  color: var(--rb-fg);
+}
+.btn.ghost:hover { background: var(--rb-accent-soft); }
+.btn:disabled { opacity: 0.55; cursor: default; transform: none; }
+.rb-label {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--rb-accent);
+}
+.rb-sec {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: clamp(34px, 4.6vw, 56px);
+  line-height: 1.02;
+  margin: 6px 0 14px;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.rb-lead { color: var(--rb-muted); max-width: 58ch; margin: 0; }
+
+/* Логото е маска: цветът му следва фазата (кафяво денем, светло нощем). */
+.rb-logo {
+  display: block;
+  height: 34px;
+  aspect-ratio: 430 / 176;
+  background: var(--rb-logo);
+  -webkit-mask: url("/logo-mask.webp") center / contain no-repeat;
+  mask: url("/logo-mask.webp") center / contain no-repeat;
+  transition: opacity 0.2s;
+}
+.rb-logo-img { display: block; height: 34px; width: auto; }
+
+/* ───────── меню ───────── */
+.rb-nav {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 40;
+  padding-top: 14px;
+}
+.rb-navbar {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  justify-content: space-between;
+  padding: 10px 12px 10px 22px;
+  border-radius: 999px;
+}
+.rb-links { display: flex; gap: 2px; flex-wrap: wrap; }
+.rb-links a {
+  text-decoration: none;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--rb-muted);
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: color 0.2s, background 0.2s;
+}
+.rb-links a:hover { color: var(--rb-fg); background: var(--rb-card-2); }
+.rb-links a[aria-current="page"] { color: var(--rb-accent); background: var(--rb-accent-soft); }
+.rb-nav-r { display: flex; gap: 6px; align-items: center; }
+.rb-clock {
+  font: inherit;
+  color: var(--rb-fg);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--rb-line);
+  background: var(--rb-card);
+  font-weight: 800;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.rb-clock svg { width: 16px; height: 16px; color: var(--rb-brass); }
+.rb-clock b { font-weight: 800; }
+.rb-clock span { font-weight: 700; color: var(--rb-muted); }
+.rb-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--rb-fg);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+.rb-icon:hover { background: var(--rb-card-2); }
+.rb-icon.solid { background: var(--rb-fg); color: var(--rb-ground); }
+.rb-icon.solid:hover { background: var(--rb-fg); transform: translateY(-1px); }
+.rb-cartn {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--rb-accent);
+  color: var(--rb-on-accent);
+  font-size: 11px;
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+}
+.rb-mobile {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: color-mix(in srgb, var(--rb-ground) 82%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  overflow-y: auto;
+}
+.rb-mobile nav a {
+  display: block;
+  padding: 14px 4px;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.1;
+  text-decoration: none;
+  border-bottom: 1px solid var(--rb-line);
+}
+.rb-mobile nav a[aria-current="page"] { color: var(--rb-accent); }
+
+/* ───────── бюлетин и footer ───────── */
+.rb-news {
+  border-radius: 38px;
+  padding: clamp(26px, 5vw, 56px);
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 36px;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.rb-news::before {
+  content: "";
+  position: absolute;
+  inset: auto -10% -60% 30%;
+  height: 340px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--sky-low) 45%, transparent), transparent);
+  pointer-events: none;
+}
+.rb-news > * { position: relative; }
+.rb-env { width: 128px; height: 92px; position: relative; isolation: isolate; }
+.rb-env .bodyE {
+  position: absolute;
+  inset: 0;
+  background: var(--rb-card-2);
+  border: 1px solid var(--rb-line);
+  border-radius: 12px;
+  box-shadow: 0 14px 30px -12px var(--rb-drop);
+}
+.rb-env .flap {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 52px;
+  background: color-mix(in srgb, var(--rb-brass) 30%, var(--rb-ground));
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top;
+  transition: transform 0.6s;
+}
+.rb-env .letter {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 10px;
+  height: 58px;
+  background: var(--rb-accent);
+  border-radius: 6px;
+  transition: transform 0.7s cubic-bezier(0.3, 0.8, 0.2, 1);
+  z-index: -1;
+}
+.rb-env.sent .flap { transform: rotateX(180deg); }
+.rb-env.sent .letter { transform: translateY(-62px); }
+.rb-news form { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.rb-news input {
+  flex: 1 1 240px;
+  min-width: 0;
+  padding: 14px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--rb-line);
+  background: var(--rb-card-2);
+  color: var(--rb-fg);
+  font: inherit;
+}
+.rb-news input::placeholder { color: var(--rb-faint); }
+.rb-news small { display: block; color: var(--rb-faint); margin-top: 10px; font-size: 13px; }
+.rb-ok { color: var(--rb-accent); font-weight: 800; }
+.rb-err { color: var(--destructive); font-weight: 700; }
+
+.rb-footer { padding-block: 48px 96px; border-top: 1px solid var(--rb-line); margin-top: 48px; }
+.rb-foot { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr); gap: 28px; font-size: 14.5px; }
+.rb-foot h4 {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--rb-accent);
+  margin: 0 0 12px;
+  letter-spacing: 0;
+}
+.rb-foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rb-foot a { color: var(--rb-muted); text-decoration: none; transition: color 0.2s; }
+.rb-foot a:hover { color: var(--rb-fg); }
+.rb-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  justify-content: space-between;
+  color: var(--rb-faint);
+  font-size: 13px;
+  margin-top: 36px;
+}
+.rb-legal nav { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.rb-legal a { color: var(--rb-faint); text-decoration: none; }
+.rb-legal a:hover { color: var(--rb-fg); }
+
+@media (max-width: 980px) {
+  .rb-links { display: none; }
+  .rb-foot { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+  .rb-clock span { display: none; }
+  .rb-navbar { padding-left: 16px; gap: 8px; }
+  .rb-logo, .rb-logo-img { height: 28px; }
+  .rb-foot { grid-template-columns: 1fr; }
+  .rb-news { grid-template-columns: 1fr; }
+}
+
+/* ═════════════════════ НАЧАЛНА СТРАНИЦА ═════════════════════ */
+.rb-home section { padding-block: clamp(64px, 8vw, 110px); scroll-margin-top: 90px; }
+.rb-home .rb-top { scroll-margin-top: 90px; }
+
+/* ───────── hero: едно небе, едно слънце, един компас ───────── */
+.rb-home .hero {
+  margin-top: 18px;
+  border-radius: 40px;
+  overflow: hidden;
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(180deg, var(--sky-top), var(--sky-mid) 58%, var(--sky-low));
+  box-shadow: 0 40px 90px -50px var(--rb-drop);
+  color: var(--hfg);
+  transition: --hfg 0.9s, --hmuted 0.9s, --hcard 0.9s, --hcard-line 0.9s;
+}
+.rb-home .hero[data-sky="light"] { --hfg: #1e1a2c; --hmuted: rgba(30, 26, 44, 0.74); --hcard: rgba(255, 255, 255, 0.58); --hcard-line: rgba(255, 255, 255, 0.75); }
+.rb-home .hero[data-sky="dark"] { --hfg: #fff8ee; --hmuted: rgba(255, 248, 238, 0.8); --hcard: rgba(10, 12, 32, 0.42); --hcard-line: rgba(255, 255, 255, 0.14); }
+.rb-home .hstars { position: absolute; inset: 0; z-index: -1; opacity: var(--night); pointer-events: none; }
+.rb-home .hstars i { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff6e0; animation: rb-tw 3s ease-in-out infinite; }
+.rb-home .orb-sun, .rb-home .orb-moon { position: absolute; z-index: -1; translate: -50% -50%; border-radius: 50%; pointer-events: none; will-change: left, top; }
+.rb-home .orb-sun {
+  width: 118px; height: 118px;
+  background: radial-gradient(circle at 42% 38%, #fffdf4, var(--sun-c, #ffd36b) 58%);
+  box-shadow: 0 0 90px 34px color-mix(in srgb, var(--sun-c, #ffd36b) 55%, transparent);
+}
+.rb-home .orb-moon {
+  width: 72px; height: 72px;
+  background: radial-gradient(circle at 38% 34%, #fffaf0, #e9dcc0 60%, #c9b893);
+  box-shadow: 0 0 60px 14px rgba(246, 217, 162, 0.25);
+}
+.rb-home .orb-moon::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 72% 30%, rgba(10, 14, 30, 0.5), transparent 55%); }
+.rb-home .hill {
+  position: absolute; z-index: -1; left: -10%; right: -10%; bottom: -70px; height: 200px; border-radius: 50%;
+  background: color-mix(in srgb, var(--sky-low) 55%, #ffffff 30%); opacity: 0.55;
+}
+.rb-home .hill.b { bottom: -120px; left: 24%; right: -30%; background: color-mix(in srgb, var(--sky-low) 40%, var(--rb-ground) 60%); opacity: 0.8; }
+.rb-home .hero-in {
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: 24px; align-items: center;
+  padding: clamp(22px, 3.6vw, 48px) clamp(26px, 4.5vw, 60px) clamp(26px, 4.5vw, 60px);
+}
+.rb-home .hero-l { display: flex; flex-direction: column; gap: 20px; }
+.rb-home .greet { font-weight: 800; font-size: 15px; color: var(--hmuted); min-height: 1.6em; }
+.rb-home .hero h1 { font-family: var(--font-serif); font-weight: 600; font-size: clamp(46px, 6.8vw, 96px); line-height: 0.94; margin: 0; letter-spacing: -0.02em; text-wrap: balance; }
+.rb-home .hero h1 em { font-style: italic; font-weight: 500; }
+.rb-home .hero .lede { font-size: 18px; max-width: 40ch; color: var(--hmuted); margin: 0; }
+.rb-home .cta { display: flex; gap: 10px; flex-wrap: wrap; }
+.rb-home .hero .btn.ghost { background: var(--hcard); border-color: var(--hcard-line); color: var(--hfg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.rb-home .recbox { border-radius: 26px; padding: 16px; background: var(--hcard); border: 1px solid var(--hcard-line); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); max-width: 470px; }
+.rb-home .recbox h3 { font-family: var(--font-sans); letter-spacing: 0; margin: 2px 6px 10px; font-size: 15px; font-weight: 800; display: flex; flex-wrap: wrap; column-gap: 8px; align-items: baseline; }
+.rb-home .recbox h3 small { font-weight: 600; color: var(--hmuted); font-size: 13.5px; }
+.rb-home .recbox h3 small::before { content: "·"; margin-right: 8px; opacity: 0.7; }
+.rb-home .recs { display: flex; flex-direction: column; gap: 8px; }
+.rb-home .rec {
+  all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 12px; align-items: center;
+  padding: 7px 12px 7px 7px; border-radius: 16px; background: var(--hcard); border: 1px solid transparent;
+  transition: transform 0.2s, border-color 0.2s; animation: rb-rise 0.5s both;
+}
+.rb-home .rec:hover { transform: translateX(4px); border-color: var(--hcard-line); }
+.rb-home .rec:focus-visible { outline: 2px solid var(--hfg); outline-offset: 2px; }
+.rb-home .rec .mini { width: 44px; aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; position: relative; }
+.rb-home .rec b { display: block; font-size: 14.5px; line-height: 1.25; }
+.rb-home .rec small { color: var(--hmuted); font-size: 12.5px; }
+.rb-home .rec .pr { font-weight: 800; font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* компасът: пътеводител из каталога */
+.rb-home .compass-col { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.rb-home .compass-zone { position: relative; display: grid; place-items: center; aspect-ratio: 1; max-width: 500px; width: 100%; margin-inline: auto; color: var(--hfg); }
+.rb-home .dial {
+  position: absolute; inset: 10%; border-radius: 50%;
+  background: radial-gradient(circle at 35% 28%, var(--rb-dial-hi), color-mix(in srgb, var(--rb-dial-hi) 25%, transparent) 42%, var(--rb-dial-lo) 100%);
+  border: 1px solid color-mix(in srgb, var(--rb-brass) 55%, transparent);
+  box-shadow:
+    inset 0 -30px 60px var(--rb-dial-lo), inset 0 20px 40px rgba(255, 255, 255, 0.1),
+    0 0 0 10px color-mix(in srgb, var(--rb-brass) 8%, transparent), 0 0 80px color-mix(in srgb, var(--rb-brass) 22%, transparent),
+    0 60px 90px -40px var(--rb-drop);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.rb-home .dial svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.rb-home .needle { position: absolute; inset: 10%; display: grid; place-items: center; pointer-events: none; transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.2, 1.1); }
+.rb-home .needle svg { width: 18%; height: 74%; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35)); }
+.rb-home .needle .t1 { fill: var(--rb-brass-2); }
+.rb-home .needle .t2 { fill: var(--rb-brass); }
+.rb-home .needle .t3 { fill: var(--rb-needle-tail); }
+.rb-home .needle .t4 { fill: color-mix(in srgb, var(--rb-needle-tail) 75%, #000); }
+.rb-home .hub { position: absolute; width: 6%; aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff7e3, var(--rb-brass) 60%, #7a5a25); box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5); pointer-events: none; }
+.rb-home .cardinal {
+  position: absolute; padding: 10px 16px; border-radius: 18px; cursor: pointer; color: var(--hfg); font: inherit;
+  background: var(--hcard); border: 1px solid var(--hcard-line); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
+}
+.rb-home .cardinal span { font-size: 14px; font-weight: 700; white-space: nowrap; }
+.rb-home .cardinal:hover, .rb-home .cardinal.on { border-color: color-mix(in srgb, var(--rb-brass) 80%, transparent); transform: scale(1.05); }
+.rb-home .cardinal.on { background: color-mix(in srgb, var(--rb-brass) 26%, var(--hcard)); }
+.rb-home .c-n { top: 0; left: 50%; translate: -50% -20%; }
+.rb-home .c-s { bottom: 0; left: 50%; translate: -50% 20%; }
+.rb-home .c-e { right: 0; top: 50%; translate: 20% -50%; }
+.rb-home .c-w { left: 0; top: 50%; translate: -20% -50%; }
+.rb-home .hint { font-size: 13.5px; color: var(--hmuted); text-align: center; max-width: 38ch; margin: 8px 0 0; }
+
+/* пътят на слънцето: отделният контрол за светлината на сайта */
+.rb-home .daybar {
+  position: relative; margin: clamp(14px, 2.4vw, 26px) clamp(14px, 2.4vw, 26px) 0; padding: 14px 22px 10px; border-radius: 26px;
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 26px; align-items: center;
+  background: var(--hcard); border: 1px solid var(--hcard-line);
+  backdrop-filter: blur(16px) saturate(140%); -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+.rb-home .db-read { display: flex; flex-direction: column; min-width: 96px; }
+.rb-home .db-read small { font-size: 12px; font-weight: 800; color: var(--hmuted); }
+.rb-home .db-read time { font-family: var(--font-serif); font-weight: 600; font-size: 38px; line-height: 1; font-variant-numeric: tabular-nums; }
+.rb-home .db-read b { font-size: 13.5px; font-weight: 800; color: var(--hmuted); }
+.rb-home .db-track { position: relative; height: 96px; touch-action: none; cursor: pointer; }
+.rb-home .db-track svg { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: 68px; overflow: visible; }
+.rb-home .db-track .hz { stroke: var(--hfg); stroke-opacity: 0.35; stroke-dasharray: 3 5; }
+.rb-home .db-track .crv { fill: none; stroke: var(--hfg); stroke-opacity: 0.3; stroke-width: 1.5; }
+.rb-home .db-track .done { fill: none; stroke: #ffc65a; stroke-width: 2.5; }
+.rb-home .hero[data-sky="dark"] .db-track .done { stroke: #f6d9a2; }
+.rb-home .db-knob { position: absolute; top: 0; left: 0; width: 30px; height: 30px; translate: -50% -50%; border-radius: 50%; cursor: grab; touch-action: none; outline-offset: 4px; transition: box-shadow 0.5s, background 0.5s; }
+.rb-home .db-knob.sun { background: radial-gradient(circle at 40% 35%, #fffbe8, #ffc94d 62%, #f39a2e); box-shadow: 0 0 0 4px rgba(255, 201, 77, 0.25), 0 0 22px 6px rgba(255, 180, 60, 0.55); }
+.rb-home .db-knob.moon { background: radial-gradient(circle at 38% 34%, #fffaf0, #e3d5b4 62%, #b9a780); box-shadow: 0 0 0 4px rgba(246, 217, 162, 0.18), 0 0 18px 4px rgba(246, 217, 162, 0.35); }
+.rb-home .db-knob.moon::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 72% 30%, rgba(20, 24, 50, 0.45), transparent 55%); }
+.rb-home .db-knob:focus-visible { outline: 2px solid var(--hfg); }
+.rb-home .db-track.drag, .rb-home .db-track.drag .db-knob { cursor: grabbing; }
+.rb-home .db-marks { position: absolute; left: 0; right: 0; bottom: 0; height: 24px; }
+.rb-home .db-mark {
+  all: unset; position: absolute; bottom: 0; translate: -50% 0; font-size: 12.5px; font-weight: 800; color: var(--hmuted);
+  cursor: pointer; padding: 2px 8px; border-radius: 999px; white-space: nowrap; transition: color 0.2s, background 0.2s;
+}
+.rb-home .db-mark:hover, .rb-home .db-mark.on { color: var(--hfg); background: color-mix(in srgb, var(--hfg) 10%, transparent); }
+.rb-home .db-mark:focus-visible { outline: 2px solid var(--hfg); }
+.rb-home .db-mark em { font-style: normal; font-weight: 600; opacity: 0.75; margin-left: 4px; font-variant-numeric: tabular-nums; }
+.rb-home .db-mark.edge-l { translate: 0 0; }
+.rb-home .db-mark.edge-r { translate: -100% 0; }
+.rb-home .now { all: unset; cursor: pointer; font-weight: 800; font-size: 13.5px; padding: 9px 15px; border-radius: 999px; background: var(--hcard); border: 1px solid var(--hcard-line); white-space: nowrap; }
+.rb-home .now:focus-visible { outline: 2px solid var(--hfg); }
+.rb-home .now[aria-pressed="true"] { opacity: 0.55; cursor: default; }
+
+/* ───────── рафт: триизмерни книги, осветени от слънцето ───────── */
+.rb-home .shelf-head { display: flex; flex-wrap: wrap; gap: 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 38px; }
+.rb-home .tabs { display: flex; gap: 6px; padding: 6px; border-radius: 999px; flex-wrap: wrap; }
+.rb-home .tab { border: 0; background: transparent; color: var(--rb-muted); font: inherit; font-size: 14.5px; font-weight: 700; padding: 9px 16px; border-radius: 999px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.rb-home .tab.on { background: var(--rb-accent); color: var(--rb-on-accent); }
+.rb-home .tab:not(.on):hover { color: var(--rb-fg); background: var(--rb-card-2); }
+.rb-home .tab sup { font-size: 10px; opacity: 0.7; margin-left: 3px; }
+.rb-home .shelf { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 48px 28px; perspective: 1400px; }
+.rb-home .item { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.rb-home .item.hide { display: none; }
+.rb-home .item h3 { font-family: var(--font-serif); font-weight: 600; font-size: 21px; line-height: 1.1; margin: 0; text-wrap: balance; }
+.rb-home .item h3 a { text-decoration: none; }
+.rb-home .item h3 a:hover { color: var(--rb-accent); }
+.rb-home .item .au { color: var(--rb-muted); font-size: 13.5px; }
+.rb-home .shelf-more { display: flex; justify-content: center; margin-top: 48px; }
+
+/* ───────── PDF ───────── */
+.rb-home .pdf { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: stretch; margin-top: 36px; }
+.rb-home .perks { border-radius: 30px; padding: 34px; display: flex; flex-direction: column; gap: 18px; }
+.rb-home .chk { display: flex; gap: 14px; align-items: center; font-weight: 700; }
+.rb-home .chk i { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--rb-accent-soft); color: var(--rb-accent); display: grid; place-items: center; transition: background 0.3s, color 0.3s; }
+.rb-home .chk i svg { width: 15px; height: 15px; stroke-dasharray: 20; stroke-dashoffset: 20; transition: stroke-dashoffset 0.5s; }
+.rb-home .chk.done i { background: var(--rb-accent); color: var(--rb-on-accent); }
+.rb-home .chk.done i svg { stroke-dashoffset: 0; }
+.rb-home .flip { border-radius: 30px; padding: 28px; display: flex; flex-direction: column; gap: 18px; }
+.rb-home .flipbook { position: relative; aspect-ratio: 3 / 2; perspective: 1600px; }
+.rb-home .leaf { position: absolute; top: 0; bottom: 0; right: 0; width: 50%; transform-origin: left center; transform-style: preserve-3d; transition: transform 0.9s cubic-bezier(0.3, 0.8, 0.2, 1); }
+.rb-home .leaf.turned { transform: rotateY(-180deg); }
+.rb-home .side {
+  position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; padding: 9% 10%;
+  background: linear-gradient(90deg, #efe7d6, #f8f3e8 12%); color: #2a2418; font-family: var(--font-serif);
+  font-size: clamp(13px, 1.4vw, 17px); line-height: 1.4; border-radius: 0 6px 6px 0;
+  box-shadow: inset 10px 0 18px -10px rgba(0, 0, 0, 0.35); overflow: hidden;
+}
+.rb-home .side.back { transform: rotateY(180deg); border-radius: 6px 0 0 6px; background: linear-gradient(270deg, #efe7d6, #f8f3e8 12%); box-shadow: inset -10px 0 18px -10px rgba(0, 0, 0, 0.35); }
+.rb-home .side h5 { font-family: var(--font-sans); font-size: 11px; font-weight: 800; color: #8a6a2c; margin: 0 0 10px; letter-spacing: 0; }
+.rb-home .side ol { margin: 0; padding-left: 1.1em; list-style: decimal; }
+.rb-home .side p { margin: 0 0 0.6em; }
+.rb-home .side .q { font-style: italic; font-size: 1.15em; }
+.rb-home .base-left { position: absolute; top: 0; bottom: 0; left: 0; width: 50%; border-radius: 6px 0 0 6px; overflow: hidden; background: #141d36; }
+.rb-home .base-left img { width: 100%; height: 100%; object-fit: cover; }
+.rb-home .flipctl { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rb-home .dots { display: flex; gap: 6px; }
+.rb-home .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--rb-line); }
+.rb-home .dots span.on { background: var(--rb-accent); }
+
+/* ───────── аудио и дишане ───────── */
+.rb-home .audio { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 28px; align-items: start; margin-top: 36px; }
+.rb-home .player { border-radius: 30px; padding: 30px; display: flex; flex-direction: column; gap: 20px; position: relative; overflow: hidden; }
+.rb-home .player::before { content: ""; position: absolute; width: 340px; height: 340px; right: -120px; top: -140px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--rb-accent) 30%, transparent), transparent 70%); pointer-events: none; }
+.rb-home .p-top { display: flex; gap: 20px; align-items: center; position: relative; }
+.rb-home .p-art { flex: none; width: 96px; aspect-ratio: 1; border-radius: 22px; overflow: hidden; position: relative; box-shadow: 0 18px 40px -12px var(--rb-drop); }
+.rb-home .p-art .gc { padding: 16%; }
+.rb-home .p-art .gc .t, .rb-home .p-art .gc .a, .rb-home .p-art .gc::before { display: none; }
+.rb-home .p-art .gc svg { width: 80%; margin: auto; }
+.rb-home .p-art img { width: 100%; height: 100%; object-fit: cover; }
+.rb-home .p-for { font-size: 13px; font-weight: 800; color: var(--rb-accent); }
+.rb-home .p-title { font-family: var(--font-serif); font-size: 28px; font-weight: 600; line-height: 1.05; margin: 4px 0 8px; }
+.rb-home .p-title a { text-decoration: none; }
+.rb-home .p-title a:hover { color: var(--rb-accent); }
+.rb-home .wave { width: 100%; height: 84px; cursor: pointer; display: block; position: relative; }
+.rb-home .p-time { display: flex; justify-content: space-between; font-size: 12.5px; color: var(--rb-muted); font-variant-numeric: tabular-nums; }
+.rb-home .p-ctl { display: flex; align-items: center; gap: 14px; position: relative; }
+.rb-home .play { width: 62px; height: 62px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; background: var(--rb-accent); color: var(--rb-on-accent); box-shadow: 0 12px 30px -8px var(--rb-accent); }
+.rb-home .play:disabled { opacity: 0.5; cursor: default; }
+.rb-home .play svg { width: 24px; height: 24px; }
+.rb-home .skip { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--rb-line); background: var(--rb-card-2); color: var(--rb-fg); cursor: pointer; display: grid; place-items: center; font: inherit; font-size: 12px; font-weight: 800; }
+.rb-home .skip:disabled { opacity: 0.5; cursor: default; }
+.rb-home .p-note { font-size: 12px; color: var(--rb-faint); }
+.rb-home .side-col { display: flex; flex-direction: column; gap: 14px; }
+.rb-home .track {
+  all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 16px; align-items: center;
+  padding: 15px 18px; border-radius: 20px; border: 1px solid var(--rb-line); background: var(--rb-card); transition: background 0.2s, border-color 0.2s;
+}
+.rb-home .track:hover { background: var(--rb-card-2); }
+.rb-home .track.on { border-color: color-mix(in srgb, var(--rb-accent) 60%, transparent); background: var(--rb-accent-soft); }
+.rb-home .track:focus-visible { outline: 2px solid var(--rb-accent); outline-offset: 3px; }
+.rb-home .eq { width: 26px; height: 22px; display: flex; align-items: flex-end; gap: 3px; }
+.rb-home .eq span { flex: 1; background: var(--rb-accent); border-radius: 2px; height: 30%; }
+.rb-home .track.on.playing .eq span { animation: rb-eq 1s ease-in-out infinite; }
+.rb-home .eq span:nth-child(2) { animation-delay: -0.3s !important; height: 70%; }
+.rb-home .eq span:nth-child(3) { animation-delay: -0.6s !important; height: 45%; }
+.rb-home .track b { display: block; font-weight: 700; font-size: 15px; line-height: 1.3; }
+.rb-home .track small { color: var(--rb-muted); font-size: 12.5px; }
+.rb-home .track .tp { font-weight: 800; font-size: 14px; text-align: right; font-variant-numeric: tabular-nums; }
+.rb-home .breathe { border-radius: 26px; padding: 22px; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; align-items: center; }
+.rb-home .bring { position: relative; width: 132px; height: 132px; display: grid; place-items: center; }
+.rb-home .bring .c1, .rb-home .bring .c2 { position: absolute; border-radius: 50%; transition-property: transform; transition-timing-function: ease-in-out; transition-duration: 4s; }
+.rb-home .bring .c1 { inset: 0; background: radial-gradient(circle, color-mix(in srgb, var(--rb-accent) 28%, transparent), transparent 70%); }
+.rb-home .bring .c2 { inset: 24%; background: radial-gradient(circle at 40% 35%, #fff, color-mix(in srgb, var(--rb-accent) 55%, #fff)); box-shadow: 0 10px 26px -10px var(--rb-accent); }
+.rb-home .bring.in .c1 { transform: scale(1.15); }
+.rb-home .bring.in .c2 { transform: scale(1.5); }
+.rb-home .bring span { position: relative; font-weight: 800; font-size: 14px; color: #2a2238; text-align: center; line-height: 1.15; }
+.rb-home .breathe h3 { font-family: var(--font-serif); font-weight: 600; font-size: 25px; margin: 2px 0 6px; line-height: 1.1; }
+.rb-home .breathe p { margin: 0 0 12px; color: var(--rb-muted); font-size: 14.5px; }
+
+/* ───────── за нас ───────── */
+.rb-home .about { position: relative; border-radius: 38px; overflow: hidden; min-height: 560px; display: grid; align-items: end; }
+.rb-home .about > img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+  filter: saturate(calc(1 - var(--night) * 0.25)) brightness(calc(0.95 - var(--night) * 0.4)); transition: filter 1s;
+}
+.rb-home .about::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 20%, color-mix(in srgb, var(--rb-ground) 88%, transparent)); }
+.rb-home .about-in { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 28px; padding: clamp(22px, 5vw, 56px); align-items: end; }
+.rb-home .about-in .card { border-radius: 28px; padding: 30px; }
+.rb-home .about-in .card p { margin: 0 0 12px; }
+.rb-home .vals { display: grid; gap: 12px; }
+.rb-home .val { all: unset; box-sizing: border-box; cursor: pointer; display: flex; gap: 16px; align-items: center; padding: 15px 18px; border-radius: 22px; transition: border-color 0.2s; }
+.rb-home .val:hover, .rb-home .val[aria-expanded="true"] { border-color: color-mix(in srgb, var(--rb-accent) 60%, transparent); }
+.rb-home .val:focus-visible { outline: 2px solid var(--rb-accent); outline-offset: 3px; }
+.rb-home .vorb {
+  flex: none; width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-serif); font-weight: 700; font-size: 20px;
+  background:
+    radial-gradient(circle at 32% 26%, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.08) 28%, transparent 48%),
+    radial-gradient(circle at 70% 80%, color-mix(in srgb, var(--rb-brass) 70%, transparent), transparent 62%),
+    var(--rb-accent-soft);
+  border: 1px solid var(--rb-line);
+}
+.rb-home .val b { display: block; font-size: 16px; }
+.rb-home .val .vd { display: block; color: var(--rb-muted); font-size: 14px; max-height: 0; overflow: hidden; transition: max-height 0.35s; }
+.rb-home .val[aria-expanded="true"] .vd { max-height: 120px; margin-top: 4px; }
+
+/* ───────── блог ───────── */
+.rb-home .posts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; }
+.rb-home .post { border-radius: 28px; overflow: hidden; text-decoration: none; display: flex; flex-direction: column; transition: transform 0.3s; }
+.rb-home .post:hover { transform: translateY(-6px); }
+.rb-home .post .phot { aspect-ratio: 16 / 10; overflow: hidden; position: relative; }
+.rb-home .post img { width: 100%; height: 100%; object-fit: cover; filter: brightness(calc(1 - var(--night) * 0.2)); transition: transform 0.6s; }
+.rb-home .post:hover img { transform: scale(1.05); }
+.rb-home .post .tx { padding: 20px 22px 24px; display: flex; flex-direction: column; gap: 8px; }
+.rb-home .post time { font-size: 13px; font-weight: 800; color: var(--rb-accent); }
+.rb-home .post h3 { font-family: var(--font-serif); font-weight: 600; font-size: 24px; line-height: 1.1; margin: 0; }
+.rb-home .post p { margin: 0; color: var(--rb-muted); font-size: 14.5px; }
+
+/* ───────── книги и корици (началната страница и прозорецът с книга) ───────── */
+.book-btn { all: unset; cursor: pointer; display: block; position: relative; aspect-ratio: 2 / 3; width: 100%; isolation: isolate; }
+/* сянката зад книгата пада встрани от слънцето и нощем става мека сянка от лампа */
+.book-btn::before {
+  content: ""; position: absolute; z-index: -1; inset: 6% 4% 1% 8%; border-radius: 6px; background: var(--rb-drop); filter: blur(12px);
+  opacity: calc(0.5 + var(--night) * 0.2); transform: translate(calc(var(--sx) * -34px), 12px) skewX(calc(var(--sx) * 9deg)); transition: opacity 0.6s;
+}
+.book-btn:focus-visible { outline: 2px solid var(--rb-accent); outline-offset: 8px; border-radius: 4px; }
+.b3d { position: absolute; inset: 0; transform-style: preserve-3d; transform: rotateY(-18deg) rotateX(4deg); transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.book-btn:hover .b3d, .book-btn:focus-visible .b3d { transform: rotateY(-36deg) rotateX(6deg) translateZ(20px) translateY(-8px); }
+.face { position: absolute; inset: 0; border-radius: 2px 5px 5px 2px; overflow: hidden; transform: translateZ(11px); box-shadow: inset 4px 0 6px -2px rgba(255, 255, 255, 0.25); background: #151515; }
+.face img { width: 100%; height: 100%; object-fit: cover; }
+/* светлината по корицата идва оттам, където е слънцето */
+.face::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(calc(180deg + var(--sx) * 90deg), rgba(255, 248, 228, calc(0.5 - var(--night) * 0.32)) 0%, transparent 34%, transparent 68%, rgba(0, 0, 0, 0.24));
+}
+.spine { position: absolute; top: 0; bottom: 0; left: 0; width: 22px; transform-origin: left; transform: rotateY(-90deg) translateX(-11px); filter: brightness(0.6); }
+.pages { position: absolute; top: 2%; bottom: 2%; right: 0; width: 20px; transform-origin: right; transform: rotateY(90deg) translateX(10px); background: repeating-linear-gradient(90deg, #e8e0cc 0 1px, #cfc6b0 1px 2px); }
+.bshadow {
+  position: absolute; left: 8%; right: -4%; bottom: -16px; height: 22px; border-radius: 50%; background: radial-gradient(closest-side, var(--rb-drop), transparent); filter: blur(4px);
+  transform: translateX(calc(var(--sx) * -26px)) scaleX(calc(1 + (1 - var(--night)) * 0.25 * var(--sx) * var(--sx)));
+}
+.rb-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.rb-tag { font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: var(--rb-card-2); color: var(--rb-muted); border: 1px solid var(--rb-line); line-height: 1.5; }
+.rb-tag.best { background: var(--rb-accent-soft); color: var(--rb-accent); border-color: transparent; }
+.rb-tag.off { background: rgba(232, 81, 63, 0.14); color: #d9493a; border-color: transparent; }
+html[data-mode="dark"] .rb-tag.off { color: #ef8f8f; }
+.rb-tag.free { background: rgba(26, 169, 130, 0.15); color: #13906d; border-color: transparent; }
+html[data-mode="dark"] .rb-tag.free { color: #6fd6c4; }
+.rb-price { display: flex; gap: 10px; align-items: baseline; font-variant-numeric: tabular-nums; }
+.rb-price b { font-size: 17px; }
+.rb-price s { color: var(--rb-faint); font-size: 13px; }
+.rb-stock { font-size: 12.5px; color: #d9493a; font-weight: 700; }
+html[data-mode="dark"] .rb-stock { color: #ef8f8f; }
+
+/* генерирани корици за заглавия без снимка */
+.gc {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; padding: 14% 12% 12%;
+  background: radial-gradient(120% 80% at 30% 10%, hsl(var(--h) 42% 36%), hsl(var(--h) 46% 15%) 72%); color: hsl(var(--h) 60% 88%);
+}
+.gc::before { content: ""; position: absolute; width: 80%; aspect-ratio: 1; border-radius: 50%; right: -28%; top: -18%; background: hsl(var(--h) 70% 80% / 0.12); }
+.gc svg { position: relative; width: 60%; align-self: center; fill: none; stroke: #f6d9a2; stroke-width: 1.7; opacity: 0.9; stroke-linecap: round; stroke-linejoin: round; }
+.gc .t { position: relative; font-family: var(--font-serif); font-weight: 600; font-size: clamp(15px, 1.6vw, 20px); line-height: 1.05; color: #fff6e6; text-wrap: balance; }
+.gc .a { position: relative; font-size: 10.5px; font-weight: 800; color: #f6d9a2; opacity: 0.9; }
+.mini .gc { padding: 0; justify-content: center; align-items: center; }
+.mini .gc .t, .mini .gc .a, .mini .gc::before { display: none; }
+.mini .gc svg { width: 72%; }
+
+/* ───────── прозорец с книга ───────── */
+.rb-scrim {
+  position: fixed; inset: 0; z-index: 60; background: color-mix(in srgb, var(--rb-ground) 55%, transparent);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); display: grid; place-items: center; opacity: 0; transition: opacity 0.25s;
+  padding: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
+}
+.rb-scrim.show { opacity: 1; }
+.rb-sheet {
+  width: min(880px, 100%); max-height: 88vh; overflow: auto; border-radius: 30px; display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: 30px; padding: 30px; position: relative;
+  background: var(--rb-sheet); color: var(--rb-fg); border: 1px solid var(--rb-line);
+  box-shadow: 0 0 80px -20px color-mix(in srgb, var(--rb-brass) 45%, transparent), 0 40px 100px -20px var(--rb-drop);
+  transform: translateY(14px) scale(0.98); transition: transform 0.3s;
+}
+.rb-scrim.show .rb-sheet { transform: none; }
+.rb-sheet .bk { position: relative; aspect-ratio: 2 / 3; border-radius: 4px 8px 8px 4px; overflow: hidden; box-shadow: 0 30px 60px -20px var(--rb-drop); }
+.rb-sheet .bk img { width: 100%; height: 100%; object-fit: cover; }
+.rb-sheet h3 { font-family: var(--font-serif); font-weight: 600; font-size: clamp(28px, 3.4vw, 40px); line-height: 1.02; margin: 10px 0 6px; }
+.rb-sheet .au { color: var(--rb-muted); }
+.rb-sheet .rb-price b { font-size: 26px; }
+.rb-sheet p { color: var(--rb-muted); margin: 0 0 0.8em; }
+.rb-sheet .why { margin: 14px 0; padding: 12px 16px; border-radius: 16px; background: var(--rb-accent-soft); color: var(--rb-fg); font-size: 14.5px; }
+.rb-sheet .row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; align-items: center; }
+.rb-x { position: absolute; top: 14px; right: 14px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--rb-line); background: var(--rb-card-2); color: var(--rb-fg); cursor: pointer; display: grid; place-items: center; }
+.rb-x svg { width: 16px; height: 16px; }
+
+@keyframes rb-tw { 50% { opacity: 0.25; } }
+@keyframes rb-rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes rb-eq { 50% { height: 100%; } }
+
+@media (max-width: 980px) {
+    .rb-home .hero-in, .rb-home .pdf, .rb-home .audio, .rb-home .about-in { grid-template-columns: 1fr; }
+  .rb-home .posts { grid-template-columns: 1fr; }
+  .rb-home .compass-zone { max-width: 400px; }
+  .rb-home .compass-col { order: -1; padding: 10px 6% 0; }
+  .rb-home .daybar { grid-template-columns: 1fr auto; gap: 10px 16px; }
+  .rb-home .db-track { grid-column: 1 / -1; grid-row: 2; }
+  .rb-home .recbox { max-width: none; }
+  .rb-sheet { grid-template-columns: 1fr; }
+  .rb-sheet .bk { max-width: 220px; }
+}
+@media (max-width: 560px) {
+    .rb-home .shelf { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 38px 18px; }
+  .rb-home .cardinal { padding: 7px 10px; }
+  .rb-home .cardinal span { font-size: 12.5px; }
+  .rb-home .db-mark em { display: none; }
+  .rb-home .db-mark.edge-l, .rb-home .db-mark.edge-r { display: none; }
+  .rb-home .db-read time { font-size: 32px; }
+  .rb-home .daybar { padding: 12px 14px 8px; }
+  .rb-home .p-top { flex-direction: column; align-items: flex-start; }
+  .rb-home .breathe { grid-template-columns: 1fr; }
+  .rb-home .orb-sun { width: 84px; height: 84px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rb-home *, .rb-sheet, .b3d, .rb-env * { animation: none !important; transition: none !important; }
+}

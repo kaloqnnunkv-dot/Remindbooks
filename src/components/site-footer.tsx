@@ -1,9 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { env } from "@/lib/env";
-import { NewsletterForm } from "./newsletter-form";
-import { Logo } from "./logo";
-import { InstagramIcon, MailIcon, PhoneIcon } from "./icons";
+import { NewsletterEnvelope } from "./newsletter-envelope";
+import { SiteLogo } from "./logo";
 
 const SHOP_LINKS = [
   { href: "/knigi", label: "Физически книги" },
@@ -21,104 +19,76 @@ const INFO_LINKS = [
 
 const LEGAL_LINKS = [
   { href: "/obshti-uslovia", label: "Общи условия" },
-  { href: "/poveritelnost", label: "Политика за поверителност" },
-  { href: "/biskvitki", label: "Политика за бисквитки" },
+  { href: "/poveritelnost", label: "Поверителност" },
+  { href: "/biskvitki", label: "Бисквитки" },
   { href: "/vrashtane", label: "Право на отказ и връщане" },
 ];
 
+/**
+ * Долната част на всяка страница: бюлетинът с плика и колоните с връзки,
+ * както в „Компас на деня“.
+ */
 export function SiteFooter({ logoSrc }: { logoSrc?: string }) {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="mt-24 bg-footer text-footer-foreground border-t border-border">
-      <div className="container-page py-14">
-        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
-          {/* Бранд + бюлетин */}
-          <div className="lg:col-span-1">
-            <Logo width={160} src={logoSrc} className="h-10" />
-            <p className="mt-3 text-sm text-footer-foreground/75 leading-relaxed">
+    <div id="kontakti" className="container-page mt-16 sm:mt-24">
+      <NewsletterEnvelope source="footer" />
+
+      <footer className="rb-footer">
+        <div className="rb-foot">
+          <div>
+            <SiteLogo src={logoSrc} className="mb-3.5" />
+            <p className="m-0 max-w-[34ch] text-[var(--rb-muted)]">
               Книги, които връщат посоката. Истории и практики за вътрешния компас.
             </p>
-
-            <div className="mt-6">
-              <h3 className="font-sans text-xs font-bold uppercase tracking-wider mb-3">
-                Бюлетин
-              </h3>
-              <NewsletterForm source="footer" variant="footer" />
-            </div>
           </div>
 
           <FooterColumn title="Магазин" links={SHOP_LINKS} />
           <FooterColumn title="Информация" links={INFO_LINKS} />
 
-          {/* Контакти */}
           <div>
-            <h3 className="font-sans text-xs font-bold uppercase tracking-wider mb-4">
-              Контакти
-            </h3>
-            <ul className="space-y-2.5 text-sm">
+            <h4>Контакти</h4>
+            <ul>
               <li>
-                <a
-                  href={`tel:${env.contact.phone.replace(/\s/g, "")}`}
-                  className="inline-flex items-center gap-2 text-footer-foreground/80 hover:text-primary transition-colors"
-                >
-                  <PhoneIcon size={16} />
-                  {env.contact.phone}
-                </a>
+                <a href={`tel:${env.contact.phone.replace(/\s/g, "")}`}>{env.contact.phone}</a>
               </li>
               <li>
-                <a
-                  href={`mailto:${env.contact.email}`}
-                  className="inline-flex items-center gap-2 text-footer-foreground/80 hover:text-primary transition-colors"
-                >
-                  <MailIcon size={16} />
-                  {env.contact.email}
+                <a href={`mailto:${env.contact.email}`}>{env.contact.email}</a>
+              </li>
+              <li>
+                <a href={env.social.facebook} target="_blank" rel="noopener noreferrer">
+                  Facebook
                 </a>
+                ,{" "}
+                <a href={env.social.tiktok} target="_blank" rel="noopener noreferrer">
+                  TikTok
+                </a>
+                {env.social.instagram && (
+                  <>
+                    ,{" "}
+                    <a href={env.social.instagram} target="_blank" rel="noopener noreferrer">
+                      Instagram
+                    </a>
+                  </>
+                )}
               </li>
             </ul>
-
-            <div className="mt-5 flex items-center gap-2">
-              <SocialLogo
-                href={env.social.facebook}
-                label="Facebook"
-                logo="/social-facebook.png"
-              />
-              <SocialLogo
-                href={env.social.tiktok}
-                label="TikTok"
-                logo="/social-tiktok.png"
-              />
-              {env.social.instagram && (
-                <SocialLink href={env.social.instagram} label="Instagram">
-                  <InstagramIcon size={18} />
-                </SocialLink>
-              )}
-            </div>
           </div>
         </div>
 
-        {/* Долна лента */}
-        <div className="mt-12 pt-6 border-t border-border flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-footer-foreground/60">
-            © {year} Remind Books. Всички права запазени.
-          </p>
+        <div className="rb-legal">
+          <span>© {year} Remind Books. Всички права запазени.</span>
           <nav aria-label="Правна информация">
-            <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs">
-              {LEGAL_LINKS.map((l) => (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    className="text-footer-foreground/70 hover:text-primary transition-colors"
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            {LEGAL_LINKS.map((l) => (
+              <Link key={l.href} href={l.href}>
+                {l.label}
+              </Link>
+            ))}
           </nav>
         </div>
-      </div>
-    </footer>
+      </footer>
+    </div>
   );
 }
 
@@ -131,67 +101,14 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="font-sans text-xs font-bold uppercase tracking-wider mb-4">
-        {title}
-      </h3>
-      <ul className="space-y-2.5 text-sm">
+      <h4>{title}</h4>
+      <ul>
         {links.map((l) => (
           <li key={l.href}>
-            <Link
-              href={l.href}
-              className="text-footer-foreground/80 hover:text-primary transition-colors"
-            >
-              {l.label}
-            </Link>
+            <Link href={l.href}>{l.label}</Link>
           </li>
         ))}
       </ul>
     </div>
-  );
-}
-
-/** Официалното лого на мрежата — носи собствен фон, затова няма рамка. */
-function SocialLogo({
-  href,
-  label,
-  logo,
-}: {
-  href: string;
-  label: string;
-  logo: string;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      title={label}
-      className="inline-flex transition-transform hover:scale-105"
-    >
-      <Image src={logo} alt="" width={36} height={36} className="h-9 w-9 rounded-md" />
-    </a>
-  );
-}
-
-function SocialLink({
-  href,
-  label,
-  children,
-}: {
-  href: string;
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label={label}
-      className="h-9 w-9 inline-flex items-center justify-center rounded-md border border-border hover:bg-accent hover:text-accent-foreground transition-colors"
-    >
-      {children}
-    </a>
   );
 }

@@ -1,12 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Libre_Baskerville, Lora, IBM_Plex_Mono } from "next/font/google";
+import { Cormorant_Garamond, Nunito, IBM_Plex_Mono } from "next/font/google";
 import { SessionProvider } from "next-auth/react";
 import "./globals.css";
+import "./compass.css";
 
 import { auth } from "@/lib/auth";
 import { cartCount } from "@/lib/cart";
-import { getThemeCss } from "@/lib/theme";
 import { getSiteImages } from "@/lib/images";
+import { DAY_BOOT_SCRIPT } from "@/lib/daylight";
+import { DaylightProvider } from "@/components/daylight";
 import { env } from "@/lib/env";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
@@ -19,17 +21,20 @@ import { ToastProvider } from "@/components/toast";
  * което е и по-бързо, и по-чисто откъм GDPR — няма заявки към Google при
  * зареждане на страницата.
  */
-const libreBaskerville = Libre_Baskerville({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "700"],
-  variable: "--font-libre-baskerville",
+/** Заглавията — „Компас на деня“. */
+const cormorant = Cormorant_Garamond({
+  subsets: ["latin", "latin-ext", "cyrillic"],
+  weight: ["500", "600", "700"],
+  style: ["normal", "italic"],
+  variable: "--font-cormorant",
   display: "swap",
 });
 
-const lora = Lora({
+/** Текстът и интерфейсът. */
+const nunito = Nunito({
   subsets: ["latin", "latin-ext", "cyrillic"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-lora",
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-nunito",
   display: "swap",
 });
 
@@ -84,8 +89,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f1e6" },
-    { media: "(prefers-color-scheme: dark)", color: "#2d2621" },
+    { media: "(prefers-color-scheme: light)", color: "#f1f7f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#070a14" },
   ],
   width: "device-width",
   initialScale: 1,
@@ -94,48 +99,57 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const [session, count, themeCss, images] = await Promise.all([
+  const [session, count, images] = await Promise.all([
     auth(),
     cartCount(),
-    getThemeCss(),
     getSiteImages(),
   ]);
+
+  // Цветовете от „Оформление“ в админ панела вече не се вграждат: палитрата
+  // следва часа от деня (четири фази в globals.css) и една фиксирана палитра
+  // би я спряла. Запазените стойности остават в базата непокътнати.
 
   return (
     <html
       lang="bg"
-      className={`${libreBaskerville.variable} ${lora.variable} ${ibmPlexMono.variable}`}
+      className={`${cormorant.variable} ${nunito.variable} ${ibmPlexMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen flex flex-col antialiased">
-        {/* Цветовете, избрани от админ панела. Стои след таблицата със стилове,
-            затова пренаписва стойностите от `globals.css` без `!important`.
-            Съдържанието е само шестнайсетични цветове — проверката е в
-            `lib/theme.ts`, защото това тук е код, не текст. */}
-        {themeCss && <style>{themeCss}</style>}
-
+      <head>
+        {/* Задава фазата на деня по местния час, преди страницата да се
+            изчертае — иначе нощем първо проблясваше дневната палитра. */}
+        <script dangerouslySetInnerHTML={{ __html: DAY_BOOT_SCRIPT }} />
+      </head>
+      <body className="min-h-screen antialiased">
         <SessionProvider session={session}>
           <ToastProvider>
-            <a
-              href="#main"
-              className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-md focus:font-sans focus:text-sm"
-            >
-              Към основното съдържание
-            </a>
+            <DaylightProvider>
+              <div className="rb-page flex min-h-screen flex-col">
+                <a
+                  href="#main"
+                  className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-3 focus:left-3 focus:bg-primary focus:text-primary-foreground focus:px-4 focus:py-2 focus:rounded-full focus:font-sans focus:text-sm"
+                >
+                  Към основното съдържание
+                </a>
 
-            <SiteHeader
-              cartCount={count}
-              isLoggedIn={Boolean(session?.user)}
-              logoSrc={images.logo}
-            />
+                <SiteHeader
+                  cartCount={count}
+                  isLoggedIn={Boolean(session?.user)}
+                  logoSrc={images.logo}
+                />
 
-            <main id="main" className="flex-1">
-              {children}
-            </main>
+                <main id="main" className="flex-1">
+                  {children}
+                </main>
 
-            <SiteFooter logoSrc={images.logo} />
-            <SocialWidgets />
-            <CookieConsent />
+                <SiteFooter logoSrc={images.logo} />
+
+                {/* Вътре в .rb-page, за да делят един z-index слой с менюто и
+                    прозорците — иначе изскачаха над тях. */}
+                <SocialWidgets />
+                <CookieConsent />
+              </div>
+            </DaylightProvider>
           </ToastProvider>
         </SessionProvider>
       </body>

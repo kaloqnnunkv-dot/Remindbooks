@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* Тъмният режим идва от часа от деня: вечер и нощ са тъмни (виж lib/daylight.ts). */
+@custom-variant dark (&:where([data-mode="dark"], [data-mode="dark"] *));
 
 /**
  * Едрината на сайта на голям екран.
@@ -23,114 +24,156 @@
 }
 
 /* ------------------------------------------------------------------ */
-/*  ReMindBooks — дизайн токени                                        */
-/*  Базирани на темата, копирана от 21st.dev (топла хартиена палитра)  */
+/*  Remind Books — „Компас на деня“                                     */
+/*                                                                      */
+/*  Палитрата следва часа от деня: сутрин, ден, вечер и нощ имат свои  */
+/*  цветове (атрибутът data-phase на <html>, задаван от                 */
+/*  components/daylight.tsx). Изходният дизайн е в                      */
+/*  design/remindbooks-F-sun-compass/index.html.                        */
+/*                                                                      */
+/*  Цветовете на фазите са с префикс --rb-. Токените, които ползват    */
+/*  компонентите (--primary, --card и т.н.), са изведени от тях по-долу,*/
+/*  така че всяка страница сменя облика си заедно с деня.               */
 /* ------------------------------------------------------------------ */
 
+/* Регистрирани цветове — при смяна на фазата преливат, вместо да скачат. */
+@property --rb-ground { syntax: "<color>"; inherits: true; initial-value: #f1f7f5; }
+@property --rb-ground-2 { syntax: "<color>"; inherits: true; initial-value: #e1eeeb; }
+@property --rb-fg { syntax: "<color>"; inherits: true; initial-value: #15303a; }
+@property --rb-muted { syntax: "<color>"; inherits: true; initial-value: #4c676d; }
+@property --rb-faint { syntax: "<color>"; inherits: true; initial-value: #87999c; }
+@property --rb-accent { syntax: "<color>"; inherits: true; initial-value: #0d7a67; }
+@property --rb-accent-soft { syntax: "<color>"; inherits: true; initial-value: #d4f0e8; }
+@property --rb-on-accent { syntax: "<color>"; inherits: true; initial-value: #fff; }
+@property --rb-card { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.66); }
+@property --rb-card-2 { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.94); }
+@property --rb-line { syntax: "<color>"; inherits: true; initial-value: rgba(21, 48, 58, 0.11); }
+@property --rb-brass { syntax: "<color>"; inherits: true; initial-value: #946c26; }
+@property --rb-brass-2 { syntax: "<color>"; inherits: true; initial-value: #c99a4f; }
+@property --rb-drop { syntax: "<color>"; inherits: true; initial-value: rgba(30, 60, 70, 0.26); }
+@property --rb-sheet { syntax: "<color>"; inherits: true; initial-value: #fff; }
+@property --rb-logo { syntax: "<color>"; inherits: true; initial-value: #5d463a; }
+@property --rb-dial-hi { syntax: "<color>"; inherits: true; initial-value: rgba(255, 255, 255, 0.9); }
+@property --rb-dial-lo { syntax: "<color>"; inherits: true; initial-value: rgba(220, 240, 250, 0.4); }
+@property --rb-needle-tail { syntax: "<color>"; inherits: true; initial-value: #62808a; }
+
+/* Денят е подразбиращата се палитра — важи и ако JavaScript не тръгне. */
+:root,
+html[data-phase="day"] {
+  --rb-logo: #5d463a;
+  --rb-ground: #f1f7f5; --rb-ground-2: #e1eeeb; --rb-fg: #15303a; --rb-muted: #4c676d; --rb-faint: #87999c;
+  --rb-accent: #0d7a67; --rb-accent-soft: #d4f0e8; --rb-on-accent: #fff;
+  --rb-card: rgba(255, 255, 255, 0.66); --rb-card-2: rgba(255, 255, 255, 0.94); --rb-line: rgba(21, 48, 58, 0.11);
+  --rb-brass: #946c26; --rb-brass-2: #c99a4f; --rb-drop: rgba(30, 60, 70, 0.26); --rb-sheet: #ffffff;
+  --rb-dial-hi: rgba(255, 255, 255, 0.9); --rb-dial-lo: rgba(220, 240, 250, 0.4); --rb-needle-tail: #62808a;
+}
+html[data-phase="morn"] {
+  --rb-logo: #5d463a;
+  --rb-ground: #fbf3ec; --rb-ground-2: #f3e4da; --rb-fg: #2b2030; --rb-muted: #6f5f6c; --rb-faint: #9c8d97;
+  --rb-accent: #b23f68; --rb-accent-soft: #f8dde6; --rb-on-accent: #fff;
+  --rb-card: rgba(255, 255, 255, 0.62); --rb-card-2: rgba(255, 255, 255, 0.9); --rb-line: rgba(43, 32, 48, 0.11);
+  --rb-brass: #a3732a; --rb-brass-2: #d29d4c; --rb-drop: rgba(90, 50, 60, 0.28); --rb-sheet: #fffaf6;
+  --rb-dial-hi: rgba(255, 255, 255, 0.85); --rb-dial-lo: rgba(255, 236, 220, 0.35); --rb-needle-tail: #7b6a7e;
+}
+html[data-phase="eve"] {
+  --rb-logo: #f1e1c6;
+  --rb-ground: #17142f; --rb-ground-2: #221d45; --rb-fg: #f3eef9; --rb-muted: #bab2d6; --rb-faint: #8279a6;
+  --rb-accent: #b5a8ff; --rb-accent-soft: rgba(181, 168, 255, 0.16); --rb-on-accent: #17142f;
+  --rb-card: rgba(255, 255, 255, 0.05); --rb-card-2: rgba(255, 255, 255, 0.1); --rb-line: rgba(255, 255, 255, 0.12);
+  --rb-brass: #eab97a; --rb-brass-2: #f8dcb0; --rb-drop: rgba(5, 3, 20, 0.75); --rb-sheet: #1e1a3d;
+  --rb-dial-hi: rgba(255, 255, 255, 0.2); --rb-dial-lo: rgba(20, 10, 50, 0.3); --rb-needle-tail: #4a4580;
+}
+html[data-phase="night"] {
+  --rb-logo: #f1e1c6;
+  --rb-ground: #070a14; --rb-ground-2: #0d1426; --rb-fg: #f1ece2; --rb-muted: #a8a9b8; --rb-faint: #6e7188;
+  --rb-accent: #e2b56b; --rb-accent-soft: rgba(226, 181, 107, 0.16); --rb-on-accent: #20160a;
+  --rb-card: rgba(255, 255, 255, 0.04); --rb-card-2: rgba(255, 255, 255, 0.09); --rb-line: rgba(255, 255, 255, 0.11);
+  --rb-brass: #e2b56b; --rb-brass-2: #f6d9a2; --rb-drop: rgba(0, 0, 0, 0.8); --rb-sheet: #121931;
+  --rb-dial-hi: rgba(255, 255, 255, 0.18); --rb-dial-lo: rgba(0, 0, 0, 0.25); --rb-needle-tail: #3b4566;
+}
+
+html {
+  transition:
+    --rb-ground 1s, --rb-ground-2 1s, --rb-fg 1s, --rb-muted 1s, --rb-faint 1s, --rb-accent 1s,
+    --rb-accent-soft 1s, --rb-on-accent 1s, --rb-card 1s, --rb-card-2 1s, --rb-line 1s, --rb-brass 1s,
+    --rb-brass-2 1s, --rb-logo 1s, --rb-drop 1s, --rb-sheet 1s, --rb-dial-hi 1s, --rb-dial-lo 1s,
+    --rb-needle-tail 1s;
+}
+html[data-mode="light"] { color-scheme: light; }
+html[data-mode="dark"] { color-scheme: dark; }
+
 :root {
-  --card: #fffcf5;
-  --ring: #745739;
-  --input: #bab19e;
-  --muted: #c9c3b8;
-  --accent: #b4aa90;
-  --border: #bab19e;
-  --radius: 0.25rem;
-  --chart-1: #745739;
-  --chart-2: #634d35;
-  --chart-3: #503f29;
-  --chart-4: #7d654e;
-  --chart-5: #86705a;
-  --popover: #fffcf5;
-  --primary: #745739;
+  /* Небето — задава се непрекъснато от скрипта според часа. */
+  --sky-top: #8fd0ff;
+  --sky-mid: #c6ebff;
+  --sky-low: #fff6cf;
+  --night: 0;
+  --sx: 0;
+
   --font-mono: var(--font-ibm-plex-mono), "IBM Plex Mono", monospace;
-  --font-sans: var(--font-libre-baskerville), "Libre Baskerville", serif;
-  --secondary: #c0b8a6;
-  --background: #f5f1e6;
-  --font-serif: var(--font-lora), "Lora", serif;
-  --foreground: #342c25;
-  --destructive: #b54a35;
-  --shadow-blur: 5px;
-  --shadow-color: hsl(28 13% 20%);
-  --shadow-spread: 0px;
-  --shadow-opacity: 0.12;
-  --card-foreground: #342c25;
-  --shadow-offset-x: 2px;
-  --shadow-offset-y: 3px;
-  --muted-foreground: #584b3c;
-  --accent-foreground: #342c25;
-  --popover-foreground: #342c25;
-  --primary-foreground: #ffffff;
-  --secondary-foreground: #40362c;
+  /* Nunito за текста и интерфейса, Cormorant Garamond за заглавията. */
+  --font-sans: var(--font-nunito), "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: var(--font-cormorant), "Cormorant Garamond", Georgia, "Times New Roman", serif;
+
+  /* Токените на компонентите, изведени от фазата. */
+  --background: var(--rb-ground);
+  --foreground: var(--rb-fg);
+  --card: color-mix(in srgb, var(--rb-sheet) 80%, transparent);
+  --card-foreground: var(--rb-fg);
+  --popover: var(--rb-sheet);
+  --popover-foreground: var(--rb-fg);
+  --primary: var(--rb-accent);
+  --primary-foreground: var(--rb-on-accent);
+  --secondary: var(--rb-card-2);
+  --secondary-foreground: var(--rb-fg);
+  --muted: color-mix(in srgb, var(--rb-fg) 7%, transparent);
+  --muted-foreground: var(--rb-muted);
+  --accent: var(--rb-accent-soft);
+  --accent-foreground: var(--rb-fg);
+  --border: var(--rb-line);
+  --input: color-mix(in srgb, var(--rb-fg) 18%, transparent);
+  --ring: var(--rb-accent);
+  --destructive: #c8443a;
   --destructive-foreground: #ffffff;
+  --radius: 0.875rem;
 
-  /* Значки за вид на продукта — 30% по-тъмни от фоновете, върху които стоят.
-     Текстът е допълнително задълбочен, за да остане четим (дребен шрифт). */
-  --badge-overlay: #d6d3ce;
-  --badge-overlay-foreground: #342c25;
-  --badge-inline: #a9a39b;
-  --badge-inline-foreground: #28211c;
+  --chart-1: var(--rb-accent);
+  --chart-2: var(--rb-brass);
+  --chart-3: var(--rb-brass-2);
+  --chart-4: var(--rb-muted);
+  --chart-5: var(--rb-faint);
 
-  /* Нюанси на фона за редуване на секциите */
-  --surface-1: #cbc6b9;
-  --surface-2: #c4beae;
+  --shadow-blur: 24px;
+  --shadow-color: var(--rb-drop);
+  --shadow-spread: -12px;
+  --shadow-opacity: 1;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 14px;
 
-  /* Долната лента. Отделена от останалите фонове, защото се сменя сама за
-     себе си — линиите ѝ ползват --border, а подчертаването при посочване
-     --primary, тъй че тук стигат два цвята. */
-  --footer: #fffcf5;
-  --footer-foreground: #342c25;
+  --badge-overlay: var(--rb-card-2);
+  --badge-overlay-foreground: var(--rb-fg);
+  --badge-inline: var(--rb-accent-soft);
+  --badge-inline-foreground: var(--rb-accent);
 
-  /* Статуси (извън базовата тема, за админ панела и наличности) */
-  --success: #5f7d4f;
+  --surface-1: color-mix(in srgb, var(--rb-fg) 3%, transparent);
+  --surface-2: color-mix(in srgb, var(--rb-fg) 5%, transparent);
+
+  --footer: transparent;
+  --footer-foreground: var(--rb-fg);
+
+  --success: #13906d;
   --success-foreground: #ffffff;
-  --warning: #b8843f;
+  --warning: #b8742a;
   --warning-foreground: #ffffff;
 }
 
-.dark {
-  --card: #3a322c;
-  --ring: #c0a080;
-  --input: #4a4039;
-  --muted: #312b26;
-  --accent: #59493e;
-  --border: #4a4039;
-  --radius: 0.25rem;
-  --chart-1: #c0a080;
-  --chart-2: #b3906f;
-  --chart-3: #a67c52;
-  --chart-4: #8d6e4c;
-  --chart-5: #735a3a;
-  --popover: #3a322c;
-  --primary: #c0a080;
-  --secondary: #4a4039;
-  --background: #2d2621;
-  --foreground: #ece5d8;
-  --destructive: #b54a35;
-  --card-foreground: #ece5d8;
-  --muted-foreground: #c5bcac;
-  --accent-foreground: #ece5d8;
-  --popover-foreground: #ece5d8;
-  --primary-foreground: #2d2621;
-  --secondary-foreground: #ece5d8;
-  --destructive-foreground: #ffffff;
-  --shadow-color: hsl(28 13% 4%);
-  --shadow-opacity: 0.34;
-
-  --surface-1: #332c26;
-  --surface-2: #3a322c;
-
-  --footer: #332c26;
-  --footer-foreground: #ece5d8;
-
-  --badge-overlay: #4a4039;
-  --badge-overlay-foreground: #ece5d8;
-  --badge-inline: #59493e;
-  --badge-inline-foreground: #ece5d8;
-
-  --success: #8ab173;
-  --success-foreground: #2d2621;
-  --warning: #d7a35b;
-  --warning-foreground: #2d2621;
+html[data-mode="dark"] {
+  --success: #6fd6c4;
+  --success-foreground: #0b1a17;
+  --warning: #f0b36a;
+  --warning-foreground: #20160a;
+  --destructive: #ef8f8f;
+  --destructive-foreground: #2a0c0c;
 }
 
 @theme inline {
@@ -201,20 +244,25 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
-    font-family: var(--font-serif);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
 
+  /* Заглавията са в Cormorant Garamond. Там, където компонент изрично е
+     поискал `font-sans` (малки надписи в карти, етикети), важи неговият клас. */
   h1,
   h2,
   h3,
   h4,
   h5,
   h6 {
-    font-family: var(--font-sans);
-    font-weight: 700;
+    font-family: var(--font-serif);
+    font-weight: 600;
     letter-spacing: -0.01em;
+    line-height: 1.08;
     text-wrap: balance;
   }
 
@@ -298,19 +346,11 @@
       0 0 10px color-mix(in srgb, var(--background) 72%, transparent);
   }
 
+  /* Рисунката с книги принадлежеше на хартиената палитра. В „Компас на деня“
+     фонът е небето зад страницата, затова рисунката вече не се показва —
+     класът остава, за да не се пипат всички страници, които го носят. */
   .pattern-books::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-    background-color: color-mix(in srgb, var(--primary) 18%, transparent);
-    -webkit-mask-image: url("/images/pattern-books.png");
-    mask-image: url("/images/pattern-books.png");
-    -webkit-mask-size: 400px 168px;
-    mask-size: 400px 168px;
-    -webkit-mask-repeat: repeat;
-    mask-repeat: repeat;
+    content: none;
   }
 
   /**
@@ -491,14 +531,15 @@
     }
   }
 
-  /* Тънка декоративна линия под заглавия */
+  /* Тънка месингова линия под заглавия */
   .rule::after {
     content: "";
     display: block;
     width: 2.5rem;
     height: 2px;
     margin-top: 0.75rem;
-    background: var(--primary);
+    border-radius: 2px;
+    background: var(--rb-brass);
   }
 
   /* Богат текст от админ панела (блог публикации, описания) */

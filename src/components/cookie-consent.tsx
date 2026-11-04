@@ -69,7 +69,7 @@ export function CookieConsent() {
       className="fixed inset-x-0 bottom-0 z-50 p-3 sm:p-4"
     >
       <div className="container-page max-w-4xl">
-        <div className="bg-card border border-border rounded-md shadow-lift p-5 sm:p-6">
+        <div className="bg-popover border border-border rounded-3xl shadow-lift p-5 sm:p-6">
           <h2 className="font-sans text-base font-bold">Бисквитки</h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             Използваме бисквитки, за да работи сайтът коректно и за да подобряваме

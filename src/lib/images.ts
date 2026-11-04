@@ -57,7 +57,7 @@ export const IMAGE_SLOTS: readonly ImageSlotInfo[] = [
     slot: "hero",
     setting: "img_hero",
     label: "Заглавна секция",
-    where: "Начална страница — фонът зад заглавието и книгите",
+    where: "Не се показва в дизайна „Компас на деня“ — там горната секция е небе, което следва часа от деня",
     ratio: "2:1 (широка)",
   },
   {

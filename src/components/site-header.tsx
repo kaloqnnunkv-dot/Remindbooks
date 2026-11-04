@@ -12,8 +12,9 @@ import {
   UserIcon,
 } from "./icons";
 import { LiveSearch } from "./live-search";
-import { Logo } from "./logo";
-import { cn } from "./ui";
+import { useDay } from "./daylight";
+import { SiteLogo } from "./logo";
+import { NEXT_STEP, PHASES, hhmm } from "@/lib/daylight";
 
 const NAV = [
   { href: "/knigi", label: "Книги" },
@@ -60,85 +61,79 @@ export function SiteHeader({
         e.preventDefault();
         setSearchOpen(true);
       }
-      if (e.key === "Escape") setSearchOpen(false);
+      if (e.key === "Escape") {
+        setSearchOpen(false);
+        setMobileOpen(false);
+      }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  const isActive = (href: string) => pathname.startsWith(href);
+
   return (
     <>
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+      <header className="rb-nav">
         <div className="container-page">
-          <div className="flex h-20 items-center justify-between gap-4">
-            {/* Лого */}
+          <div className="rb-navbar glass">
             <Link
               href="/"
               aria-label="Remind Books — начална страница"
               className="shrink-0 transition-opacity hover:opacity-80"
             >
-              <Logo width={240} priority src={logoSrc} className="h-[3.375rem] sm:h-[3.75rem]" />
+              <SiteLogo src={logoSrc} />
             </Link>
 
-            {/* Навигация — десктоп */}
-            <nav className="hidden lg:flex items-center gap-1" aria-label="Основна навигация">
-              {NAV.map((item) => {
-                const active = pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                      "px-3 py-2 font-sans text-sm rounded-md transition-colors",
-                      active
-                        ? "text-primary font-bold"
-                        : "text-foreground/80 hover:text-primary hover:bg-muted",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
+            <nav className="rb-links" aria-label="Основна навигация">
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                >
+                  {item.label}
+                </Link>
+              ))}
             </nav>
 
-            {/* Действия */}
-            <div className="flex items-center gap-0.5">
+            <div className="rb-nav-r">
+              <DayClock />
+
               <button
                 ref={searchButtonRef}
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 aria-label="Търсене"
-                className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-muted transition-colors"
+                className="rb-icon"
               >
-                <SearchIcon />
+                <SearchIcon size={19} />
               </button>
 
               <Link
                 href={isLoggedIn ? "/profil/lyubimi" : "/vhod"}
                 aria-label="Любими"
-                className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted transition-colors"
+                className="rb-icon max-sm:!hidden"
               >
-                <HeartIcon />
+                <HeartIcon size={19} />
               </Link>
 
               <Link
                 href={isLoggedIn ? "/profil" : "/vhod"}
                 aria-label={isLoggedIn ? "Моят профил" : "Вход"}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted transition-colors"
+                className="rb-icon max-sm:!hidden"
               >
-                <UserIcon />
+                <UserIcon size={19} />
               </Link>
 
               <Link
                 href="/kolichka"
                 aria-label={`Кошница (${cartCount} артикула)`}
-                className="relative inline-flex h-9 w-9 items-center justify-center rounded-md hover:bg-muted transition-colors"
+                className="rb-icon solid"
               >
-                <CartIcon />
+                <CartIcon size={19} />
                 {cartCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-sans font-bold">
-                    {cartCount > 99 ? "99+" : cartCount}
-                  </span>
+                  <span className="rb-cartn">{cartCount > 99 ? "99+" : cartCount}</span>
                 )}
               </Link>
 
@@ -147,9 +142,9 @@ export function SiteHeader({
                 onClick={() => setMobileOpen((v) => !v)}
                 aria-label="Меню"
                 aria-expanded={mobileOpen}
-                className="lg:hidden h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-muted transition-colors"
+                className="rb-icon lg:!hidden"
               >
-                {mobileOpen ? <CloseIcon /> : <MenuIcon />}
+                {mobileOpen ? <CloseIcon size={19} /> : <MenuIcon size={19} />}
               </button>
             </div>
           </div>
@@ -158,33 +153,31 @@ export function SiteHeader({
 
       {/* Мобилно меню */}
       {mobileOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 bg-background">
-          <div className="container-page">
-            <div className="flex h-20 items-center justify-between">
-              <span className="font-sans text-lg font-bold">Меню</span>
+        <div className="rb-mobile lg:hidden" role="dialog" aria-modal="true" aria-label="Меню">
+          <div className="container-page pt-[14px]">
+            <div className="rb-navbar glass">
+              <SiteLogo src={logoSrc} />
               <button
                 type="button"
                 onClick={() => setMobileOpen(false)}
                 aria-label="Затвори менюто"
-                className="h-9 w-9 inline-flex items-center justify-center rounded-md hover:bg-muted"
+                className="rb-icon"
               >
-                <CloseIcon />
+                <CloseIcon size={19} />
               </button>
             </div>
-            <nav className="py-4 flex flex-col" aria-label="Мобилна навигация">
+            <nav className="py-6" aria-label="Мобилна навигация">
               {NAV.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="py-3.5 font-sans text-lg border-b border-border hover:text-primary transition-colors"
+                  aria-current={isActive(item.href) ? "page" : undefined}
                 >
                   {item.label}
                 </Link>
               ))}
-              <Link
-                href={isLoggedIn ? "/profil" : "/vhod"}
-                className="py-3.5 font-sans text-lg border-b border-border hover:text-primary transition-colors"
-              >
+              <Link href={isLoggedIn ? "/profil/lyubimi" : "/vhod"}>Любими</Link>
+              <Link href={isLoggedIn ? "/profil" : "/vhod"}>
                 {isLoggedIn ? "Моят профил" : "Вход / Регистрация"}
               </Link>
             </nav>
@@ -194,5 +187,32 @@ export function SiteHeader({
 
       {searchOpen && <LiveSearch onClose={() => setSearchOpen(false)} />}
     </>
+  );
+}
+
+/**
+ * Часът в менюто. Показва часа, по който е подреден сайтът, и при натискане
+ * прескача към следващата част от деня — сутрин, ден, вечер, нощ.
+ */
+function DayClock() {
+  const { hour, phase, ready, goTo } = useDay();
+  const t = hhmm(hour);
+  const name = PHASES[phase].name;
+
+  return (
+    <button
+      type="button"
+      className="rb-clock"
+      onClick={() => goTo(NEXT_STEP[phase], false)}
+      aria-label={`${t}, ${name}. Смени часа от деня`}
+      title="Смени часа от деня"
+    >
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      <b suppressHydrationWarning>{ready ? t : "--:--"}</b>
+      <span>{ready ? name : ""}</span>
+    </button>
   );
 }

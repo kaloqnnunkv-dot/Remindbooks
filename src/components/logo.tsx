@@ -39,6 +39,25 @@ export function Logo({
   );
 }
 
+/** Вграденото лого. Само то се рисува като маска. */
+const BUNDLED_LOGO = "/logo.webp";
+
+/**
+ * Логото в менюто и footer-а на „Компас на деня“.
+ *
+ * Вграденото се рисува като маска (`public/logo-mask.webp`) в цвета на фазата —
+ * кафяво денем, светло нощем. Лого, качено от админ панела, се показва както
+ * е: не знаем дали има прозрачен фон, а без него маската би станала плътен
+ * правоъгълник.
+ */
+export function SiteLogo({ src, className }: { src?: string; className?: string }) {
+  if (src && src !== BUNDLED_LOGO) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={src} alt="Remind Books" className={cn("rb-logo-img", className)} />;
+  }
+  return <span className={cn("rb-logo", className)} role="img" aria-label="Remind Books" />;
+}
+
 /** Логото като връзка към началната страница — за навигацията и footer-а. */
 export function LogoLink({
   className,
