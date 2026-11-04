@@ -77,11 +77,11 @@ export default async function BlogPage({
 
       {/* Тагове */}
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-10">
+        <div className="rb-chips mb-10">
           <Link
             href="/blog"
             className={cn(
-              "px-3.5 py-1.5 rounded-md border font-sans text-xs font-bold transition-colors",
+              "px-4 py-2 rounded-full border font-sans text-xs font-bold transition-colors",
               !params.tag
                 ? "bg-primary text-primary-foreground border-primary"
                 : "bg-card border-border hover:border-primary hover:text-primary",
@@ -94,7 +94,7 @@ export default async function BlogPage({
               key={tag.id}
               href={`/blog?tag=${tag.slug}`}
               className={cn(
-                "px-3.5 py-1.5 rounded-md border font-sans text-xs font-bold transition-colors",
+                "px-4 py-2 rounded-full border font-sans text-xs font-bold transition-colors",
                 params.tag === tag.slug
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-card border-border hover:border-primary hover:text-primary",

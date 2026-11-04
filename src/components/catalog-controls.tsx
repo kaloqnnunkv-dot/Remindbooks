@@ -45,7 +45,7 @@ export function CatalogControls({
   return (
     <div className="mb-8 space-y-4">
       {showCategories && categories.length > 0 && (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Филтър по категория">
+        <div className="rb-chips" role="group" aria-label="Филтър по категория">
           <FilterChip
             active={currentCategory === ""}
             onClick={() => setParam("kategoria", "")}
@@ -76,7 +76,7 @@ export function CatalogControls({
               : `${total} заглавия`}
         </p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 max-sm:w-full">
           <label
             htmlFor="sort"
             className="font-sans text-xs uppercase tracking-wider text-muted-foreground"
@@ -87,7 +87,7 @@ export function CatalogControls({
             id="sort"
             value={currentSort}
             onChange={(e) => setParam("sort", e.target.value)}
-            className="w-auto min-w-[11rem]"
+            className="w-auto min-w-[11rem] max-sm:flex-1 max-sm:min-w-0"
           >
             {(Object.keys(SORT_LABELS) as SortOption[]).map((key) => (
               <option key={key} value={key}>
@@ -116,7 +116,7 @@ function FilterChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "px-3.5 py-1.5 rounded-md border font-sans text-xs font-bold transition-colors",
+        "px-4 py-2 rounded-full border font-sans text-xs font-bold transition-colors",
         active
           ? "bg-primary text-primary-foreground border-primary"
           : "bg-card border-border text-foreground hover:border-primary hover:text-primary",

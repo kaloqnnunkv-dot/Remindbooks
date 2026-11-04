@@ -35,7 +35,7 @@ export function GiftCardForm() {
                   onClick={() => setAmount(value)}
                   aria-pressed={active}
                   className={cn(
-                    "h-11 rounded-md border font-sans text-sm font-bold transition-colors",
+                    "h-11 rounded-full border font-sans text-sm font-bold transition-colors",
                     active
                       ? "bg-primary text-primary-foreground border-primary"
                       : "bg-card border-border hover:border-primary hover:text-primary",

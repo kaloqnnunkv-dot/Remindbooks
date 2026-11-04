@@ -26,7 +26,7 @@ export function ProfileNav({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <nav aria-label="Навигация в профила">
-      <ul className="space-y-1">
+      <ul className="max-lg:grid max-lg:grid-cols-2 max-lg:gap-2 lg:space-y-1 max-lg:[&>li:last-child:nth-child(odd)]:col-span-2">
         {LINKS.map((link) => {
           const active = link.exact
             ? pathname === link.href
@@ -38,7 +38,7 @@ export function ProfileNav({ isAdmin }: { isAdmin: boolean }) {
               <Link
                 href={link.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-md font-sans text-sm transition-colors",
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl font-sans text-sm transition-colors max-lg:h-full max-lg:border max-lg:border-border",
                   active
                     ? "bg-primary text-primary-foreground font-bold"
                     : "text-foreground/80 hover:bg-muted hover:text-foreground",
@@ -52,10 +52,10 @@ export function ProfileNav({ isAdmin }: { isAdmin: boolean }) {
         })}
 
         {isAdmin && (
-          <li className="pt-2 mt-2 border-t border-border">
+          <li className="lg:pt-2 lg:mt-2 lg:border-t lg:border-border">
             <Link
               href="/admin"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-md font-sans text-sm text-primary hover:bg-muted transition-colors"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-sans text-sm text-primary hover:bg-muted transition-colors max-lg:h-full max-lg:border max-lg:border-border"
             >
               <ChartIcon size={17} />
               Административен панел
@@ -63,11 +63,11 @@ export function ProfileNav({ isAdmin }: { isAdmin: boolean }) {
           </li>
         )}
 
-        <li className="pt-2 mt-2 border-t border-border">
-          <form action={logoutUser}>
+        <li className="lg:pt-2 lg:mt-2 lg:border-t lg:border-border">
+          <form action={logoutUser} className="max-lg:h-full">
             <button
               type="submit"
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-md font-sans text-sm text-muted-foreground hover:bg-muted hover:text-destructive transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-sans text-sm text-muted-foreground hover:bg-muted hover:text-destructive transition-colors max-lg:h-full max-lg:border max-lg:border-border"
             >
               <LogoutIcon size={17} />
               Изход
